@@ -1,0 +1,20 @@
+[package]
+name = "humars-tests"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+axum = { version = "0.7.2" }
+bytes = "1.5.0"
+http-body-util = "0.1.0"
+humars = {path = "../humars"}
+humars_macros = {path = "../humars-macros"}
+serde = { version = "1.0.195", features = ["derive"] }
+static_assertions = "1.1.0"
+tokio = { version = "1.35.1", features = ["full"] }
+
+[dev-dependencies]
+tower = { version = "0.4.13", features = ["util"] }
+utoipa = "4.2.0"
