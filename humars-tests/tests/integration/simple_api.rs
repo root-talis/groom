@@ -2,21 +2,28 @@ use axum::Router;
 use axum::body::Body;
 use axum::http::{Request, StatusCode};
 
+use utoipa::openapi::path::{OperationBuilder, ParameterBuilder, PathItemBuilder};
+use utoipa::openapi::request_body::RequestBodyBuilder;
+use utoipa::openapi::{self, ComponentsBuilder, ContentBuilder, InfoBuilder, PathsBuilder, ResponseBuilder, Schema, SchemaFormat, SchemaType};
+use utoipa::{OpenApi, openapi::OpenApiBuilder};
+
 use tower::ServiceExt; // for `call`, `oneshot` and `ready`
 use http_body_util::BodyExt;
 
 use crate::humars_macros::Controller;
 
+use serde_json::json;
+
 
 // region: test bootstrap utils -----------------------------------
 //
 
-fn app() -> Router {
+fn router() -> Router {
     my_api::merge_into_router(Router::new())
 }
 
 async fn call_url(url: &str) -> (StatusCode, String) {
-    let app = app();
+    let app = router();
 
     let response = app
         .oneshot(
@@ -36,27 +43,6 @@ async fn call_url(url: &str) -> (StatusCode, String) {
     (status, body)
 }
 
-/*
-fn api_doc() -> OpenApiBuilder {
-    #[derive(OpenApi)]
-    #[openapi(
-        paths(
-            MyApi::root,
-            MyApi::hello_world
-        ),
-        tags(
-            (name = "todo", description = "ToDo")
-        )
-    )]
-    struct ApiDoc;
-
-    let doc = ApiDoc::openapi();
-
-    let api = OpenApiBuilder::from(doc);
-
-    return api;
-}
-*/
 
 //
 // endregion: test bootstrap utils --------------------------------------
@@ -92,8 +78,17 @@ mod my_api {
 
     // --- BEGIN GET /hello-world ---
 
+    /// This method says "hello, world!"
+    /// 
+    /// Ha-ha, classic.
     #[Route(method="get", path="/hello-world")]
     pub async fn hello_world() -> HelloWorldResponse {
+        HelloWorldResponse::Ok("hello, world!".into())
+    }
+
+    /// POST hello world
+    #[Route(method="post", path="/hello-world")]
+    pub async fn post_hello_world() -> HelloWorldResponse {
         HelloWorldResponse::Ok("hello, world!".into())
     }
 
@@ -113,10 +108,9 @@ mod my_api {
 
     #[DTO]
     pub struct RqConsPathStruct {
-        user_id: String,
-        team_id: i32,
+        pub user_id: String,
+        pub team_id: i32,
     }
-
 
     #[DTO]
     pub struct RqConsQueryParams {
@@ -222,6 +216,128 @@ mod my_api {
 
 // region: tests --------------------------------------------------
 //
+
+//use ::utoipa::ToSchema;
+
+#[test]
+fn api_doc_scratchpad() {
+    #[derive(OpenApi)]
+    #[openapi()]
+    struct ApiDoc;
+
+    let api = OpenApiBuilder::from(ApiDoc::openapi());
+
+    // region: should generate this for /hello-world
+    let parameter = ParameterBuilder::new()
+        .parameter_in(openapi::path::ParameterIn::Query)
+        .name("sad")
+        .schema(Some(my_api::RqConsQueryParams::default()))
+        .build()
+    ;
+
+    let components = ComponentsBuilder::new()
+        .schema("my_component", my_api::RqConsPathStruct::default())
+        .build()
+    ;
+
+    let content = ContentBuilder::new()
+        .schema(components.schemas["my_component"].clone())
+        .build()
+    ;
+
+    let request_body = RequestBodyBuilder::new()
+        .content("application/json", content)
+        .build()
+    ;
+
+    let operation = OperationBuilder::new()
+        .parameter(parameter)
+        .request_body(Some(request_body))
+        .description(Some("description"))
+        .summary(Some("summary"))
+        .build();
+    let operation = OperationBuilder::from(operation).build(); 
+
+    let path_item= PathItemBuilder::new()
+        .operation(utoipa::openapi::PathItemType::Get, operation)
+        .build()
+    ;
+
+    let paths = PathsBuilder::new()
+        .path("/hello-world", path_item)
+        .build()
+    ;
+    let paths = PathsBuilder::from(paths).build();
+
+    let api = api.paths(paths);
+    //let api = api.components(Some(components));
+
+    // endregion: should generate this for /hello-world
+
+    let _json = api.build().to_json().expect("expected a valid json");
+
+    let _breakpoint = false;
+}
+
+#[test]
+fn api_doc() {
+    #[derive(OpenApi)]
+    #[openapi(
+        info(title = "t", description = "d", license(name = "n"), version = "0.0.0")
+    )]
+    struct ApiDoc;
+
+    let api = OpenApiBuilder::from(ApiDoc::openapi());
+    let api = my_api::merge_into_openapi_builder(api);
+
+    let json = api.build().to_json().expect("expected a valid json string");
+
+    assert_eq!(
+        json!({
+            "openapi": "3.0.3",
+            "info": {"title": "t", "description": "d", "license": {"name": "n"}, "version": "0.0.0"},
+            "paths": {
+                "/": {
+                    "get": {
+                        "responses": {}
+                    },
+                },
+                "/greet": {
+                    "get": {
+                        "responses": {}
+                    },
+                },
+                "/greet_2": {
+                    "get": {
+                        "responses": {}
+                    },
+                },
+                "/hello-world": {
+                    "get": {
+                        "summary": "This method says \"hello, world!\"",
+                        "description": "Ha-ha, classic.",
+                        "responses": {}
+                    },
+                    "post": {
+                        "summary": "POST hello world",
+                        "responses": {}
+                    }
+                },
+                "/team/:team_id/user/:user_id": {
+                    "get": {
+                        "responses": {}
+                    },
+                },
+                "/user/:user_id/team/:team_id": {
+                    "get": {
+                        "responses": {}
+                    },
+                },
+            }
+        }),
+        json.parse::<serde_json::Value>().expect("expected a parsed json")
+    );
+}
 
 #[tokio::test]
 pub async fn test_root() {

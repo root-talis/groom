@@ -4,6 +4,9 @@ extern crate humars_macros;
 pub mod api_root {
     use axum::extract::{Path,Query};
 
+    /// Summary
+    /// 
+    /// Description
     #[Route(method = "get", path = "/")]
     pub async fn get_root() -> GetRootResponse {
         let a = 1;
@@ -91,5 +94,4 @@ pub mod api_root {
         #[Response()]
         Ok(String),
     }
-
 }

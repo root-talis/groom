@@ -64,11 +64,12 @@ fn generate_impl(input: TokenStream) -> TokenStream {
     // Walk through all handlers and parse them
     //
 
-    let mut seen_handlers: IndexMap<String, String> = IndexMap::new();        // for routes deduplication
-    let mut module_items: Vec<TokenStream> = Vec::with_capacity(items.len()); // all module items in the original order
-    let mut routes_setup: Vec<TokenStream> = Vec::new();                      // code to setup routes in merge_into_router()
+    let mut seen_handlers: IndexMap<String, IndexMap<HTTPMethod, String>> = IndexMap::new(); // for routes deduplication
+    let mut module_items: Vec<TokenStream> = Vec::with_capacity(items.len());                // all module items in the original order
+    let mut routes_setup: Vec<TokenStream> = Vec::new();                                     // code to setup routes in merge_into_router()
+    let mut paths_setup: IndexMap<String, Vec<TokenStream>> = IndexMap::new();               // code to setup paths in merge_into_openapi_builder()
 
-    let mut type_assertions: Vec<TokenStream> = Vec::new();
+    let mut type_assertions: Vec<TokenStream> = Vec::new(); // compile-time checks of trait implementation (for better error messages)
 
     for item in items {
         if let Item::Fn(mut function) = item {
@@ -87,19 +88,21 @@ fn generate_impl(input: TokenStream) -> TokenStream {
 
                 let path = route.path;
                 let method = route.method;
-                let route = format!("{path} {method}");
 
                 let duplicate_handler = seen_handlers
-                    .insert(route.to_string(), function.sig.ident.to_string())
+                    .entry(path.clone())
+                    .or_default()
+                    .insert(method, function.sig.ident.to_string())
                 ;
 
                 if duplicate_handler.is_some() {
                     return Error::new_spanned(
                         &function.sig,
                         format!(
-                            "duplicate handler: function named `{}` is already assigned to route `{}`",
+                            "duplicate handler: function named `{}` is already assigned to route `{} {}`",
                             duplicate_handler.unwrap(),
-                            route
+                            method,
+                            path,
                         )
                     ).to_compile_error();
                 }
@@ -121,20 +124,82 @@ fn generate_impl(input: TokenStream) -> TokenStream {
                     }
                 }
 
+                //
+                // new module item instead of current one:
+                //
+
                 // make new module item:
                 let method_str = method.to_string().to_ascii_uppercase();
-                let comment = format!(" HTTP handler: {method_str} {path}");
+                let handler_comment = format!(" HTTP handler: {method_str} {path}");
 
+                // change comment:
+                let (summary, description) = crate::utils::get_summary_and_description(&function.attrs).unwrap_or_default();
+
+                let mut new_comment: Vec<TokenStream> = Vec::new();
+                if let Some(s) = summary.clone() {
+                    let s = format!(" {s}");
+                    new_comment.push(quote!{#[doc = #s]});
+                    new_comment.push(quote!{#[doc = ""]});
+                }
+                new_comment.push(quote!{#[doc = #handler_comment]});
+                if let Some(s) = description.clone() {
+                    let s = format!(" {s}");
+                    new_comment.push(quote!{#[doc = ""]});
+                    new_comment.push(quote!{#[doc = #s]});
+                }
+
+                crate::utils::remove_description(&mut function.attrs);
+
+                // generate module item:
                 module_items.push(quote! {
-                    #[doc = #comment]
+                    #(#new_comment)*
                     #function
                 });
+
+                //
+                // web route setup:
+                //
 
                 let routing_method = format_ident!("{}", method.to_string());
                 let fn_name = function.sig.ident.clone();
 
                 routes_setup.push(quote! {
                     .route(#path, ::axum::routing::#routing_method(#fn_name))
+                });
+
+                //
+                // openapi path setup:
+                //
+
+                let operation = match method {
+                    HTTPMethod::Connect => quote! {::utoipa::openapi::PathItemType::Connect},
+                    HTTPMethod::Delete  => quote! {::utoipa::openapi::PathItemType::Delete },
+                    HTTPMethod::Get     => quote! {::utoipa::openapi::PathItemType::Get    },
+                    HTTPMethod::Head    => quote! {::utoipa::openapi::PathItemType::Head   },
+                    HTTPMethod::Options => quote! {::utoipa::openapi::PathItemType::Option },
+                    HTTPMethod::Patch   => quote! {::utoipa::openapi::PathItemType::Patch  },
+                    HTTPMethod::Post    => quote! {::utoipa::openapi::PathItemType::Post   },
+                    HTTPMethod::Put     => quote! {::utoipa::openapi::PathItemType::Put    },
+                    HTTPMethod::Trace   => quote! {::utoipa::openapi::PathItemType::Trace  },
+                };
+
+                let summary_tk = match summary {
+                    Some(s) => quote! { Some(#s) },
+                    None => quote! { None as Option<String> },
+                };
+
+                let description_tk = match description {
+                    Some(s) => quote! { Some(#s) },
+                    None => quote! { None as Option<String> },
+                };
+                paths_setup.entry(path.clone()).or_default().push(quote! {
+                    ::utoipa::openapi::path::PathItemBuilder::new()
+                        .operation(#operation, ::utoipa::openapi::path::OperationBuilder::new()
+                            .summary(#summary_tk)
+                            .description(#description_tk)
+                            .build()
+                        )
+                        .build()
                 });
             } else {
                 module_items.push(function.into_token_stream());
@@ -147,6 +212,17 @@ fn generate_impl(input: TokenStream) -> TokenStream {
     //
     // Regenerate the entire module
     //
+
+    let mut paths: Vec<TokenStream> = Vec::new();
+    for p in paths_setup {
+        let url = p.0;
+
+        for m in p.1 {
+            paths.push(quote! {
+                paths = paths.path(#url, #m);
+            });
+        }
+    }
 
     quote! {
         #vis mod #ident {
@@ -163,7 +239,11 @@ fn generate_impl(input: TokenStream) -> TokenStream {
             }
 
             pub fn merge_into_openapi_builder(other: ::utoipa::openapi::OpenApiBuilder) -> ::utoipa::openapi::OpenApiBuilder {
-                other
+                let mut paths = ::utoipa::openapi::path::PathsBuilder::new();
+
+                #(#paths)*
+
+                other.paths(paths)
             }
 
             #(#type_assertions)*

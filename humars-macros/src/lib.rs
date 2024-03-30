@@ -9,6 +9,7 @@ mod controller;
 mod dto;
 mod http;
 mod response;
+mod utils;
 
 #[proc_macro_error]
 #[proc_macro_attribute]
