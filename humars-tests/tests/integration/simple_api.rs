@@ -4,7 +4,7 @@ use axum::http::{Request, StatusCode};
 
 use utoipa::openapi::path::{OperationBuilder, ParameterBuilder, PathItemBuilder};
 use utoipa::openapi::request_body::RequestBodyBuilder;
-use utoipa::openapi::{self, ComponentsBuilder, ContentBuilder, InfoBuilder, PathsBuilder, ResponseBuilder, Schema, SchemaFormat, SchemaType};
+use utoipa::openapi::{self, ComponentsBuilder, ContentBuilder, PathsBuilder};
 use utoipa::{OpenApi, openapi::OpenApiBuilder};
 
 use tower::ServiceExt; // for `call`, `oneshot` and `ready`
