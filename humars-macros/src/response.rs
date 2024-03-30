@@ -56,6 +56,7 @@ fn generate_impl(input: TokenStream) -> TokenStream {
 
 fn generate_impl_enum(enum_impl: ItemEnum) -> TokenStream {
     let ident = enum_impl.ident;
+    let vis = enum_impl.vis;
     let (variants, into_response_implementations) = {
         let mut variants: Vec<TokenStream> = Vec::new();
         let mut into_response_impls: Vec<TokenStream> = Vec::new();
@@ -127,7 +128,7 @@ fn generate_impl_enum(enum_impl: ItemEnum) -> TokenStream {
     };
     
     quote! {
-        enum #ident {
+        #vis enum #ident {
             #(#variants)*
         }
 

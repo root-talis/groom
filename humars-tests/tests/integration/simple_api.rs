@@ -1,25 +1,18 @@
-use std::collections::HashMap;
-
 use axum::Router;
 use axum::body::Body;
 use axum::http::{Request, StatusCode};
 
-use static_assertions::assert_impl_all;
-use axum::extract::{Query, Path};
-
 use tower::ServiceExt; // for `call`, `oneshot` and `ready`
 use http_body_util::BodyExt;
 
-
-use crate::humars_macros::{Controller, Response, DTO};
-use crate::humars::Controller;
+use crate::humars_macros::Controller;
 
 
 // region: test bootstrap utils -----------------------------------
 //
 
 fn app() -> Router {
-    MyApi::merge_into_router(Router::new())
+    my_api::merge_into_router(Router::new())
 }
 
 async fn call_url(url: &str) -> (StatusCode, String) {
@@ -71,22 +64,46 @@ fn api_doc() -> OpenApiBuilder {
 // region: api implementation to test ------------------------------------
 //
 
-struct MyApi;
-
 #[Controller]
-impl MyApi {
+mod my_api {
+    use std::collections::HashMap;
+
+    use axum::extract::{Path, Query};
+
+    use crate::humars_macros::{Response, DTO};
+
     // region: dumb handlers ---------------------------------------------
     //
 
+    // --- BEGIN GET / ---
+
     #[Route(method="get", path="/")]
-    async fn root() -> RootResponse {
+    pub async fn root() -> RootResponse {
         RootResponse::Ok
     }
 
+    #[Response]
+    pub enum RootResponse {
+        #[Response(code = 202)] // todo: allow using constants like axum::http::Status::ACCEPTED?
+        Ok,
+    }
+
+    // --- END GET / ---
+
+    // --- BEGIN GET /hello-world ---
+
     #[Route(method="get", path="/hello-world")]
-    async fn hello_world() -> HelloWorldResponse {
+    pub async fn hello_world() -> HelloWorldResponse {
         HelloWorldResponse::Ok("hello, world!".into())
     }
+
+    #[Response]
+    pub enum HelloWorldResponse {
+        #[Response()]
+        Ok(String),
+    }
+
+    // --- END GET /hello-world ---
 
     //
     // endregion: dumb handlers -----------------------------------------
@@ -94,9 +111,42 @@ impl MyApi {
     // region: request consumption --------------------------------------
     //
 
+    #[DTO]
+    pub struct RqConsPathStruct {
+        user_id: String,
+        team_id: i32,
+    }
+
+
+    #[DTO]
+    pub struct RqConsQueryParams {
+        first_name: String,
+        last_name: Option<String>,
+    }
+
+    #[DTO]
+    pub struct RqConsQueryParams2 {
+        title: Option<String>,
+    }
+
+    #[Response]
+    pub enum RqConsQueryResponse {
+        #[Response()]
+        Ok(String),
+
+        #[Response(code = 400)]
+        BadRequest(String),
+    }
+
+    #[Response]
+    pub enum RqConsPathResponse {
+        #[Response()]
+        Ok(String),
+    }
+
     // Request consumption: Query<struct> (stuff after `?`)
     #[Route(method = "get", path = "/greet")]
-    async fn rq_cons_query_struct(query: Query<RqConsQueryParams>, query2: Query<RqConsQueryParams2>) -> RqConsQueryResponse {
+    pub async fn rq_cons_query_struct(query: Query<RqConsQueryParams>, query2: Query<RqConsQueryParams2>) -> RqConsQueryResponse {
         if query.first_name.is_empty() {
             RqConsQueryResponse::BadRequest("Empty name".into())
         } else {
@@ -164,51 +214,7 @@ impl MyApi {
     // endregion: request consumption ---------------------------------
 
     #[allow(dead_code)]
-    async fn not_a_handler(&self) {}
-}
-
-#[DTO]
-struct RqConsPathStruct {
-    user_id: String,
-    team_id: i32,
-}
-
-#[Response]
-enum RootResponse {
-    #[Response(code = 202)] // todo: allow using constants like axum::http::Status::ACCEPTED?
-    Ok,
-}
-
-#[Response]
-enum HelloWorldResponse {
-    #[Response()]
-    Ok(String),
-}
-
-#[DTO]
-struct RqConsQueryParams {
-    first_name: String,
-    last_name: Option<String>,
-}
-
-#[DTO]
-struct RqConsQueryParams2 {
-    title: Option<String>,
-}
-
-#[Response]
-enum RqConsQueryResponse {
-    #[Response()]
-    Ok(String),
-
-    #[Response(code = 400)]
-    BadRequest(String),
-}
-
-#[Response]
-enum RqConsPathResponse {
-    #[Response()]
-    Ok(String),
+    async fn not_a_handler() {}
 }
 
 //

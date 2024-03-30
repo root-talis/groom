@@ -1,8 +1,8 @@
 use indexmap::IndexMap;
 use proc_macro2::TokenStream;
 use proc_macro_error::abort;
-use syn::{parse2, ItemImpl, ImplItem, Error, ImplItemFn};
-use quote::{quote, format_ident};
+use syn::{parse2, Error, Item, ItemMod};
+use quote::{format_ident, quote, ToTokens};
 use darling::FromMeta;
 use syn::Attribute;
 
@@ -33,11 +33,6 @@ impl RouteArgs {
 // region: AST parsing and generation ----------------------------------------------
 //
 
-struct ControllerParts {
-    handlers: IndexMap<String, IndexMap<HTTPMethod, ImplItemFn>>,
-    ignored_functions: Vec<ImplItemFn>,
-}
-
 pub(crate) fn generate(args: TokenStream, input: TokenStream) -> TokenStream {
     if !args.is_empty() {
         abort!(args, "no args yet")
@@ -51,31 +46,32 @@ pub(crate) fn generate(args: TokenStream, input: TokenStream) -> TokenStream {
 }
 
 fn generate_impl(input: TokenStream) -> TokenStream {
-    let mut item_impl = match parse2::<ItemImpl>(input) {
+    let item_mod = match parse2::<ItemMod>(input) {
         Ok(syntax_tree) => syntax_tree,
         Err(error) => return error.to_compile_error(),
     };
 
-    let ident = item_impl.self_ty.clone();
-    /*let ident_name = match &*ident {
-        syn::Type::Path(tp) => tp.path.segments.first().unwrap().ident.clone(),
-        _ => panic!("failed to parse the ident path"),
-    };*/
+    let ident = item_mod.ident.clone();
+    let vis = item_mod.vis;
+
+    if item_mod.content.is_none() {
+        return Error::new_spanned(&item_mod.ident, "module should have content").to_compile_error();
+    }
+
+    let items = item_mod.content.unwrap().1;
 
     //
     // Walk through all handlers and parse them
     //
 
-    let mut controller_parts = ControllerParts {
-        handlers: Default::default(),
-        ignored_functions: Default::default(),
-    };
-
+    let mut seen_handlers: IndexMap<String, String> = IndexMap::new();        // for routes deduplication
+    let mut module_items: Vec<TokenStream> = Vec::with_capacity(items.len()); // all module items in the original order
+    let mut routes_setup: Vec<TokenStream> = Vec::new();                      // code to setup routes in merge_into_router()
 
     let mut type_assertions: Vec<TokenStream> = Vec::new();
 
-    for item in &mut item_impl.items {
-        if let ImplItem::Fn(function) = item {
+    for item in items {
+        if let Item::Fn(mut function) = item {
             let args = match RouteArgs::parse_from_attrs(&function.attrs) {
                 Ok(args) => {
                     RouteArgs::remove_from_attrs(&mut function.attrs);
@@ -91,20 +87,19 @@ fn generate_impl(input: TokenStream) -> TokenStream {
 
                 let path = route.path;
                 let method = route.method;
+                let route = format!("{path} {method}");
 
-                let duplicate_handler = controller_parts.handlers
-                    .entry(path.to_string())
-                    .or_default()
-                    .insert(method, function.clone());
+                let duplicate_handler = seen_handlers
+                    .insert(route.to_string(), function.sig.ident.to_string())
+                ;
 
                 if duplicate_handler.is_some() {
                     return Error::new_spanned(
                         &function.sig,
                         format!(
-                            "duplicate handler: function named `{}` is already assigned to route `{} {}`",
-                            duplicate_handler.unwrap().sig.ident.to_string(),
-                            method.to_string().to_ascii_uppercase(),
-                            path
+                            "duplicate handler: function named `{}` is already assigned to route `{}`",
+                            duplicate_handler.unwrap(),
+                            route
                         )
                     ).to_compile_error();
                 }
@@ -125,60 +120,41 @@ fn generate_impl(input: TokenStream) -> TokenStream {
                         },
                     }
                 }
+
+                // make new module item:
+                let method_str = method.to_string().to_ascii_uppercase();
+                let comment = format!(" HTTP handler: {method_str} {path}");
+
+                module_items.push(quote! {
+                    #[doc = #comment]
+                    #function
+                });
+
+                let routing_method = format_ident!("{}", method.to_string());
+                let fn_name = function.sig.ident.clone();
+
+                routes_setup.push(quote! {
+                    .route(#path, ::axum::routing::#routing_method(#fn_name))
+                });
             } else {
-                controller_parts.ignored_functions.push(function.clone());
+                module_items.push(function.into_token_stream());
             }
+        } else {
+            module_items.push(item.into_token_stream());
         }
     }
 
     //
-    // Convert everything we've gathered into handlers and router setup calls
-    //
-
-    let ignored_functions = controller_parts.ignored_functions;
-    let (handlers, routes_setup) = {
-        let mut handlers: Vec<TokenStream> = Vec::new();
-        let mut routes_setup: Vec<TokenStream> = Vec::new();
-
-        for (path, routes) in controller_parts.handlers {
-            for (method, impl_item_fn) in routes {
-                let impl_item_fn = impl_item_fn.clone();
-                let method_str = method.to_string().to_ascii_uppercase();
-
-                let comment = format!(" HTTP handler: {method_str} {path}");
-
-                handlers.push(quote! {
-                    #[doc = #comment]
-                    #impl_item_fn
-                });
-
-                let routing_method = format_ident!("{}", method.to_string());
-                let fn_name = impl_item_fn.sig.ident.clone();
-
-                routes_setup.push(quote! {
-                    .route(#path, ::axum::routing::#routing_method(Self::#fn_name))
-                });
-           }
-        }
-
-        (handlers, routes_setup)
-    };
-
-    //
-    // Regenerate the entire impl
+    // Regenerate the entire module
     //
 
     quote! {
-        impl #ident {
-            #(#handlers)*
+        #vis mod #ident {
+            use ::static_assertions::assert_impl_all;
+            
+            #(#module_items)*
 
-            #(#ignored_functions)*
-        }
-
-        #(#type_assertions)*
-
-        impl ::humars::Controller for #ident {
-            fn merge_into_router(other: ::axum::Router) -> ::axum::Router {
+            pub fn merge_into_router(other: ::axum::Router) -> ::axum::Router {
                 let this_router = ::axum::Router::new()
                     #(#routes_setup)*
                 ;
@@ -186,9 +162,11 @@ fn generate_impl(input: TokenStream) -> TokenStream {
                 other.merge(this_router)
             }
 
-            fn merge_into_openapi_builder(other: ::utoipa::openapi::OpenApiBuilder) -> ::utoipa::openapi::OpenApiBuilder {
+            pub fn merge_into_openapi_builder(other: ::utoipa::openapi::OpenApiBuilder) -> ::utoipa::openapi::OpenApiBuilder {
                 other
             }
+
+            #(#type_assertions)*
         }
     }
 }
