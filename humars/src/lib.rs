@@ -1,3 +1,5 @@
+use utoipa::ToSchema;
+
 pub mod extract;
 
-pub trait DTO {}
+pub trait DTO: ToSchema<'static> {}

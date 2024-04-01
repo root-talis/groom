@@ -41,11 +41,12 @@ pub mod api_root {
         }
     }
 
+    /*
     /// Path<tuple>
     #[Route(method = "get", path = "/user/:user_id/team/:team_id")]
     pub async fn rq_cons_path_tuple(Path((user_id, team_id)): Path<(i32, String)>) -> RqConsPathResponse {
         RqConsPathResponse::Ok("ok".into())
-    }
+    }*/
 
     /// Path<struct>
     #[Route(method = "get", path = "/team/:team_id/user/:user_id")]

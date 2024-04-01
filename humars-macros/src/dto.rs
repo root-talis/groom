@@ -35,7 +35,7 @@ fn generate_impl_struct(item_struct: ItemStruct) -> TokenStream {
     let ident = item_struct.ident.clone();
 
     quote! {
-        #[derive(Default, ::serde::Serialize, ::serde::Deserialize, ::utoipa::ToSchema)]
+        #[derive(::serde::Serialize, ::serde::Deserialize, ::utoipa::ToSchema)]
         #item_struct
 
         impl ::humars::DTO for #ident {}

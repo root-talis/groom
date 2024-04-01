@@ -43,14 +43,6 @@ pub mod api_root {
             RqConsQueryResponse::BadRequest("Empty string".into())
         }
     }
-    /// Path<tuple>
-    ///
-    /// HTTP handler: GET /user/:user_id/team/:team_id
-    pub async fn rq_cons_path_tuple(
-        Path((user_id, team_id)): Path<(i32, String)>,
-    ) -> RqConsPathResponse {
-        RqConsPathResponse::Ok("ok".into())
-    }
     /// Path<struct>
     ///
     /// HTTP handler: GET /team/:team_id/user/:user_id
@@ -87,15 +79,6 @@ pub mod api_root {
     pub struct RqConsQueryStruct {
         name: String,
     }
-    #[automatically_derived]
-    impl ::core::default::Default for RqConsQueryStruct {
-        #[inline]
-        fn default() -> RqConsQueryStruct {
-            RqConsQueryStruct {
-                name: ::core::default::Default::default(),
-            }
-        }
-    }
     impl ::humars::DTO for RqConsQueryStruct {}
     pub enum RqConsQueryResponse {
         Ok(String),
@@ -119,16 +102,6 @@ pub mod api_root {
         user_id: String,
         team_id: i32,
     }
-    #[automatically_derived]
-    impl ::core::default::Default for RqConsPathStruct {
-        #[inline]
-        fn default() -> RqConsPathStruct {
-            RqConsPathStruct {
-                user_id: ::core::default::Default::default(),
-                team_id: ::core::default::Default::default(),
-            }
-        }
-    }
     impl ::humars::DTO for RqConsPathStruct {}
     pub enum RqConsPathResponse {
         Ok(String),
@@ -150,10 +123,6 @@ pub mod api_root {
             .route("/greet", ::axum::routing::get(rq_cons_query_struct))
             .route("/greet_2", ::axum::routing::get(rq_cons_query_struct))
             .route(
-                "/user/:user_id/team/:team_id",
-                ::axum::routing::get(rq_cons_path_tuple),
-            )
-            .route(
                 "/team/:team_id/user/:user_id",
                 ::axum::routing::get(rq_cons_path_struct),
             );
@@ -166,80 +135,86 @@ pub mod api_root {
         paths = paths
             .path(
                 "/",
-                ::utoipa::openapi::path::PathItemBuilder::new()
-                    .operation(
-                        ::utoipa::openapi::PathItemType::Get,
-                        ::utoipa::openapi::path::OperationBuilder::new()
-                            .summary(Some("Summary"))
-                            .description(Some("Description"))
-                            .build(),
-                    )
-                    .build(),
+                {
+                    let mut op_builder = ::utoipa::openapi::path::OperationBuilder::new()
+                        .summary(Some("Summary"))
+                        .description(Some("Description"));
+                    ::utoipa::openapi::path::PathItemBuilder::new()
+                        .operation(
+                            ::utoipa::openapi::PathItemType::Get,
+                            op_builder.build(),
+                        )
+                        .build()
+                },
             );
         paths = paths
             .path(
                 "/",
-                ::utoipa::openapi::path::PathItemBuilder::new()
-                    .operation(
-                        ::utoipa::openapi::PathItemType::Post,
-                        ::utoipa::openapi::path::OperationBuilder::new()
-                            .summary(None as Option<String>)
-                            .description(None as Option<String>)
-                            .build(),
-                    )
-                    .build(),
+                {
+                    let mut op_builder = ::utoipa::openapi::path::OperationBuilder::new()
+                        .summary(None as Option<String>)
+                        .description(None as Option<String>);
+                    ::utoipa::openapi::path::PathItemBuilder::new()
+                        .operation(
+                            ::utoipa::openapi::PathItemType::Post,
+                            op_builder.build(),
+                        )
+                        .build()
+                },
             );
         paths = paths
             .path(
                 "/greet",
-                ::utoipa::openapi::path::PathItemBuilder::new()
-                    .operation(
-                        ::utoipa::openapi::PathItemType::Get,
-                        ::utoipa::openapi::path::OperationBuilder::new()
-                            .summary(Some("Query<struct>"))
-                            .description(None as Option<String>)
-                            .build(),
-                    )
-                    .build(),
+                {
+                    let mut op_builder = ::utoipa::openapi::path::OperationBuilder::new()
+                        .summary(Some("Query<struct>"))
+                        .description(None as Option<String>);
+                    op_builder = <Query<
+                        RqConsQueryStruct,
+                    >>::__openapi_modify_operation(op_builder);
+                    ::utoipa::openapi::path::PathItemBuilder::new()
+                        .operation(
+                            ::utoipa::openapi::PathItemType::Get,
+                            op_builder.build(),
+                        )
+                        .build()
+                },
             );
         paths = paths
             .path(
                 "/greet_2",
-                ::utoipa::openapi::path::PathItemBuilder::new()
-                    .operation(
-                        ::utoipa::openapi::PathItemType::Get,
-                        ::utoipa::openapi::path::OperationBuilder::new()
-                            .summary(Some("Query<HashMap<String, String>>"))
-                            .description(None as Option<String>)
-                            .build(),
-                    )
-                    .build(),
-            );
-        paths = paths
-            .path(
-                "/user/:user_id/team/:team_id",
-                ::utoipa::openapi::path::PathItemBuilder::new()
-                    .operation(
-                        ::utoipa::openapi::PathItemType::Get,
-                        ::utoipa::openapi::path::OperationBuilder::new()
-                            .summary(Some("Path<tuple>"))
-                            .description(None as Option<String>)
-                            .build(),
-                    )
-                    .build(),
+                {
+                    let mut op_builder = ::utoipa::openapi::path::OperationBuilder::new()
+                        .summary(Some("Query<HashMap<String, String>>"))
+                        .description(None as Option<String>);
+                    op_builder = <Query<
+                        HashMap<String, String>,
+                    >>::__openapi_modify_operation(op_builder);
+                    ::utoipa::openapi::path::PathItemBuilder::new()
+                        .operation(
+                            ::utoipa::openapi::PathItemType::Get,
+                            op_builder.build(),
+                        )
+                        .build()
+                },
             );
         paths = paths
             .path(
                 "/team/:team_id/user/:user_id",
-                ::utoipa::openapi::path::PathItemBuilder::new()
-                    .operation(
-                        ::utoipa::openapi::PathItemType::Get,
-                        ::utoipa::openapi::path::OperationBuilder::new()
-                            .summary(Some("Path<struct>"))
-                            .description(None as Option<String>)
-                            .build(),
-                    )
-                    .build(),
+                {
+                    let mut op_builder = ::utoipa::openapi::path::OperationBuilder::new()
+                        .summary(Some("Path<struct>"))
+                        .description(None as Option<String>);
+                    op_builder = <Path<
+                        RqConsPathStruct,
+                    >>::__openapi_modify_operation(op_builder);
+                    ::utoipa::openapi::path::PathItemBuilder::new()
+                        .operation(
+                            ::utoipa::openapi::PathItemType::Get,
+                            op_builder.build(),
+                        )
+                        .build()
+                },
             );
         other.paths(paths)
     }

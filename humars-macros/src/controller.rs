@@ -107,6 +107,7 @@ fn generate_impl(input: TokenStream) -> TokenStream {
                     ).to_compile_error();
                 }
 
+                let mut extractors: Vec<TokenStream> = Vec::new(); // mounting extractors to modify openapi operations
                 for item in function.sig.inputs.clone() {
                     match item {
                         syn::FnArg::Receiver(receiver) => {
@@ -119,6 +120,9 @@ fn generate_impl(input: TokenStream) -> TokenStream {
                             let ty = arg.ty.as_ref();
                             type_assertions.push(quote!{
                                 assert_impl_all!(#ty: ::humars::extract::HumarsExtractor);
+                            });
+                            extractors.push(quote! {
+                                op_builder = <#ty>::__openapi_modify_operation(op_builder);
                             });
                         },
                     }
@@ -193,13 +197,17 @@ fn generate_impl(input: TokenStream) -> TokenStream {
                     None => quote! { None as Option<String> },
                 };
                 paths_setup.entry(path.clone()).or_default().push(quote! {
-                    ::utoipa::openapi::path::PathItemBuilder::new()
-                        .operation(#operation, ::utoipa::openapi::path::OperationBuilder::new()
-                            .summary(#summary_tk)
-                            .description(#description_tk)
+                    {
+                        let mut op_builder = ::utoipa::openapi::path::OperationBuilder::new()
+                                .summary(#summary_tk)
+                                .description(#description_tk);
+                        
+                        #(#extractors)*
+
+                        ::utoipa::openapi::path::PathItemBuilder::new()
+                            .operation(#operation, op_builder.build())
                             .build()
-                        )
-                        .build()
+                    }
                 });
             } else {
                 module_items.push(function.into_token_stream());

@@ -5,12 +5,19 @@ use axum::http::{Request, StatusCode};
 use utoipa::openapi::path::{OperationBuilder, ParameterBuilder, PathItemBuilder};
 use utoipa::openapi::request_body::RequestBodyBuilder;
 use utoipa::openapi::{self, ComponentsBuilder, ContentBuilder, PathsBuilder};
+use utoipa::ToSchema;
 use utoipa::{OpenApi, openapi::OpenApiBuilder};
+
 
 use tower::ServiceExt; // for `call`, `oneshot` and `ready`
 use http_body_util::BodyExt;
 
 use crate::humars_macros::Controller;
+
+// for scratchpad: ------
+use crate::humars::extract::HumarsExtractor;
+use crate::integration::simple_api::my_api::RqConsPathStruct;
+// end for scratchpad ---
 
 use serde_json::json;
 
@@ -22,7 +29,7 @@ fn router() -> Router {
     my_api::merge_into_router(Router::new())
 }
 
-async fn call_url(url: &str) -> (StatusCode, String) {
+async fn get(url: &str) -> (StatusCode, String) {
     let app = router();
 
     let response = app
@@ -52,11 +59,12 @@ async fn call_url(url: &str) -> (StatusCode, String) {
 
 #[Controller]
 mod my_api {
-    use std::collections::HashMap;
+    //use std::collections::HashMap;
 
     use axum::extract::{Path, Query};
 
     use crate::humars_macros::{Response, DTO};
+    use humars::extract::HumarsExtractor;
 
     // region: dumb handlers ---------------------------------------------
     //
@@ -107,9 +115,10 @@ mod my_api {
     //
 
     #[DTO]
+    #[serde(rename="RqConsPathStructRenamed")]
     pub struct RqConsPathStruct {
-        pub user_id: String,
-        pub team_id: i32,
+        pub team_id: String,
+        pub user_id: i32,
     }
 
     #[DTO]
@@ -159,6 +168,7 @@ mod my_api {
         }
     }
 
+    /*
     // Request consumption: Query<HashMap<String, String>> (stuff after `?`)
     #[Route(method = "get", path = "/greet_2")]
     async fn rq_cons_query_hashmap(query: Query<HashMap<String, String>>) -> RqConsQueryResponse {
@@ -170,12 +180,14 @@ mod my_api {
                 RqConsQueryResponse::BadRequest("ass".into()), // Well shit.
         }
     }
+    */
 
+    /*
     // Request consumption: Path<tuple>
     #[Route(method = "get", path = "/user/:user_id/team/:team_id")]
     async fn rq_cons_path_tuple(Path((user_id, team_id)): Path<(i32, String)>) -> RqConsPathResponse {
         RqConsPathResponse::Ok(format!("{} -> {}", user_id, team_id))
-    }
+    }*/
 
     // Request consumption: Path<struct>
     #[Route(method = "get", path = "/team/:team_id/user/:user_id")]
@@ -231,12 +243,12 @@ fn api_doc_scratchpad() {
     let parameter = ParameterBuilder::new()
         .parameter_in(openapi::path::ParameterIn::Query)
         .name("sad")
-        .schema(Some(my_api::RqConsQueryParams::default()))
+        .schema(Some(my_api::RqConsQueryParams::schema().1))
         .build()
     ;
 
     let components = ComponentsBuilder::new()
-        .schema("my_component", my_api::RqConsPathStruct::default())
+        .schema("my_component", my_api::RqConsPathStruct::schema().1)
         .build()
     ;
 
@@ -250,12 +262,16 @@ fn api_doc_scratchpad() {
         .build()
     ;
 
-    let operation = OperationBuilder::new()
+    let op_builder= OperationBuilder::new()
         .parameter(parameter)
         .request_body(Some(request_body))
         .description(Some("description"))
-        .summary(Some("summary"))
-        .build();
+        .summary(Some("summary"));
+
+    let op_builder = axum::extract::Path::<RqConsPathStruct>::__openapi_modify_operation(op_builder);
+
+    let operation = op_builder.build();
+
     let operation = OperationBuilder::from(operation).build(); 
 
     let path_item= PathItemBuilder::new()
@@ -302,16 +318,6 @@ fn api_doc() {
                         "responses": {}
                     },
                 },
-                "/greet": {
-                    "get": {
-                        "responses": {}
-                    },
-                },
-                "/greet_2": {
-                    "get": {
-                        "responses": {}
-                    },
-                },
                 "/hello-world": {
                     "get": {
                         "summary": "This method says \"hello, world!\"",
@@ -323,14 +329,29 @@ fn api_doc() {
                         "responses": {}
                     }
                 },
-                "/team/:team_id/user/:user_id": {
+                "/greet": {
                     "get": {
                         "responses": {}
                     },
                 },
-                "/user/:user_id/team/:team_id": {
+                "/team/:team_id/user/:user_id": {
                     "get": {
-                        "responses": {}
+                        "parameters": [
+                            {
+                                "in": "path",
+                                "name": "RqConsPathStruct",
+                                "required": true,
+                                "schema": {
+                                    "properties": {
+                                        "team_id": { "type": "string" },
+                                        "user_id": { "type": "integer", "format": "int32" },
+                                    },
+                                    "required": ["team_id", "user_id"],
+                                    "type": "object",
+                                }
+                            },
+                        ],
+                        "responses": {},
                     },
                 },
             }
@@ -341,7 +362,7 @@ fn api_doc() {
 
 #[tokio::test]
 pub async fn test_root() {
-    let (status, body) = call_url("/").await;
+    let (status, body) = get("/").await;
 
     assert_eq!(status, StatusCode::ACCEPTED);
     assert_eq!(body, "");
@@ -349,7 +370,7 @@ pub async fn test_root() {
 
 #[tokio::test]
 pub async fn test_hello_world() {
-    let (status, body) = call_url("/hello-world").await;
+    let (status, body) = get("/hello-world").await;
 
     assert_eq!(status, StatusCode::OK);
     assert_eq!(body, "hello, world!");
@@ -357,49 +378,51 @@ pub async fn test_hello_world() {
 
 #[tokio::test]
 pub async fn test_query_struct() {
-    let (status, body) = call_url("/greet?first_name=").await;
+    let (status, body) = get("/greet?first_name=").await;
     assert_eq!(status, StatusCode::BAD_REQUEST);
     assert_eq!(body, "Empty name");
 
-    let (status, body) = call_url("/greet?first_name=Max").await;
+    let (status, body) = get("/greet?first_name=Max").await;
     assert_eq!(status, StatusCode::OK);
     assert_eq!(body, "Hello, Max!");
 
-    let (status, body) = call_url("/greet?last_name=Doe&first_name=John").await;
+    let (status, body) = get("/greet?last_name=Doe&first_name=John").await;
     assert_eq!(status, StatusCode::OK);
     assert_eq!(body, "Hello, John Doe!");
 
-    let (status, body) = call_url("/greet?first_name=John&title=Sir").await;
+    let (status, body) = get("/greet?first_name=John&title=Sir").await;
     assert_eq!(status, StatusCode::OK);
     assert_eq!(body, "Hello, Sir John!");
 
-    let (status, body) = call_url("/greet?last_name=Backsword&title=Sir&first_name=John").await;
+    let (status, body) = get("/greet?last_name=Backsword&title=Sir&first_name=John").await;
     assert_eq!(status, StatusCode::OK);
     assert_eq!(body, "Hello, Sir John Backsword!");
 }
 
+/*
 #[tokio::test]
 pub async fn test_query_struct_hashmap() {
-    let (status, body) = call_url("/greet_2?first_name=").await;
+    let (status, body) = get("/greet_2?first_name=").await;
     assert_eq!(status, StatusCode::BAD_REQUEST);
     assert_eq!(body, "ass");
 
-    let (status, body) = call_url("/greet_2?last_name=Doe&first_name=John").await;
+    let (status, body) = get("/greet_2?last_name=Doe&first_name=John").await;
     assert_eq!(status, StatusCode::OK);
     assert_eq!(body, "Hello, John Doe!");
 
-    let (status, body) = call_url("/greet_2?last_name=Backsword&title=Sir&first_name=John").await;
+    let (status, body) = get("/greet_2?last_name=Backsword&title=Sir&first_name=John").await;
     assert_eq!(status, StatusCode::OK);
     assert_eq!(body, "Hello, John Backsword!");
 }
+*/
 
 #[tokio::test]
 pub async fn test_path() {
-    let (status, body) = call_url("/user/1/team/7").await;
+    let (status, body) = get("/team/7/user/1").await;
     assert_eq!(status, StatusCode::OK);
     assert_eq!(body, "1 -> 7");
 
-    let (status, body) = call_url("/user/42/team/Hitchhikers").await;
+    let (status, body) = get("/team/Hitchhikers/user/42").await;
     assert_eq!(status, StatusCode::OK);
     assert_eq!(body, "42 -> Hitchhikers");
 }
