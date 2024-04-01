@@ -1,10 +1,19 @@
 use axum::extract::Query;
-use utoipa::openapi::path::OperationBuilder;
+use utoipa::openapi::path::{OperationBuilder, ParameterBuilder};
 
-use crate::extract::HumarsExtractor;
+use crate::{extract::HumarsExtractor, DTO};
 
-impl<T: crate::DTO> HumarsExtractor for Query<T> {
+impl<T: DTO> HumarsExtractor for Query<T> {
     fn __openapi_modify_operation(op: OperationBuilder) -> OperationBuilder {
-        op
+        let (name, schema) = T::schema();
+
+        let param = ParameterBuilder::new()
+            .parameter_in(utoipa::openapi::path::ParameterIn::Query)
+            .required(utoipa::openapi::Required::True)
+            .name(name)
+            .schema(Some(schema))
+            .build();
+
+        op.parameter(param)
     }
 }

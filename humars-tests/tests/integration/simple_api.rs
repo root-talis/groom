@@ -123,6 +123,7 @@ mod my_api {
 
     #[DTO]
     pub struct RqConsQueryParams {
+        #[serde(rename="first_name_renamed")]
         first_name: String,
         last_name: Option<String>,
     }
@@ -331,8 +332,44 @@ fn api_doc() {
                 },
                 "/greet": {
                     "get": {
-                        "responses": {}
-                    },
+                      "parameters": [
+                        {
+                          "name": "RqConsQueryParams",
+                          "in": "query",
+                          "required": true,
+                          "schema": {
+                            "type": "object",
+                            "required": [
+                              "first_name_renamed"
+                            ],
+                            "properties": {
+                              "first_name_renamed": {
+                                "type": "string"
+                              },
+                              "last_name": {
+                                "type": "string",
+                                "nullable": true
+                              }
+                            }
+                          }
+                        },
+                        {
+                          "name": "RqConsQueryParams2",
+                          "in": "query",
+                          "required": true,
+                          "schema": {
+                            "type": "object",
+                            "properties": {
+                              "title": {
+                                "type": "string",
+                                "nullable": true
+                              }
+                            }
+                          }
+                        }
+                      ],
+                      "responses": {}
+                    }
                 },
                 "/team/:team_id/user/:user_id": {
                     "get": {
@@ -378,23 +415,23 @@ pub async fn test_hello_world() {
 
 #[tokio::test]
 pub async fn test_query_struct() {
-    let (status, body) = get("/greet?first_name=").await;
+    let (status, body) = get("/greet?first_name_renamed=").await;
     assert_eq!(status, StatusCode::BAD_REQUEST);
     assert_eq!(body, "Empty name");
 
-    let (status, body) = get("/greet?first_name=Max").await;
+    let (status, body) = get("/greet?first_name_renamed=Max").await;
     assert_eq!(status, StatusCode::OK);
     assert_eq!(body, "Hello, Max!");
 
-    let (status, body) = get("/greet?last_name=Doe&first_name=John").await;
+    let (status, body) = get("/greet?last_name=Doe&first_name_renamed=John").await;
     assert_eq!(status, StatusCode::OK);
     assert_eq!(body, "Hello, John Doe!");
 
-    let (status, body) = get("/greet?first_name=John&title=Sir").await;
+    let (status, body) = get("/greet?first_name_renamed=John&title=Sir").await;
     assert_eq!(status, StatusCode::OK);
     assert_eq!(body, "Hello, Sir John!");
 
-    let (status, body) = get("/greet?last_name=Backsword&title=Sir&first_name=John").await;
+    let (status, body) = get("/greet?last_name=Backsword&title=Sir&first_name_renamed=John").await;
     assert_eq!(status, StatusCode::OK);
     assert_eq!(body, "Hello, Sir John Backsword!");
 }
