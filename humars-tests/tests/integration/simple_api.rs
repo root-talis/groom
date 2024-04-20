@@ -1,6 +1,6 @@
 use axum::Router;
 use axum::body::Body;
-use axum::http::{Request, StatusCode};
+use axum::http::{HeaderMap, Request, StatusCode};
 
 use utoipa::openapi::path::{OperationBuilder, ParameterBuilder, PathItemBuilder};
 use utoipa::openapi::request_body::RequestBodyBuilder;
@@ -32,7 +32,7 @@ fn router() -> Router {
     my_api::merge_into_router(Router::new())
 }
 
-async fn get(url: &str) -> (StatusCode, String) {
+async fn get(url: &str) -> (StatusCode, HeaderMap, String) {
     let app = router();
 
     let response = app
@@ -47,12 +47,20 @@ async fn get(url: &str) -> (StatusCode, String) {
     ;
 
     let status = response.status();
+    let headers = response.headers().to_owned();
     let body = response.into_body().collect().await.unwrap().to_bytes();
     let body = std::str::from_utf8(&body).unwrap().to_owned();
 
-    (status, body)
+    (status, headers, body)
 }
 
+fn assert_content_type(headers: &HeaderMap, expected: &str) {
+    assert_eq!(headers.get("content-type").expect("should respond with content-type header"), expected);
+}
+
+fn assert_no_content_type(headers: &HeaderMap) {
+    assert_eq!(headers.get("content-type"), None, "should respond without content-type header");
+}
 
 //
 // endregion: test bootstrap utils --------------------------------------
@@ -469,41 +477,48 @@ fn api_doc() {
 
 #[tokio::test]
 pub async fn test_root() {
-    let (status, body) = get("/").await;
+    let (status, headers, body) = get("/").await;
 
     assert_eq!(status, StatusCode::ACCEPTED);
     assert_eq!(body, "");
+    assert_no_content_type(&headers);
 }
 
 #[tokio::test]
 pub async fn test_hello_world() {
-    let (status, body) = get("/hello-world").await;
+    let (status, headers, body) = get("/hello-world").await;
 
     assert_eq!(status, StatusCode::OK);
     assert_eq!(body, "hello, world!");
+    assert_content_type(&headers, "text/plain; charset=utf-8");
 }
 
 #[tokio::test]
 pub async fn test_query_struct() {
-    let (status, body) = get("/greet?first_name_renamed=").await;
+    let (status, headers, body) = get("/greet?first_name_renamed=").await;
     assert_eq!(status, StatusCode::BAD_REQUEST);
     assert_eq!(body, "Empty name");
+    assert_content_type(&headers, "text/plain; charset=utf-8");
 
-    let (status, body) = get("/greet?first_name_renamed=Max").await;
+    let (status, headers, body) = get("/greet?first_name_renamed=Max").await;
     assert_eq!(status, StatusCode::OK);
     assert_eq!(body, "Hello, Max!");
+    assert_content_type(&headers, "text/plain; charset=utf-8");
 
-    let (status, body) = get("/greet?last_name=Doe&first_name_renamed=John").await;
+    let (status, headers, body) = get("/greet?last_name=Doe&first_name_renamed=John").await;
     assert_eq!(status, StatusCode::OK);
     assert_eq!(body, "Hello, John Doe!");
+    assert_content_type(&headers, "text/plain; charset=utf-8");
 
-    let (status, body) = get("/greet?first_name_renamed=John&title=Sir").await;
+    let (status, headers, body) = get("/greet?first_name_renamed=John&title=Sir").await;
     assert_eq!(status, StatusCode::OK);
     assert_eq!(body, "Hello, Sir John!");
+    assert_content_type(&headers, "text/plain; charset=utf-8");
 
-    let (status, body) = get("/greet?last_name=Backsword&title=Sir&first_name_renamed=John").await;
+    let (status, headers, body) = get("/greet?last_name=Backsword&title=Sir&first_name_renamed=John").await;
     assert_eq!(status, StatusCode::OK);
     assert_eq!(body, "Hello, Sir John Backsword!");
+    assert_content_type(&headers, "text/plain; charset=utf-8");
 }
 
 /*
@@ -525,13 +540,24 @@ pub async fn test_query_struct_hashmap() {
 
 #[tokio::test]
 pub async fn test_path() {
-    let (status, body) = get("/team/7/user/1").await;
+    let (status, headers, body) = get("/team/7/user/1").await;
     assert_eq!(status, StatusCode::OK);
     assert_eq!(body, "1 -> 7");
+    assert_content_type(&headers, "text/plain; charset=utf-8");
 
-    let (status, body) = get("/team/Hitchhikers/user/42").await;
+    let (status, headers, body) = get("/team/Hitchhikers/user/42").await;
     assert_eq!(status, StatusCode::OK);
     assert_eq!(body, "42 -> Hitchhikers");
+    assert_content_type(&headers, "text/plain; charset=utf-8");
+}
+
+
+#[tokio::test]
+pub async fn test_struct_body() {
+    let (status, headers, body) = get("/struct").await;
+    assert_eq!(status, StatusCode::OK);
+    assert_eq!(body, "{\"success\":true,\"message\":null}");
+    assert_content_type(&headers, "application/json");
 }
 
 //
