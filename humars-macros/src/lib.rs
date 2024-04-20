@@ -37,7 +37,7 @@ macro_rules! parse_nested_meta {
 #[proc_macro_attribute]
 #[allow(non_snake_case)]
 pub fn Controller(_args: TokenStream, input: TokenStream) -> TokenStream {
-    controller::generate( input.into()).into()
+    controller::generate(input.into()).into()
 }
 
 
@@ -45,7 +45,7 @@ pub fn Controller(_args: TokenStream, input: TokenStream) -> TokenStream {
 #[proc_macro_attribute]
 #[allow(non_snake_case)]
 pub fn Response(_args: TokenStream, input: TokenStream) -> TokenStream {
-    response::generate( input.into()).into()
+    response::generate(input.into()).into()
 }
 
 
