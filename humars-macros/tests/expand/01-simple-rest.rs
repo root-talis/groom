@@ -54,6 +54,13 @@ pub mod api_root {
         RqConsPathResponse::Ok("ok".into())
     }
 
+    #[Route(method = "get", path = "/json")]
+    pub async fn resp_json() -> RespJsonResponse {
+        RespJsonResponse::Ok(StructJson{
+            success: true
+        })
+    }
+
     async fn not_a_handler() {
         let a = 1;
     }
@@ -75,7 +82,7 @@ pub mod api_root {
         Forbidden,
     }
 
-    #[DTO]
+    #[DTO(request)]
     pub struct RqConsQueryStruct {
         name: String,
     }
@@ -89,7 +96,7 @@ pub mod api_root {
         BadRequest(String),
     }
 
-    #[DTO]
+    #[DTO(request)]
     pub struct RqConsPathStruct {
         user_id: String,
         team_id: i32,
@@ -99,5 +106,16 @@ pub mod api_root {
     pub enum RqConsPathResponse {
         #[Response()]
         Ok(String),
+    }
+
+    #[DTO(response(json))]
+    pub struct StructJson {
+        success: bool
+    }
+
+    #[Response]
+    pub enum RespJsonResponse {
+        #[Response()]
+        Ok(StructJson),
     }
 }

@@ -213,19 +213,19 @@ mod my_api {
     }
     // todo: validate that in Path<T> that if T is a struct, it implements DTO, make good error message
 
-    // todo: String
-
-    // todo: Bytes
-
-    // todo: Json<Value>
-
-    // todo: HeaderMap
+    // todo: Request bodies:
+        // todo: String
+        // todo: Bytes
+        // todo: axum::Json<Value> - as a separate feature
+        // todo: axum::form::Form  - as a separate feature
+        // todo: XML               - as a separate feature
+        // todo: BSON              - as a separate feature
 
     // todo: Request
 
-    // todo: Extension<State>
+    // todo: HeaderMap
 
-    // todo: axum::form::Form - as a separate feature
+    // todo: Extension<State>
 
     // todo: Method
 
@@ -247,7 +247,7 @@ mod my_api {
         })
     }
     
-    #[DTO(response)]
+    #[DTO(response(json))]
     pub struct StructBody {
         pub success: bool,
         pub message: Option<String>,
@@ -258,6 +258,11 @@ mod my_api {
         #[Response()]
         Ok(StructBody),
     }
+
+    // todo: Response bodies:
+    //     todo: JSON - as a separate feature
+    //     todo: XML  - as a separate feature
+    //     todo: BSON - as a separate feature
 
     //
     // endregion: responses ---------------------------------------------

@@ -139,7 +139,7 @@ fn generate_impl_enum(enum_impl: ItemEnum) -> TokenStream {
                 let ty = single_field.ty;
 
                 type_assertions.push(quote!{
-                    assert_impl_any!(#ty: ::utoipa::PartialSchema, ::utoipa::ToSchema<'static>);
+                    assert_impl_any!(#ty: ::utoipa::PartialSchema, ::humars::DTO_Response);
                 });
 
                 quote!{

@@ -54,11 +54,10 @@ pub fn Response(_args: TokenStream, input: TokenStream) -> TokenStream {
 #[allow(non_snake_case)]
 pub fn DTO(args: TokenStream, input: TokenStream) -> TokenStream {
     let args: proc_macro2::TokenStream = args.into();
-
     if args.is_empty() {
-        abort!(args, "specify `request`, `response` or both as DTO arguments (e.g. `#[DTO(request, response)`])")
+        abort!(args, "specify `request`, `response` or both as DTO arguments (e.g. `#[DTO(request, response(json))`])")
     }
 
-    let dto_args = parse_nested_meta!(dto::DtoArgs, args);
-    dto::generate(dto_args, input.into()).into()
+    let dto_args = parse_nested_meta!(dto::DtoArgs, args.clone());
+    dto::generate(args, dto_args, input.into()).into()
 }
