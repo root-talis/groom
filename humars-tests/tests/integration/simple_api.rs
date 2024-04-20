@@ -139,9 +139,13 @@ mod my_api {
 
     #[Response]
     pub enum RqConsQueryResponse {
+        /// A quick brown fox jumped over a lazy dog.
         #[Response()]
         Ok(String),
 
+        /// What did you say?
+        /// 
+        /// Bad request bro.
         #[Response(code = 400)]
         BadRequest(String),
     }
@@ -392,10 +396,10 @@ fn api_doc() {
                       ],
                       "responses": {
                             "200": {
-                                "description": ""
+                                "description": "A quick brown fox jumped over a lazy dog."
                             },
                             "400": {
-                                "description": ""
+                                "description": "What did you say?\n\nBad request bro."
                             }
                       }
                     }

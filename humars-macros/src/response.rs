@@ -5,7 +5,7 @@ use proc_macro_error::abort;
 use syn::{ItemEnum, parse2};
 use quote::{quote, ToTokens};
 
-use crate::{attrs::{parse_attr, remove_attrs}, http::HTTPStatusCode};
+use crate::{attrs::{parse_attr, remove_attrs}, http::HTTPStatusCode, utils::get_description};
 
 // region: ResponseArgs ------------------------------------------------------------
 //
@@ -124,17 +124,26 @@ fn generate_impl_enum(enum_impl: ItemEnum) -> TokenStream {
                 },
             });
 
+            let description_tk = match get_description(&variant.attrs).unwrap_or_default() {
+                Some(s) => quote! { #s },
+                None => quote! { "" },
+            };
+
             response_impls.push(match fields.clone() {
                 None => quote! {
                     let op = op.response(
                         #code_str,
-                        ::utoipa::openapi::ResponseBuilder::new().build()
+                        ::utoipa::openapi::ResponseBuilder::new()
+                            .description(#description_tk)
+                            .build()
                     );
                 },
                 Some(_single_field) => quote!{
                     let op = op.response(
                         #code_str,
-                        ::utoipa::openapi::ResponseBuilder::new().build()
+                        ::utoipa::openapi::ResponseBuilder::new()
+                            .description(#description_tk)
+                            .build()
                     );
                 },
             });

@@ -81,11 +81,20 @@ pub mod api_root {
             op: ::utoipa::openapi::path::OperationBuilder,
         ) -> ::utoipa::openapi::path::OperationBuilder {
             let op = op
-                .response("200", ::utoipa::openapi::ResponseBuilder::new().build());
+                .response(
+                    "200",
+                    ::utoipa::openapi::ResponseBuilder::new().description("").build(),
+                );
             let op = op
-                .response("400", ::utoipa::openapi::ResponseBuilder::new().build());
+                .response(
+                    "400",
+                    ::utoipa::openapi::ResponseBuilder::new().description("").build(),
+                );
             let op = op
-                .response("401", ::utoipa::openapi::ResponseBuilder::new().build());
+                .response(
+                    "401",
+                    ::utoipa::openapi::ResponseBuilder::new().description("").build(),
+                );
             op
         }
     }
@@ -323,9 +332,15 @@ pub mod api_root {
             op: ::utoipa::openapi::path::OperationBuilder,
         ) -> ::utoipa::openapi::path::OperationBuilder {
             let op = op
-                .response("200", ::utoipa::openapi::ResponseBuilder::new().build());
+                .response(
+                    "200",
+                    ::utoipa::openapi::ResponseBuilder::new().description("").build(),
+                );
             let op = op
-                .response("400", ::utoipa::openapi::ResponseBuilder::new().build());
+                .response(
+                    "400",
+                    ::utoipa::openapi::ResponseBuilder::new().description("").build(),
+                );
             op
         }
     }
@@ -604,7 +619,10 @@ pub mod api_root {
             op: ::utoipa::openapi::path::OperationBuilder,
         ) -> ::utoipa::openapi::path::OperationBuilder {
             let op = op
-                .response("200", ::utoipa::openapi::ResponseBuilder::new().build());
+                .response(
+                    "200",
+                    ::utoipa::openapi::ResponseBuilder::new().description("").build(),
+                );
             op
         }
     }
