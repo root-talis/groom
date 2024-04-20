@@ -73,10 +73,13 @@ mod my_api {
     //use std::collections::HashMap;
 
     use axum::extract::{Path, Query};
+    use axum::response::Html;
 
     use crate::humars_macros::{Response, DTO};
-    use humars::extract::HumarsExtractor;
+    use humars::{extract::HumarsExtractor, DTO_Response};
     use humars::response::Response;
+
+    use utoipa::ToSchema;
 
     // region: dumb handlers ---------------------------------------------
     //
@@ -239,6 +242,18 @@ mod my_api {
     // region: responses ------------------------------------------------
     //
 
+    #[Route(method = "get", path = "/html")]
+    async fn resp_html_body() -> GetHtmlBodyResult {
+        GetHtmlBodyResult::Ok(Html("<h1>Hello, world!</h1>"))
+    }
+
+    #[Response]
+    pub enum GetHtmlBodyResult {
+        /// Home page
+        #[Response()]
+        Ok(Html<&'static str>),
+    }
+
     #[Route(method = "get", path = "/struct")]
     async fn resp_struct_body() -> GetStructBodyResult {
         GetStructBodyResult::Ok(StructBody {
@@ -380,7 +395,14 @@ fn api_doc() {
                         "description": "Ha-ha, classic.",
                         "responses": {
                             "200": {
-                                "description": ""
+                                "description": "",
+                                "content": {
+                                    "text/plain": {
+                                        "schema": {
+                                            "type": "string",
+                                        }
+                                    }
+                                }
                             }
                         }
                     },
@@ -388,7 +410,30 @@ fn api_doc() {
                         "summary": "POST hello world",
                         "responses": {
                             "200": {
-                                "description": ""
+                                "description": "",
+                                "content": {
+                                    "text/plain": {
+                                        "schema": {
+                                            "type": "string",
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "/html": {
+                    "get": {
+                        "responses": {
+                            "200": {
+                                "description": "Home page",
+                                "content": {
+                                    "text/html": {
+                                        "schema": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
                             }
                         }
                     }
@@ -397,7 +442,24 @@ fn api_doc() {
                     "get": {
                         "responses": {
                             "200": {
-                                "description": ""
+                                "description": "",
+                                "content": {
+                                    "application/json": {
+                                        "schema": {
+                                            "type": "object",
+                                            "properties": {
+                                                "message": {
+                                                    "nullable": true,
+                                                    "type": "string",
+                                                },
+                                                "success": {
+                                                    "type": "boolean"
+                                                }
+                                            },
+                                            "required": ["success"]
+                                        }
+                                    }
+                                }
                             }
                         }
                     }
@@ -442,10 +504,24 @@ fn api_doc() {
                       ],
                       "responses": {
                             "200": {
-                                "description": "A quick brown fox jumped over a lazy dog."
+                                "description": "A quick brown fox jumped over a lazy dog.",
+                                "content": {
+                                    "text/plain": {
+                                        "schema": {
+                                            "type": "string",
+                                        }
+                                    }
+                                }
                             },
                             "400": {
-                                "description": "What did you say?\n\nBad request bro."
+                                "description": "What did you say?\n\nBad request bro.",
+                                "content": {
+                                    "text/plain": {
+                                        "schema": {
+                                            "type": "string",
+                                        }
+                                    }
+                                }
                             }
                       }
                     }
@@ -469,7 +545,14 @@ fn api_doc() {
                         ],
                         "responses": {
                             "200": {
-                                "description": ""
+                                "description": "",
+                                "content": {
+                                    "text/plain": {
+                                        "schema": {
+                                            "type": "string",
+                                        }
+                                    }
+                                }
                             }
                         }
                     },

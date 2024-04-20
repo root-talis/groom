@@ -171,20 +171,20 @@ pub mod api_root {
         fn __openapi_modify_operation(
             op: ::utoipa::openapi::path::OperationBuilder,
         ) -> ::utoipa::openapi::path::OperationBuilder {
-            let op = op
-                .response(
-                    "200",
-                    ::utoipa::openapi::ResponseBuilder::new()
-                        .description("There you go mate.")
-                        .build(),
-                );
-            let op = op
-                .response(
-                    "400",
-                    ::utoipa::openapi::ResponseBuilder::new()
-                        .description("Are you insane?\n\nBad request.")
-                        .build(),
-                );
+            let response = {
+                let rb = ::utoipa::openapi::ResponseBuilder::new()
+                    .description("There you go mate.");
+                let rb = <String>::__openapi_build_responses(rb);
+                rb.build()
+            };
+            let op = op.response("200", response);
+            let response = {
+                let rb = ::utoipa::openapi::ResponseBuilder::new()
+                    .description("Are you insane?\n\nBad request.");
+                let rb = <String>::__openapi_build_responses(rb);
+                rb.build()
+            };
+            let op = op.response("400", response);
             let op = op
                 .response(
                     "401",
@@ -482,16 +482,18 @@ pub mod api_root {
         fn __openapi_modify_operation(
             op: ::utoipa::openapi::path::OperationBuilder,
         ) -> ::utoipa::openapi::path::OperationBuilder {
-            let op = op
-                .response(
-                    "200",
-                    ::utoipa::openapi::ResponseBuilder::new().description("").build(),
-                );
-            let op = op
-                .response(
-                    "400",
-                    ::utoipa::openapi::ResponseBuilder::new().description("").build(),
-                );
+            let response = {
+                let rb = ::utoipa::openapi::ResponseBuilder::new().description("");
+                let rb = <String>::__openapi_build_responses(rb);
+                rb.build()
+            };
+            let op = op.response("200", response);
+            let response = {
+                let rb = ::utoipa::openapi::ResponseBuilder::new().description("");
+                let rb = <String>::__openapi_build_responses(rb);
+                rb.build()
+            };
+            let op = op.response("400", response);
             op
         }
     }
@@ -777,11 +779,12 @@ pub mod api_root {
         fn __openapi_modify_operation(
             op: ::utoipa::openapi::path::OperationBuilder,
         ) -> ::utoipa::openapi::path::OperationBuilder {
-            let op = op
-                .response(
-                    "200",
-                    ::utoipa::openapi::ResponseBuilder::new().description("").build(),
-                );
+            let response = {
+                let rb = ::utoipa::openapi::ResponseBuilder::new().description("");
+                let rb = <String>::__openapi_build_responses(rb);
+                rb.build()
+            };
+            let op = op.response("200", response);
             op
         }
     }
@@ -817,10 +820,23 @@ pub mod api_root {
         }
     };
     impl ::humars::DTO for StructJson {}
-    impl ::humars::DTO_Response for StructJson {}
     impl ::axum::response::IntoResponse for StructJson {
         fn into_response(self) -> axum::http::Response<::axum::body::Body> {
             ::axum::Json(self).into_response()
+        }
+    }
+    impl ::humars::DTO_Response for StructJson {
+        fn __openapi_build_responses(
+            rb: ::utoipa::openapi::ResponseBuilder,
+        ) -> ::utoipa::openapi::ResponseBuilder {
+            let rb = rb
+                .content(
+                    "application/json",
+                    ::utoipa::openapi::ContentBuilder::new()
+                        .schema(Self::schema().1)
+                        .build(),
+                );
+            rb
         }
     }
     pub enum RespJsonResponse {
@@ -881,11 +897,12 @@ pub mod api_root {
         fn __openapi_modify_operation(
             op: ::utoipa::openapi::path::OperationBuilder,
         ) -> ::utoipa::openapi::path::OperationBuilder {
-            let op = op
-                .response(
-                    "200",
-                    ::utoipa::openapi::ResponseBuilder::new().description("").build(),
-                );
+            let response = {
+                let rb = ::utoipa::openapi::ResponseBuilder::new().description("");
+                let rb = <StructJson>::__openapi_build_responses(rb);
+                rb.build()
+            };
+            let op = op.response("200", response);
             op
         }
     }

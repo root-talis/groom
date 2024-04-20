@@ -30,8 +30,18 @@ pub(crate) struct DtoResponseArg {
 }
 
 impl DtoResponseArg {
-    fn is_any(&self) -> bool {
+    const fn is_any(&self) -> bool {
         self.json /*|| self.bson */ /*|| self.xml*/
+    }
+
+    fn get_response_types(&self) -> Vec<&str> {
+        let mut response_types: Vec<&str> = Vec::with_capacity(1);
+
+        if self.json {
+            response_types.push("application/json");
+        }
+
+        response_types
     }
 }
 
@@ -68,7 +78,7 @@ fn generate_impl_struct(args_t: TokenStream, args: DtoArgs, item_struct: ItemStr
         true  => quote!{ #[derive(::serde::Deserialize)] },
     };
 
-    let (response_derive, into_response_impl) =
+    let (response_derive, response_impl) =
         if args.response.is_none() {
             Default::default()
         } else {
@@ -78,18 +88,35 @@ fn generate_impl_struct(args_t: TokenStream, args: DtoArgs, item_struct: ItemStr
             }
 
             let response_derive = quote!{ #[derive(::serde::Serialize)] };
-        
-            let into_response_impl = quote! {
-                impl ::humars::DTO_Response for #ident {}
+            let response_types = response.get_response_types();
 
+            let content_impls = response_types.iter().map(|ct| {
+                quote! {
+                    let rb = rb.content(
+                        #ct,
+                        ::utoipa::openapi::ContentBuilder::new()
+                            .schema(Self::schema().1)
+                            .build()
+                    );
+                }
+            });
+        
+            let response_impl = quote! {
                 impl ::axum::response::IntoResponse for #ident {
                     fn into_response(self) -> axum::http::Response<::axum::body::Body> {
                         ::axum::Json(self).into_response()
                     }
                 }
+
+                impl ::humars::DTO_Response for #ident {
+                    fn __openapi_build_responses(rb: ::utoipa::openapi::ResponseBuilder) -> ::utoipa::openapi::ResponseBuilder {
+                        #(#content_impls)*
+                        rb
+                    }
+                }
             };
 
-            (response_derive, into_response_impl)
+            (response_derive, response_impl)
         };
 
     quote! {
@@ -100,7 +127,7 @@ fn generate_impl_struct(args_t: TokenStream, args: DtoArgs, item_struct: ItemStr
 
         impl ::humars::DTO for #ident {}
 
-        #into_response_impl
+        #response_impl
     }
 }
 

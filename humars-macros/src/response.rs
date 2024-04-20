@@ -55,7 +55,7 @@ fn generate_impl_enum(enum_impl: ItemEnum) -> TokenStream {
 
     let mut variants: Vec<TokenStream> = Vec::new();
     let mut into_response_impls: Vec<TokenStream> = Vec::new();
-    let mut openapi_response_impls: Vec<TokenStream> = Vec::new();
+    let mut openapi_impls: Vec<TokenStream> = Vec::new();
 
     let mut type_assertions: Vec<TokenStream> = Vec::new(); // compile-time checks of trait implementation (for better error messages)
     
@@ -126,7 +126,7 @@ fn generate_impl_enum(enum_impl: ItemEnum) -> TokenStream {
             None => quote! { "" },
         };
 
-        openapi_response_impls.push(match fields.clone() {
+        openapi_impls.push(match fields.clone() {
             None => quote! {
                 let op = op.response(
                     #code_str,
@@ -143,12 +143,17 @@ fn generate_impl_enum(enum_impl: ItemEnum) -> TokenStream {
                 });
 
                 quote!{
-                    let op = op.response(
-                        #code_str,
-                        ::utoipa::openapi::ResponseBuilder::new()
+                    let response = {
+                        let rb = ::utoipa::openapi::ResponseBuilder::new()
                             .description(#description_tk)
-                            .build()
-                    );
+                        ;
+
+                        let rb = <#ty>::__openapi_build_responses(rb);
+
+                        rb.build()
+                    };
+
+                    let op = op.response(#code_str, response);
                 }
             },
         });
@@ -175,7 +180,7 @@ fn generate_impl_enum(enum_impl: ItemEnum) -> TokenStream {
 
         impl ::humars::response::Response for #ident {
             fn __openapi_modify_operation(op: ::utoipa::openapi::path::OperationBuilder) -> ::utoipa::openapi::path::OperationBuilder {
-                #(#openapi_response_impls)*
+                #(#openapi_impls)*
                 op
             }
         }
