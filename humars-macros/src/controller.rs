@@ -128,6 +128,25 @@ fn generate_impl(input: TokenStream) -> TokenStream {
                     }
                 }
 
+                let response = match function.sig.output.clone() {
+                    syn::ReturnType::Default => {
+                        /*return Error::new_spanned(
+                            &sig,
+                            "handlers must return something"
+                        ).to_compile_error();*/
+                        quote!{}
+                    },
+                    syn::ReturnType::Type(_arrow, ty) => {
+                        type_assertions.push(quote!{
+                            assert_impl_all!(#ty: ::humars::response::Response);
+                        });
+
+                        quote! {
+                            op_builder = #ty::__openapi_modify_operation(op_builder);
+                        }
+                    },
+                };
+
                 //
                 // new module item instead of current one:
                 //
@@ -203,6 +222,8 @@ fn generate_impl(input: TokenStream) -> TokenStream {
                                 .description(#description_tk);
                         
                         #(#extractors)*
+
+                        #response
 
                         ::utoipa::openapi::path::PathItemBuilder::new()
                             .operation(#operation, op_builder.build())

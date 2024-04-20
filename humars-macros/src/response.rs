@@ -57,9 +57,10 @@ fn generate_impl(input: TokenStream) -> TokenStream {
 fn generate_impl_enum(enum_impl: ItemEnum) -> TokenStream {
     let ident = enum_impl.ident;
     let vis = enum_impl.vis;
-    let (variants, into_response_implementations) = {
+    let (variants, into_response_implementations, response_impls) = {
         let mut variants: Vec<TokenStream> = Vec::new();
         let mut into_response_impls: Vec<TokenStream> = Vec::new();
+        let mut response_impls: Vec<TokenStream> = Vec::new();
 
         for mut variant in enum_impl.variants {
             let args = match ResponseArgs::parse_from_attrs(&variant.attrs) {
@@ -76,7 +77,9 @@ fn generate_impl_enum(enum_impl: ItemEnum) -> TokenStream {
                 Err(error) => return error.write_errors(),
             };
 
-            let code = match ::axum::http::StatusCode::from_u16(args.code.0) {
+            let code_u16 = args.code.0;
+
+            let code_ts = match ::axum::http::StatusCode::from_u16(code_u16) {
                 Ok(code) => {
                     let code = code.as_u16();
                     quote! {
@@ -86,10 +89,12 @@ fn generate_impl_enum(enum_impl: ItemEnum) -> TokenStream {
                 Err(e) => {
                     return syn::Error::new_spanned(
                         &variant,
-                        format!("{e}: \"{}\"", args.code.0)
+                        format!("{e}: \"{}\"", code_u16)
                     ).to_compile_error()
                 },
             };
+
+            let code_str = format!("{code_u16}");
 
             let name = variant.ident.clone();
 
@@ -110,21 +115,36 @@ fn generate_impl_enum(enum_impl: ItemEnum) -> TokenStream {
                 syn::Fields::Unit => None,
             };
 
-            into_response_impls.push(match fields {
+            into_response_impls.push(match fields.clone() {
                 None => quote! {
-                    Self::#name => (#code).into_response(),
+                    Self::#name => (#code_ts).into_response(),
                 },
                 Some(_single_field) => quote!{
-                    Self::#name(body) => (#code, body).into_response(),
+                    Self::#name(body) => (#code_ts, body).into_response(),
+                },
+            });
+
+            response_impls.push(match fields.clone() {
+                None => quote! {
+                    let op = op.response(
+                        #code_str,
+                        ::utoipa::openapi::ResponseBuilder::new().build()
+                    );
+                },
+                Some(_single_field) => quote!{
+                    let op = op.response(
+                        #code_str,
+                        ::utoipa::openapi::ResponseBuilder::new().build()
+                    );
                 },
             });
 
             variants.push(quote! {
                 #variant,
-            })
+            });
         }
 
-        (variants, into_response_impls)
+        (variants, into_response_impls, response_impls)
     };
     
     quote! {
@@ -137,6 +157,13 @@ fn generate_impl_enum(enum_impl: ItemEnum) -> TokenStream {
                 match self {
                     #(#into_response_implementations)*
                 }
+            }
+        }
+
+        impl ::humars::response::Response for #ident {
+            fn __openapi_modify_operation(op: ::utoipa::openapi::path::OperationBuilder) -> ::utoipa::openapi::path::OperationBuilder {
+                #(#response_impls)*
+                op
             }
         }
     }

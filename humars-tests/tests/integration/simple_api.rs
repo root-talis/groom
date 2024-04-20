@@ -21,6 +21,9 @@ use crate::integration::simple_api::my_api::RqConsPathStruct;
 
 use serde_json::json;
 
+#[cfg(test)]
+use pretty_assertions::{assert_eq, /*assert_ne*/};
+
 
 // region: test bootstrap utils -----------------------------------
 //
@@ -65,6 +68,7 @@ mod my_api {
 
     use crate::humars_macros::{Response, DTO};
     use humars::extract::HumarsExtractor;
+    use humars::response::Response;
 
     // region: dumb handlers ---------------------------------------------
     //
@@ -271,6 +275,10 @@ fn api_doc_scratchpad() {
 
     let op_builder = axum::extract::Path::<RqConsPathStruct>::__openapi_modify_operation(op_builder);
 
+    let resp = utoipa::openapi::ResponseBuilder::new().build();
+
+    let op_builder = op_builder.response("202", resp);
+
     let operation = op_builder.build();
 
     let operation = OperationBuilder::from(operation).build(); 
@@ -309,6 +317,8 @@ fn api_doc() {
 
     let json = api.build().to_json().expect("expected a valid json string");
 
+    eprintln!("generated openapi definition as json:\n---\n{json}\n---");
+
     assert_eq!(
         json!({
             "openapi": "3.0.3",
@@ -316,18 +326,30 @@ fn api_doc() {
             "paths": {
                 "/": {
                     "get": {
-                        "responses": {}
+                        "responses": {
+                            "202": {
+                                "description": ""
+                            }
+                        }
                     },
                 },
                 "/hello-world": {
                     "get": {
                         "summary": "This method says \"hello, world!\"",
                         "description": "Ha-ha, classic.",
-                        "responses": {}
+                        "responses": {
+                            "200": {
+                                "description": ""
+                            }
+                        }
                     },
                     "post": {
                         "summary": "POST hello world",
-                        "responses": {}
+                        "responses": {
+                            "200": {
+                                "description": ""
+                            }
+                        }
                     }
                 },
                 "/greet": {
@@ -368,7 +390,14 @@ fn api_doc() {
                           }
                         }
                       ],
-                      "responses": {}
+                      "responses": {
+                            "200": {
+                                "description": ""
+                            },
+                            "400": {
+                                "description": ""
+                            }
+                      }
                     }
                 },
                 "/team/:team_id/user/:user_id": {
@@ -388,7 +417,11 @@ fn api_doc() {
                                 }
                             },
                         ],
-                        "responses": {},
+                        "responses": {
+                            "200": {
+                                "description": ""
+                            }
+                        }
                     },
                 },
             }
