@@ -1,6 +1,5 @@
 use indexmap::IndexMap;
 use proc_macro2::TokenStream;
-use proc_macro_error::abort;
 use syn::{parse2, Error, Item, ItemMod};
 use quote::{format_ident, quote, ToTokens};
 use darling::FromMeta;
@@ -33,12 +32,8 @@ impl RouteArgs {
 // region: AST parsing and generation ----------------------------------------------
 //
 
-pub(crate) fn generate(args: TokenStream, input: TokenStream) -> TokenStream {
-    if !args.is_empty() {
-        abort!(args, "no args yet")
-    }
-
-    let generated_impl = generate_impl(input.clone());
+pub(crate) fn generate(input: TokenStream) -> TokenStream {
+    let generated_impl = generate_impl(input);
 
     quote! {
         #generated_impl
@@ -255,7 +250,7 @@ fn generate_impl(input: TokenStream) -> TokenStream {
 
     quote! {
         #vis mod #ident {
-            use ::static_assertions::assert_impl_all;
+            use ::static_assertions::{assert_impl_all, assert_impl_any};
             
             #(#module_items)*
 

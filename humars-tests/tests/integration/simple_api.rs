@@ -118,21 +118,21 @@ mod my_api {
     // region: request consumption --------------------------------------
     //
 
-    #[DTO]
+    #[DTO(request)]
     #[serde(rename="RqConsPathStructRenamed")]
     pub struct RqConsPathStruct {
         pub team_id: String,
         pub user_id: i32,
     }
 
-    #[DTO]
+    #[DTO(request)]
     pub struct RqConsQueryParams {
         #[serde(rename="first_name_renamed")]
         first_name: String,
         last_name: Option<String>,
     }
 
-    #[DTO]
+    #[DTO(request)]
     pub struct RqConsQueryParams2 {
         title: Option<String>,
     }
@@ -228,6 +228,32 @@ mod my_api {
     //
     // endregion: request consumption ---------------------------------
 
+    // region: responses ------------------------------------------------
+    //
+
+    #[Route(method = "get", path = "/struct")]
+    async fn resp_struct_body() -> GetStructBodyResult {
+        GetStructBodyResult::Ok(StructBody {
+            success: true,
+            message: None,
+        })
+    }
+    
+    #[DTO(response)]
+    pub struct StructBody {
+        pub success: bool,
+        pub message: Option<String>,
+    }
+
+    #[Response]
+    pub enum GetStructBodyResult {
+        #[Response()]
+        Ok(StructBody),
+    }
+
+    //
+    // endregion: responses ---------------------------------------------
+
     #[allow(dead_code)]
     async fn not_a_handler() {}
 }
@@ -237,8 +263,6 @@ mod my_api {
 
 // region: tests --------------------------------------------------
 //
-
-//use ::utoipa::ToSchema;
 
 #[test]
 fn api_doc_scratchpad() {
@@ -349,6 +373,15 @@ fn api_doc() {
                     },
                     "post": {
                         "summary": "POST hello world",
+                        "responses": {
+                            "200": {
+                                "description": ""
+                            }
+                        }
+                    }
+                },
+                "/struct": {
+                    "get": {
                         "responses": {
                             "200": {
                                 "description": ""

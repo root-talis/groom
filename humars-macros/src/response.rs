@@ -1,7 +1,6 @@
 use darling::FromMeta;
 use syn::{Error, Item, Attribute};
 use proc_macro2::TokenStream;
-use proc_macro_error::abort;
 use syn::{ItemEnum, parse2};
 use quote::{quote, ToTokens};
 
@@ -32,12 +31,8 @@ impl ResponseArgs {
 // region: AST parsing and generation ----------------------------------------------
 //
 
-pub(crate) fn generate(args: TokenStream, input: TokenStream) -> TokenStream {
-    if !args.is_empty() {
-        abort!(args, "no args yet")
-    }
-
-    let generated_impl = generate_impl(input.clone());
+pub(crate) fn generate(input: TokenStream) -> TokenStream {
+    let generated_impl = generate_impl(input);
 
     quote! {
         #generated_impl
@@ -57,121 +52,130 @@ fn generate_impl(input: TokenStream) -> TokenStream {
 fn generate_impl_enum(enum_impl: ItemEnum) -> TokenStream {
     let ident = enum_impl.ident;
     let vis = enum_impl.vis;
-    let (variants, into_response_implementations, response_impls) = {
-        let mut variants: Vec<TokenStream> = Vec::new();
-        let mut into_response_impls: Vec<TokenStream> = Vec::new();
-        let mut response_impls: Vec<TokenStream> = Vec::new();
 
-        for mut variant in enum_impl.variants {
-            let args = match ResponseArgs::parse_from_attrs(&variant.attrs) {
-                Ok(Some(args)) => {
-                    ResponseArgs::remove_from_attrs(&mut variant.attrs);
-                    args
-                },
-                Ok(None) => {
-                    return syn::Error::new_spanned(
-                        variant.into_token_stream(),
-                        "response variant should be annotated with #[Response()]"
-                    ).to_compile_error()
-                },
-                Err(error) => return error.write_errors(),
-            };
+    let mut variants: Vec<TokenStream> = Vec::new();
+    let mut into_response_impls: Vec<TokenStream> = Vec::new();
+    let mut openapi_response_impls: Vec<TokenStream> = Vec::new();
 
-            let code_u16 = args.code.0;
+    let mut type_assertions: Vec<TokenStream> = Vec::new(); // compile-time checks of trait implementation (for better error messages)
+    
+    for mut variant in enum_impl.variants {
+        let args = match ResponseArgs::parse_from_attrs(&variant.attrs) {
+            Ok(Some(args)) => {
+                ResponseArgs::remove_from_attrs(&mut variant.attrs);
+                args
+            },
+            Ok(None) => {
+                return syn::Error::new_spanned(
+                    variant.into_token_stream(),
+                    "response variant should be annotated with #[Response()]"
+                ).to_compile_error()
+            },
+            Err(error) => return error.write_errors(),
+        };
 
-            let code_ts = match ::axum::http::StatusCode::from_u16(code_u16) {
-                Ok(code) => {
-                    let code = code.as_u16();
-                    quote! {
-                        ::axum::http::StatusCode::from_u16(#code).unwrap()
-                    }
-                },
-                Err(e) => {
-                    return syn::Error::new_spanned(
-                        &variant,
-                        format!("{e}: \"{}\"", code_u16)
-                    ).to_compile_error()
-                },
-            };
+        let code_u16 = args.code.0;
 
-            let code_str = format!("{code_u16}");
+        let code_ts = match ::axum::http::StatusCode::from_u16(code_u16) {
+            Ok(code) => {
+                let code = code.as_u16();
+                quote! {
+                    ::axum::http::StatusCode::from_u16(#code).unwrap()
+                }
+            },
+            Err(e) => {
+                return syn::Error::new_spanned(
+                    &variant,
+                    format!("{e}: \"{}\"", code_u16)
+                ).to_compile_error()
+            },
+        };
 
-            let name = variant.ident.clone();
+        let code_str = format!("{code_u16}");
 
-            let fields = match variant.fields.clone() {
-                syn::Fields::Named(fields) => {
-                    return syn::Error::new_spanned(fields, "named fields are not supported").into_compile_error();
-                    // todo: support something like http::response::Parts
-                },
+        let name = variant.ident.clone();
 
-                syn::Fields::Unnamed(fields) => {
-                    if fields.unnamed.len() != 1 {
-                        return syn::Error::new_spanned(fields, "only exactly one unnamed field is supported").into_compile_error();
-                    }
+        let fields = match variant.fields.clone() {
+            syn::Fields::Named(fields) => {
+                return syn::Error::new_spanned(fields, "named fields are not supported").into_compile_error();
+                // todo: support something like http::response::Parts
+            },
 
-                    Some(fields.unnamed.first().expect("length checked right above").clone())
-                },
+            syn::Fields::Unnamed(fields) => {
+                if fields.unnamed.len() != 1 {
+                    return syn::Error::new_spanned(fields, "only exactly one unnamed field is supported").into_compile_error();
+                }
 
-                syn::Fields::Unit => None,
-            };
+                Some(fields.unnamed.first().expect("length is checked right above").clone())
+            },
 
-            into_response_impls.push(match fields.clone() {
-                None => quote! {
-                    Self::#name => (#code_ts).into_response(),
-                },
-                Some(_single_field) => quote!{
-                    Self::#name(body) => (#code_ts, body).into_response(),
-                },
-            });
+            syn::Fields::Unit => None,
+        };
 
-            let description_tk = match get_description(&variant.attrs).unwrap_or_default() {
-                Some(s) => quote! { #s },
-                None => quote! { "" },
-            };
+        into_response_impls.push(match fields.clone() {
+            None => quote! {
+                Self::#name => (#code_ts).into_response(),
+            },
+            Some(_single_field) => quote!{
+                Self::#name(body) => (#code_ts, body).into_response(),
+            },
+        });
 
-            response_impls.push(match fields.clone() {
-                None => quote! {
+        let description_tk = match get_description(&variant.attrs).unwrap_or_default() {
+            Some(s) => quote! { #s },
+            None => quote! { "" },
+        };
+
+        openapi_response_impls.push(match fields.clone() {
+            None => quote! {
+                let op = op.response(
+                    #code_str,
+                    ::utoipa::openapi::ResponseBuilder::new()
+                        .description(#description_tk)
+                        .build()
+                );
+            },
+            Some(single_field) => {
+                let ty = single_field.ty;
+
+                type_assertions.push(quote!{
+                    assert_impl_any!(#ty: ::utoipa::PartialSchema, ::utoipa::ToSchema<'static>);
+                });
+
+                quote!{
                     let op = op.response(
                         #code_str,
                         ::utoipa::openapi::ResponseBuilder::new()
                             .description(#description_tk)
                             .build()
                     );
-                },
-                Some(_single_field) => quote!{
-                    let op = op.response(
-                        #code_str,
-                        ::utoipa::openapi::ResponseBuilder::new()
-                            .description(#description_tk)
-                            .build()
-                    );
-                },
-            });
+                }
+            },
+        });
 
-            variants.push(quote! {
-                #variant,
-            });
-        }
-
-        (variants, into_response_impls, response_impls)
-    };
+        variants.push(quote! {
+            #variant,
+        });
+    }
     
     quote! {
         #vis enum #ident {
             #(#variants)*
         }
 
+        #(#type_assertions)*
+
         impl ::axum::response::IntoResponse for #ident {
             fn into_response(self) -> ::axum::response::Response {
                 match self {
-                    #(#into_response_implementations)*
+                    #(#into_response_impls)*
                 }
             }
         }
 
         impl ::humars::response::Response for #ident {
             fn __openapi_modify_operation(op: ::utoipa::openapi::path::OperationBuilder) -> ::utoipa::openapi::path::OperationBuilder {
-                #(#response_impls)*
+                #(#openapi_response_impls)*
                 op
             }
         }
