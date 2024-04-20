@@ -60,12 +60,17 @@ pub mod api_root {
 
     #[Response]
     pub enum GetRootResponse {
+        /// There you go mate.
         #[Response()]
         Ok(String),
 
+        /// Are you insane?
+        /// 
+        /// Bad request.
         #[Response(code = 400)]
         BadRequest(String),
 
+        /// You shall not pass!
         #[Response(code = 401)]
         Forbidden,
     }

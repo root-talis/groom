@@ -55,8 +55,13 @@ pub mod api_root {
         let a = 1;
     }
     pub enum GetRootResponse {
+        /// There you go mate.
         Ok(String),
+        /// Are you insane?
+        ///
+        /// Bad request.
         BadRequest(String),
+        /// You shall not pass!
         Forbidden,
     }
     impl ::axum::response::IntoResponse for GetRootResponse {
@@ -83,17 +88,23 @@ pub mod api_root {
             let op = op
                 .response(
                     "200",
-                    ::utoipa::openapi::ResponseBuilder::new().description("").build(),
+                    ::utoipa::openapi::ResponseBuilder::new()
+                        .description("There you go mate.")
+                        .build(),
                 );
             let op = op
                 .response(
                     "400",
-                    ::utoipa::openapi::ResponseBuilder::new().description("").build(),
+                    ::utoipa::openapi::ResponseBuilder::new()
+                        .description("Are you insane?\n\nBad request.")
+                        .build(),
                 );
             let op = op
                 .response(
                     "401",
-                    ::utoipa::openapi::ResponseBuilder::new().description("").build(),
+                    ::utoipa::openapi::ResponseBuilder::new()
+                        .description("You shall not pass!")
+                        .build(),
                 );
             op
         }
