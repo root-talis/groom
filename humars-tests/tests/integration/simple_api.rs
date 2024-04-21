@@ -92,7 +92,7 @@ mod my_api {
         RootResponse::Ok
     }
 
-    #[Response(format(plain_text))]
+    #[Response()]
     pub enum RootResponse {
         #[Response(code = 202)] // todo: allow using constants like axum::http::Status::ACCEPTED?
         Ok,
@@ -166,6 +166,16 @@ mod my_api {
     pub enum RqConsPathResponse {
         #[Response()]
         Ok(String),
+
+        /// Access has been denied.
+        #[Response(code = 401)]
+        #[allow(dead_code)]
+        GoToHell,
+
+        /// Something bad just happened, but it's not your fault (probably).
+        #[Response(code = 500)]
+        #[allow(dead_code)]
+        InternalServerError,
     }
 
     // Request consumption: Query<struct> (stuff after `?`)
@@ -425,6 +435,7 @@ fn api_doc_scratchpad() {
     let _has_header = hm.get(::axum::http::header::ACCEPT);
 }
 
+/// In this test we check how OpenAPI spec is generated.
 #[test]
 fn api_doc() {
     #[derive(OpenApi)]
@@ -441,6 +452,7 @@ fn api_doc() {
     eprintln!("generated openapi definition as json:\n---\n{json}\n---");
 
     assert_eq!(
+        json.parse::<serde_json::Value>().expect("expected a parsed json"),
         json!({
             "openapi": "3.0.3",
             "info": {"title": "t", "description": "d", "license": {"name": "n"}, "version": "0.0.0"},
@@ -462,7 +474,7 @@ fn api_doc() {
                             "200": {
                                 "description": "",
                                 "content": {
-                                    "text/plain": {
+                                    "text/plain; charset=utf-8": {
                                         "schema": {
                                             "type": "string",
                                         }
@@ -477,7 +489,7 @@ fn api_doc() {
                             "200": {
                                 "description": "",
                                 "content": {
-                                    "text/plain": {
+                                    "text/plain; charset=utf-8": {
                                         "schema": {
                                             "type": "string",
                                         }
@@ -493,7 +505,7 @@ fn api_doc() {
                             "200": {
                                 "description": "Home page",
                                 "content": {
-                                    "text/html": {
+                                    "text/html; charset=utf-8": {
                                         "schema": {
                                             "type": "string"
                                         }
@@ -509,12 +521,12 @@ fn api_doc() {
                             "200": {
                                 "description": "Home page",
                                 "content": {
-                                    "text/html": {
+                                    "text/html; charset=utf-8": {
                                         "schema": {
                                             "type": "string"
                                         }
                                     },
-                                    "text/plain": {
+                                    "text/plain; charset=utf-8": {
                                         "schema": {
                                             "type": "string"
                                         }
@@ -530,7 +542,7 @@ fn api_doc() {
                             "200": {
                                 "description": "Current status",
                                 "content": {
-                                    "text/html": {
+                                    "text/html; charset=utf-8": {
                                         "schema": {
                                             "type": "string"
                                         }
@@ -624,7 +636,7 @@ fn api_doc() {
                             "200": {
                                 "description": "A quick brown fox jumped over a lazy dog.",
                                 "content": {
-                                    "text/plain": {
+                                    "text/plain; charset=utf-8": {
                                         "schema": {
                                             "type": "string",
                                         }
@@ -634,7 +646,7 @@ fn api_doc() {
                             "400": {
                                 "description": "What did you say?\n\nBad request bro.",
                                 "content": {
-                                    "text/plain": {
+                                    "text/plain; charset=utf-8": {
                                         "schema": {
                                             "type": "string",
                                         }
@@ -665,66 +677,103 @@ fn api_doc() {
                             "200": {
                                 "description": "",
                                 "content": {
-                                    "text/plain": {
+                                    "text/plain; charset=utf-8": {
                                         "schema": {
                                             "type": "string",
                                         }
                                     }
                                 }
-                            }
+                            },
+                            "401": {
+                                "description": "Access has been denied."
+                            },
+                            "500": {
+                                "description": "Something bad just happened, but it's not your fault (probably)."
+                            },
                         }
                     },
                 },
             }
-        }),
-        json.parse::<serde_json::Value>().expect("expected a parsed json")
+        })
     );
 }
 
+/// In this test content-negotiation should ignore any Accept header's value
+/// because no Response variant has a body anyway.
 #[tokio::test]
-pub async fn test_root() {
-    let (status, headers, body) = get("/", None).await;
+pub async fn test_root_accept_anything() {
+    let (status, headers, body) = get("/", Some("text/plain")).await;
 
-    assert_eq!(status, StatusCode::ACCEPTED);
     assert_eq!(body, "");
     assert_no_content_type(&headers);
+    assert_eq!(status, StatusCode::ACCEPTED);
+
+    let (status, headers, body) = get("/", Some("something/stupid")).await;
+
+    assert_eq!(body, "");
+    assert_no_content_type(&headers);
+    assert_eq!(status, StatusCode::ACCEPTED);
 }
 
+/// In this test content-negotiation should ignore the absence of Accept header
+/// because no Response variant has a body anyway.
+#[tokio::test]
+pub async fn test_root_no_accept_header() {
+    let (status, headers, body) = get("/", None).await;
+
+    assert_eq!(body, "");
+    assert_no_content_type(&headers);
+    assert_eq!(status, StatusCode::ACCEPTED);
+}
+
+/// In this test content-negotiation should see the matching Accept header and return the response.
 #[tokio::test]
 pub async fn test_hello_world() {
     let (status, headers, body) = get("/hello-world", Some("text/plain")).await;
 
-    assert_eq!(status, StatusCode::OK);
     assert_eq!(body, "hello, world!");
     assert_content_type(&headers, "text/plain; charset=utf-8");
+    assert_eq!(status, StatusCode::OK);
 }
 
+/// In this test content-negotiation should notice the absence of Accept header
+/// and return the only content-type specified without failing.
+#[tokio::test]
+pub async fn test_hello_world_no_accept_header() {
+    let (status, headers, body) = get("/hello-world", None).await;
+
+    assert_eq!(body, "hello, world!");
+    assert_content_type(&headers, "text/plain; charset=utf-8");
+    assert_eq!(status, StatusCode::OK);
+}
+
+/// In this test we check how Query parameters are read when several structs are mapped to Query.
 #[tokio::test]
 pub async fn test_query_struct() {
     let (status, headers, body) = get("/greet?first_name_renamed=", Some("text/plain")).await;
-    assert_eq!(status, StatusCode::BAD_REQUEST);
     assert_eq!(body, "Empty name");
     assert_content_type(&headers, "text/plain; charset=utf-8");
+    assert_eq!(status, StatusCode::BAD_REQUEST);
 
     let (status, headers, body) = get("/greet?first_name_renamed=Max", Some("text/plain")).await;
-    assert_eq!(status, StatusCode::OK);
     assert_eq!(body, "Hello, Max!");
     assert_content_type(&headers, "text/plain; charset=utf-8");
+    assert_eq!(status, StatusCode::OK);
 
     let (status, headers, body) = get("/greet?last_name=Doe&first_name_renamed=John", Some("text/plain")).await;
-    assert_eq!(status, StatusCode::OK);
     assert_eq!(body, "Hello, John Doe!");
     assert_content_type(&headers, "text/plain; charset=utf-8");
+    assert_eq!(status, StatusCode::OK);
 
     let (status, headers, body) = get("/greet?first_name_renamed=John&title=Sir", Some("text/plain")).await;
-    assert_eq!(status, StatusCode::OK);
     assert_eq!(body, "Hello, Sir John!");
     assert_content_type(&headers, "text/plain; charset=utf-8");
+    assert_eq!(status, StatusCode::OK);
 
     let (status, headers, body) = get("/greet?last_name=Backsword&title=Sir&first_name_renamed=John", Some("text/plain")).await;
-    assert_eq!(status, StatusCode::OK);
     assert_eq!(body, "Hello, Sir John Backsword!");
     assert_content_type(&headers, "text/plain; charset=utf-8");
+    assert_eq!(status, StatusCode::OK);
 }
 
 /*
@@ -744,62 +793,68 @@ pub async fn test_query_struct_hashmap() {
 }
 */
 
+/// In this test we check how Path parameters are read.
 #[tokio::test]
 pub async fn test_path() {
     let (status, headers, body) = get("/team/7/user/1", Some("text/plain")).await;
-    assert_eq!(status, StatusCode::OK);
     assert_eq!(body, "1 -> 7");
     assert_content_type(&headers, "text/plain; charset=utf-8");
+    assert_eq!(status, StatusCode::OK);
 
     let (status, headers, body) = get("/team/Hitchhikers/user/42", Some("text/plain")).await;
-    assert_eq!(status, StatusCode::OK);
     assert_eq!(body, "42 -> Hitchhikers");
     assert_content_type(&headers, "text/plain; charset=utf-8");
+    assert_eq!(status, StatusCode::OK);
 }
 
-
+/// In this test we check how JSON body is returned.
 #[tokio::test]
 pub async fn test_struct_body() {
     let (status, headers, body) = get("/struct", Some("application/json")).await;
-    assert_eq!(status, StatusCode::OK);
     assert_eq!(body, "{\"success\":true,\"message\":null}");
     assert_content_type(&headers, "application/json");
+    assert_eq!(status, StatusCode::OK);
 }
 
-
+/// In this test we check how HTML body is returned.
 #[tokio::test]
 pub async fn test_html() {
     let (status, headers, body) = get("/html", Some("text/html")).await;
-    assert_eq!(status, StatusCode::OK);
     assert_eq!(body, "<h1>Hello, world!</h1>");
     assert_content_type(&headers, "text/html; charset=utf-8");
+    assert_eq!(status, StatusCode::OK);
 }
 
-
+/// In this test we check how content-negotiation chooses appropriate serialization of a struct
+/// between String and Html.
+/// Note how HTML response has <h1> tags around text.
 #[tokio::test]
 pub async fn test_html_or_text() {
     let (status, headers, body) = get("/html-or-text", Some("text/html")).await;
-    assert_eq!(status, StatusCode::OK);
     assert_eq!(body, "<h1>Hello, world!</h1>");
     assert_content_type(&headers, "text/html; charset=utf-8");
+    assert_eq!(status, StatusCode::OK);
 
     let (status, headers, body) = get("/html-or-text", Some("text/plain")).await;
-    assert_eq!(status, StatusCode::OK);
     assert_eq!(body, "Hello, world!");
     assert_content_type(&headers, "text/plain; charset=utf-8");
+    assert_eq!(status, StatusCode::OK);
 }
 
+/// In this test we check how content-negotiation chooses appropriate serialization of a struct
+/// between Json and Html.
+/// This might be useful if the same backend should be used for both JSON API and HTML page rendering (e.g. for HTMX maybe).
 #[tokio::test]
 pub async fn test_html_or_json() {
     let (status, headers, body) = get("/html-or-json", Some("text/html")).await;
-    assert_eq!(status, StatusCode::OK);
-    assert_eq!(body, "<div><div>status: open</div><div>status timestamp: 1234567890</div></div>");
     assert_content_type(&headers, "text/html; charset=utf-8");
+    assert_eq!(body, "<div><div>status: open</div><div>status timestamp: 1234567890</div></div>");
+    assert_eq!(status, StatusCode::OK);
 
     let (status, headers, body) = get("/html-or-json", Some("application/json")).await;
-    assert_eq!(status, StatusCode::OK);
-    assert_eq!(body, "{\"status\":\"open\",\"status_timestamp\":1234567890}");
     assert_content_type(&headers, "application/json");
+    assert_eq!(body, "{\"status\":\"open\",\"status_timestamp\":1234567890}");
+    assert_eq!(status, StatusCode::OK);
 }
 
 

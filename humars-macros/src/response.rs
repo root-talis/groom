@@ -2,7 +2,7 @@ use darling::FromMeta;
 use syn::{Error, Item, Attribute};
 use proc_macro2::TokenStream;
 use syn::{ItemEnum, parse2};
-use quote::{quote, ToTokens};
+use quote::{format_ident, quote, ToTokens};
 
 use crate::{attrs::{parse_attr, remove_attrs}, http::{HTTPStatusCode, ResponseContentTypesList}, utils::get_description};
 
@@ -64,9 +64,14 @@ fn generate_impl_enum(_resp_args_t: TokenStream, resp_args: ResponseArgs, enum_i
     let mut openapi_impls: Vec<TokenStream> = Vec::new();
 
     // todo: make this more dynamic and extensible somehow...
+    let mut response_bodies_match_blank: Vec<TokenStream> = Vec::new();
     let mut response_bodies_match_text_plain: Vec<TokenStream> = Vec::new();
     let mut response_bodies_match_text_html: Vec<TokenStream> = Vec::new();
     let mut response_bodies_match_application_json: Vec<TokenStream> = Vec::new();
+
+
+    let available_mimes_ident = format_ident!("__HUMARS_RESPONSE_AVAILABLE_MIMES_{}", ident);
+    let mut available_mimes_list: Vec<TokenStream> = Vec::new();
 
     let mut type_assertions: Vec<TokenStream> = Vec::new(); // compile-time checks of trait implementation (for better error messages)
     
@@ -104,7 +109,7 @@ fn generate_impl_enum(_resp_args_t: TokenStream, resp_args: ResponseArgs, enum_i
 
         let code_str = format!("{code_u16}");
 
-        let name = variant.ident.clone();
+        let variant_name = variant.ident.clone();
 
         let variant_field = match variant.fields.clone() {
             syn::Fields::Named(fields) => {
@@ -123,17 +128,44 @@ fn generate_impl_enum(_resp_args_t: TokenStream, resp_args: ResponseArgs, enum_i
             syn::Fields::Unit => None,
         };
         
+        // Let's make enum variants conversion for when no Accept header was supplied by the client.
+        if !resp_args.format.is_any() {
+            // If no formats were specified for this Response, we need to ensure that we:
+            //  - either have only variants without fields in this enum and respond only with HTTP codes,
+            //  - or raise a compile error telling the dev that they need to specify some response format.
+            response_bodies_match_blank.push(match variant_field.clone() {
+                None => quote! {
+                    Self::#variant_name => (#code_ts).into_response(),
+                },
+                Some(single_field) => {
+                    return syn::Error::new_spanned(
+                        single_field,
+                        format!("specify at least one response format for enum `{ident}` to be able to return data through it's variant `{variant_name}` (e.g. #[Response(format(json))])")
+                    ).into_compile_error();
+                }
+            });
+        } else {
+            // If some formats were specified, we need to ensure that we:
+            //  - either have some default format specified,
+            //  - or raise a compile error telling the dev that they need to specify the default response format.
+            // todo.
+        }
+
         if resp_args.format.plain_text {
             response_bodies_match_text_plain.push(match variant_field.clone() {
                 None => quote! {
-                    Self::#name => (#code_ts).into_response(),
+                    Self::#variant_name => (#code_ts).into_response(),
                 },
                 Some(_single_field) => quote!{
-                    Self::#name(body) => (
+                    Self::#variant_name(body) => (
                         #code_ts,
                         Into::<String>::into(body)
                     ).into_response(),
                 },
+            });
+
+            available_mimes_list.push(quote!{ 
+                ::mime::TEXT_PLAIN,
             });
         } else {
             // todo: one default match for all?
@@ -145,14 +177,18 @@ fn generate_impl_enum(_resp_args_t: TokenStream, resp_args: ResponseArgs, enum_i
         if resp_args.format.html {
             response_bodies_match_text_html.push(match variant_field.clone() {
                 None => quote! {
-                    Self::#name => (#code_ts).into_response(),
+                    Self::#variant_name => (#code_ts).into_response(),
                 },
                 Some(_single_field) => quote!{
-                    Self::#name(body) => (
+                    Self::#variant_name(body) => (
                         #code_ts,
                         ::axum::response::Html(body)
                     ).into_response(),
                 },
+            });
+
+            available_mimes_list.push(quote!{ 
+                ::mime::TEXT_HTML,
             });
         } else {
             // todo: one default match for all?
@@ -164,14 +200,18 @@ fn generate_impl_enum(_resp_args_t: TokenStream, resp_args: ResponseArgs, enum_i
         if resp_args.format.json {
             response_bodies_match_application_json.push(match variant_field.clone() {
                 None => quote! {
-                    Self::#name => (#code_ts).into_response(),
+                    Self::#variant_name => (#code_ts).into_response(),
                 },
                 Some(_single_field) => quote!{
-                    Self::#name(body) => (
+                    Self::#variant_name(body) => (
                         #code_ts,
                         ::axum::Json(body)
                     ).into_response(),
                 },
+            });
+
+            available_mimes_list.push(quote!{ 
+                ::mime::APPLICATION_JSON,
             });
         } else {
             // todo: one default match for all?
@@ -209,7 +249,7 @@ fn generate_impl_enum(_resp_args_t: TokenStream, resp_args: ResponseArgs, enum_i
                 if resp_args.format.plain_text {
                     response_impls.push(quote!{
                         .content(
-                            "text/plain",
+                            ::mime::TEXT_PLAIN_UTF_8.as_ref(),
                             ::utoipa::openapi::ContentBuilder::new()
                                 .schema(<String as utoipa::PartialSchema>::schema())
                                 //.example(Some("Hello, world!".into()))
@@ -220,7 +260,7 @@ fn generate_impl_enum(_resp_args_t: TokenStream, resp_args: ResponseArgs, enum_i
                 if resp_args.format.html {
                     response_impls.push(quote!{
                         .content(
-                            "text/html",
+                            ::mime::TEXT_HTML_UTF_8.as_ref(),
                             ::utoipa::openapi::ContentBuilder::new()
                                 .schema(<String as utoipa::PartialSchema>::schema())
                                 //.example(Some("<h1>Hello, world!</h1>".into()))
@@ -231,7 +271,7 @@ fn generate_impl_enum(_resp_args_t: TokenStream, resp_args: ResponseArgs, enum_i
                 if resp_args.format.json {
                     response_impls.push(quote!{
                         .content(
-                            "application/json",
+                            ::mime::APPLICATION_JSON.as_ref(),
                             ::utoipa::openapi::ContentBuilder::new()
                                 .schema(#ty::schema().1)
                                 .build()
@@ -256,6 +296,55 @@ fn generate_impl_enum(_resp_args_t: TokenStream, resp_args: ResponseArgs, enum_i
         });
     }
 
+    let content_type_negotiation = if resp_args.format.is_any() {
+        quote! {
+            match accept {
+                Some(accept) => {
+                    match accept.negotiate(&#available_mimes_ident) {
+                        Ok(negotiated) => {
+                            match (negotiated.type_(), negotiated.subtype()) {
+                                (::mime::TEXT, mime::PLAIN) => {
+                                    match self {
+                                        #(#response_bodies_match_text_plain)*
+                                    }
+                                },
+                                (::mime::TEXT, mime::HTML) => {
+                                    match self {
+                                        #(#response_bodies_match_text_html)*
+                                    }
+                                },
+                                (::mime::APPLICATION, mime::JSON) => {
+                                    match self {
+                                        #(#response_bodies_match_application_json)*
+                                    }
+                                },
+                                _ => {
+                                    (::axum::http::StatusCode::BAD_REQUEST, "Negotiated some weird poo.").into_response()
+                                }
+                            }
+                        },
+                        Err(_) => {
+                            (::axum::http::StatusCode::BAD_REQUEST, "Requested content-type not supported.").into_response()
+                        }
+                    }
+                },
+                None => {
+                    // todo: if there is a default content-type specified in #[Response()] args, use it;
+                    //       else:
+                    //           if there is no response body, return response code
+                    //           else return BadRequest
+                    (::axum::http::StatusCode::BAD_REQUEST, "No accept header specified.").into_response()
+                }
+            }
+        }
+    } else {
+        quote! {
+            match self {
+                #(#response_bodies_match_blank)*
+            }
+        }
+    };
+
     quote! {
         #vis enum #ident {
             #(#variants)*
@@ -263,55 +352,19 @@ fn generate_impl_enum(_resp_args_t: TokenStream, resp_args: ResponseArgs, enum_i
 
         #(#type_assertions)*
 
+        #[allow(non_upper_case_globals)]
+        const #available_mimes_ident: &[::mime::Mime] = &[
+            #(#available_mimes_list)*
+        ];
+
         impl ::humars::response::Response for #ident {
             fn __openapi_modify_operation(op: ::utoipa::openapi::path::OperationBuilder) -> ::utoipa::openapi::path::OperationBuilder {
                 #(#openapi_impls)*
                 op
             }
 
-            fn __humars_into_response(self, accept: Option<&::axum::http::HeaderValue>) -> ::axum::response::Response {
-                // response code that was annotated on current enum variant
-                /*let code = match self {
-                    #(#response_codes_match)*
-                };*/
-
-                match accept.map(|x| x.as_bytes()) {
-                    Some(b"text/plain") => {
-                        match self {
-                            #(#response_bodies_match_text_plain)*
-                        }
-                    },
-                    Some(b"text/html") => {
-                        match self {
-                            #(#response_bodies_match_text_html)*
-                        }
-                    },
-                    Some(b"application/json") => {
-                        match self {
-                            #(#response_bodies_match_application_json)*
-                        }
-                    },
-                    None => {
-                        // todo: if there is a default content-type specified in #[Response()] args, use it;
-                        //       else:
-                        //           if there is no response body, return response code
-                        //           else return BadRequest
-                        (::axum::http::StatusCode::BAD_REQUEST).into_response()
-                    },
-                    _ => {
-                        (::axum::http::StatusCode::BAD_REQUEST).into_response()
-                    }
-                }
-
-                // Some(body) or None
-                /*let body = match self {
-                    #(#response_bodies_match)*
-                };*/
-
-                // serialize body into appropriate response type
-
-                // if there is no body, just return into_response()
-                //(code).into_response()
+            fn __humars_into_response(self, accept: Option<::accept_header::Accept>) -> ::axum::response::Response {
+                #content_type_negotiation
             }
         }
     }

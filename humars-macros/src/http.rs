@@ -46,13 +46,13 @@ pub(crate) struct ResponseContentTypesList {
     pub(crate) json: bool,
 }
 
-/*
+
 impl ResponseContentTypesList {
-    fn is_any(&self) -> bool {
+    pub(crate) fn is_any(&self) -> bool {
         return self.plain_text || self.html || self.json;
     }
 }
-*/
+
 
 impl Into<Vec<ResponseContentType>> for ResponseContentTypesList {
     fn into(self) -> Vec<ResponseContentType> {
