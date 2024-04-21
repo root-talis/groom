@@ -195,41 +195,36 @@ pub mod api_root {
         };
         assert_impl_any_token(previous._static_assertions_impl_any());
     };
-    impl ::axum::response::IntoResponse for GetRootResponse {
-        fn into_response(self) -> ::axum::response::Response {
-            match self {
-                Self::Ok(body) => {
-                    (::axum::http::StatusCode::from_u16(200u16).unwrap(), body)
-                        .into_response()
-                }
-                Self::BadRequest(body) => {
-                    (::axum::http::StatusCode::from_u16(400u16).unwrap(), body)
-                        .into_response()
-                }
-                Self::Forbidden => {
-                    (::axum::http::StatusCode::from_u16(401u16).unwrap()).into_response()
-                }
-            }
-        }
-    }
     impl ::humars::response::Response for GetRootResponse {
         fn __openapi_modify_operation(
             op: ::utoipa::openapi::path::OperationBuilder,
         ) -> ::utoipa::openapi::path::OperationBuilder {
-            let response = {
-                let rb = ::utoipa::openapi::ResponseBuilder::new()
-                    .description("There you go mate.");
-                let rb = <String>::__openapi_build_responses(rb);
-                rb.build()
-            };
-            let op = op.response("200", response);
-            let response = {
-                let rb = ::utoipa::openapi::ResponseBuilder::new()
-                    .description("Are you insane?\n\nBad request.");
-                let rb = <String>::__openapi_build_responses(rb);
-                rb.build()
-            };
-            let op = op.response("400", response);
+            let op = op
+                .response(
+                    "200",
+                    ::utoipa::openapi::ResponseBuilder::new()
+                        .description("There you go mate.")
+                        .content(
+                            "text/plain",
+                            ::utoipa::openapi::ContentBuilder::new()
+                                .schema(<String as utoipa::PartialSchema>::schema())
+                                .build(),
+                        )
+                        .build(),
+                );
+            let op = op
+                .response(
+                    "400",
+                    ::utoipa::openapi::ResponseBuilder::new()
+                        .description("Are you insane?\n\nBad request.")
+                        .content(
+                            "text/plain",
+                            ::utoipa::openapi::ContentBuilder::new()
+                                .schema(<String as utoipa::PartialSchema>::schema())
+                                .build(),
+                        )
+                        .build(),
+                );
             let op = op
                 .response(
                     "401",
@@ -243,7 +238,46 @@ pub mod api_root {
             self,
             accept: Option<&::axum::http::HeaderValue>,
         ) -> ::axum::response::Response {
-            self.into_response()
+            match accept.map(|x| x.as_bytes()) {
+                Some(b"text/plain") => {
+                    match self {
+                        Self::Ok(body) => {
+                            (
+                                ::axum::http::StatusCode::from_u16(200u16).unwrap(),
+                                Into::<String>::into(body),
+                            )
+                                .into_response()
+                        }
+                        Self::BadRequest(body) => {
+                            (
+                                ::axum::http::StatusCode::from_u16(400u16).unwrap(),
+                                Into::<String>::into(body),
+                            )
+                                .into_response()
+                        }
+                        Self::Forbidden => {
+                            (::axum::http::StatusCode::from_u16(401u16).unwrap())
+                                .into_response()
+                        }
+                    }
+                }
+                Some(b"text/html") => {
+                    match self {
+                        _ => (::axum::http::StatusCode::BAD_REQUEST).into_response(),
+                        _ => (::axum::http::StatusCode::BAD_REQUEST).into_response(),
+                        _ => (::axum::http::StatusCode::BAD_REQUEST).into_response(),
+                    }
+                }
+                Some(b"application/json") => {
+                    match self {
+                        _ => (::axum::http::StatusCode::BAD_REQUEST).into_response(),
+                        _ => (::axum::http::StatusCode::BAD_REQUEST).into_response(),
+                        _ => (::axum::http::StatusCode::BAD_REQUEST).into_response(),
+                    }
+                }
+                None => (::axum::http::StatusCode::BAD_REQUEST).into_response(),
+                _ => (::axum::http::StatusCode::BAD_REQUEST).into_response(),
+            }
         }
     }
     pub struct RqConsQueryStruct {
@@ -515,43 +549,48 @@ pub mod api_root {
         };
         assert_impl_any_token(previous._static_assertions_impl_any());
     };
-    impl ::axum::response::IntoResponse for RqConsQueryResponse {
-        fn into_response(self) -> ::axum::response::Response {
-            match self {
-                Self::Ok(body) => {
-                    (::axum::http::StatusCode::from_u16(200u16).unwrap(), body)
-                        .into_response()
-                }
-                Self::BadRequest(body) => {
-                    (::axum::http::StatusCode::from_u16(400u16).unwrap(), body)
-                        .into_response()
-                }
-            }
-        }
-    }
     impl ::humars::response::Response for RqConsQueryResponse {
         fn __openapi_modify_operation(
             op: ::utoipa::openapi::path::OperationBuilder,
         ) -> ::utoipa::openapi::path::OperationBuilder {
-            let response = {
-                let rb = ::utoipa::openapi::ResponseBuilder::new().description("");
-                let rb = <String>::__openapi_build_responses(rb);
-                rb.build()
-            };
-            let op = op.response("200", response);
-            let response = {
-                let rb = ::utoipa::openapi::ResponseBuilder::new().description("");
-                let rb = <String>::__openapi_build_responses(rb);
-                rb.build()
-            };
-            let op = op.response("400", response);
+            let op = op
+                .response(
+                    "200",
+                    ::utoipa::openapi::ResponseBuilder::new().description("").build(),
+                );
+            let op = op
+                .response(
+                    "400",
+                    ::utoipa::openapi::ResponseBuilder::new().description("").build(),
+                );
             op
         }
         fn __humars_into_response(
             self,
             accept: Option<&::axum::http::HeaderValue>,
         ) -> ::axum::response::Response {
-            self.into_response()
+            match accept.map(|x| x.as_bytes()) {
+                Some(b"text/plain") => {
+                    match self {
+                        _ => (::axum::http::StatusCode::BAD_REQUEST).into_response(),
+                        _ => (::axum::http::StatusCode::BAD_REQUEST).into_response(),
+                    }
+                }
+                Some(b"text/html") => {
+                    match self {
+                        _ => (::axum::http::StatusCode::BAD_REQUEST).into_response(),
+                        _ => (::axum::http::StatusCode::BAD_REQUEST).into_response(),
+                    }
+                }
+                Some(b"application/json") => {
+                    match self {
+                        _ => (::axum::http::StatusCode::BAD_REQUEST).into_response(),
+                        _ => (::axum::http::StatusCode::BAD_REQUEST).into_response(),
+                    }
+                }
+                None => (::axum::http::StatusCode::BAD_REQUEST).into_response(),
+                _ => (::axum::http::StatusCode::BAD_REQUEST).into_response(),
+            }
         }
     }
     pub struct RqConsPathStruct {
@@ -822,84 +861,40 @@ pub mod api_root {
         };
         assert_impl_any_token(previous._static_assertions_impl_any());
     };
-    impl ::axum::response::IntoResponse for RqConsPathResponse {
-        fn into_response(self) -> ::axum::response::Response {
-            match self {
-                Self::Ok(body) => {
-                    (::axum::http::StatusCode::from_u16(200u16).unwrap(), body)
-                        .into_response()
-                }
-            }
-        }
-    }
     impl ::humars::response::Response for RqConsPathResponse {
         fn __openapi_modify_operation(
             op: ::utoipa::openapi::path::OperationBuilder,
         ) -> ::utoipa::openapi::path::OperationBuilder {
-            let response = {
-                let rb = ::utoipa::openapi::ResponseBuilder::new().description("");
-                let rb = <String>::__openapi_build_responses(rb);
-                rb.build()
-            };
-            let op = op.response("200", response);
+            let op = op
+                .response(
+                    "200",
+                    ::utoipa::openapi::ResponseBuilder::new().description("").build(),
+                );
             op
         }
         fn __humars_into_response(
             self,
             accept: Option<&::axum::http::HeaderValue>,
         ) -> ::axum::response::Response {
-            self.into_response()
-        }
-    }
-    pub struct StructJson {
-        success: bool,
-    }
-    #[doc(hidden)]
-    #[allow(non_upper_case_globals, unused_attributes, unused_qualifications)]
-    const _: () = {
-        #[allow(unused_extern_crates, clippy::useless_attribute)]
-        extern crate serde as _serde;
-        #[automatically_derived]
-        impl _serde::Serialize for StructJson {
-            fn serialize<__S>(
-                &self,
-                __serializer: __S,
-            ) -> _serde::__private::Result<__S::Ok, __S::Error>
-            where
-                __S: _serde::Serializer,
-            {
-                let mut __serde_state = _serde::Serializer::serialize_struct(
-                    __serializer,
-                    "StructJson",
-                    false as usize + 1,
-                )?;
-                _serde::ser::SerializeStruct::serialize_field(
-                    &mut __serde_state,
-                    "success",
-                    &self.success,
-                )?;
-                _serde::ser::SerializeStruct::end(__serde_state)
+            match accept.map(|x| x.as_bytes()) {
+                Some(b"text/plain") => {
+                    match self {
+                        _ => (::axum::http::StatusCode::BAD_REQUEST).into_response(),
+                    }
+                }
+                Some(b"text/html") => {
+                    match self {
+                        _ => (::axum::http::StatusCode::BAD_REQUEST).into_response(),
+                    }
+                }
+                Some(b"application/json") => {
+                    match self {
+                        _ => (::axum::http::StatusCode::BAD_REQUEST).into_response(),
+                    }
+                }
+                None => (::axum::http::StatusCode::BAD_REQUEST).into_response(),
+                _ => (::axum::http::StatusCode::BAD_REQUEST).into_response(),
             }
-        }
-    };
-    impl ::humars::DTO for StructJson {}
-    impl ::axum::response::IntoResponse for StructJson {
-        fn into_response(self) -> axum::http::Response<::axum::body::Body> {
-            ::axum::Json(self).into_response()
-        }
-    }
-    impl ::humars::DTO_Response for StructJson {
-        fn __openapi_build_responses(
-            rb: ::utoipa::openapi::ResponseBuilder,
-        ) -> ::utoipa::openapi::ResponseBuilder {
-            let rb = rb
-                .content(
-                    "application/json",
-                    ::utoipa::openapi::ContentBuilder::new()
-                        .schema(Self::schema().1)
-                        .build(),
-                );
-            rb
         }
     }
     pub enum RespJsonResponse {
@@ -946,33 +941,40 @@ pub mod api_root {
         };
         assert_impl_any_token(previous._static_assertions_impl_any());
     };
-    impl ::axum::response::IntoResponse for RespJsonResponse {
-        fn into_response(self) -> ::axum::response::Response {
-            match self {
-                Self::Ok(body) => {
-                    (::axum::http::StatusCode::from_u16(200u16).unwrap(), body)
-                        .into_response()
-                }
-            }
-        }
-    }
     impl ::humars::response::Response for RespJsonResponse {
         fn __openapi_modify_operation(
             op: ::utoipa::openapi::path::OperationBuilder,
         ) -> ::utoipa::openapi::path::OperationBuilder {
-            let response = {
-                let rb = ::utoipa::openapi::ResponseBuilder::new().description("");
-                let rb = <StructJson>::__openapi_build_responses(rb);
-                rb.build()
-            };
-            let op = op.response("200", response);
+            let op = op
+                .response(
+                    "200",
+                    ::utoipa::openapi::ResponseBuilder::new().description("").build(),
+                );
             op
         }
         fn __humars_into_response(
             self,
             accept: Option<&::axum::http::HeaderValue>,
         ) -> ::axum::response::Response {
-            self.into_response()
+            match accept.map(|x| x.as_bytes()) {
+                Some(b"text/plain") => {
+                    match self {
+                        _ => (::axum::http::StatusCode::BAD_REQUEST).into_response(),
+                    }
+                }
+                Some(b"text/html") => {
+                    match self {
+                        _ => (::axum::http::StatusCode::BAD_REQUEST).into_response(),
+                    }
+                }
+                Some(b"application/json") => {
+                    match self {
+                        _ => (::axum::http::StatusCode::BAD_REQUEST).into_response(),
+                    }
+                }
+                None => (::axum::http::StatusCode::BAD_REQUEST).into_response(),
+                _ => (::axum::http::StatusCode::BAD_REQUEST).into_response(),
+            }
         }
     }
     pub fn merge_into_router(other: ::axum::Router) -> ::axum::Router {
