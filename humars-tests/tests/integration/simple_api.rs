@@ -842,6 +842,53 @@ pub async fn test_html_or_text() {
 }
 
 /// In this test we check how content-negotiation chooses appropriate serialization of a struct
+/// between String and Html based on weights.
+#[tokio::test]
+pub async fn test_html_or_text_weights() {
+    // First content-type has priority
+    let (status, headers, body) = get("/html-or-text", Some("text/plain, text/html")).await;
+    assert_eq!(body, "Hello, world!");
+    assert_content_type(&headers, "text/plain; charset=utf-8");
+    assert_eq!(status, StatusCode::OK);
+
+    // First content-type has priority
+    let (status, headers, body) = get("/html-or-text", Some("text/html, text/plain")).await;
+    assert_eq!(body, "<h1>Hello, world!</h1>");
+    assert_content_type(&headers, "text/html; charset=utf-8");
+    assert_eq!(status, StatusCode::OK);
+
+    // Weights have higher priority over position.
+    let (status, headers, body) = get("/html-or-text", Some("text/plain;q=0.8, text/html;q=0.9")).await;
+    assert_eq!(body, "<h1>Hello, world!</h1>");
+    assert_content_type(&headers, "text/html; charset=utf-8");
+    assert_eq!(status, StatusCode::OK);
+
+    // Weights are not being prioritized by position in reverse order.
+    let (status, headers, body) = get("/html-or-text", Some("text/plain;q=0.9, text/html;q=0.8")).await;
+    assert_eq!(body, "Hello, world!");
+    assert_content_type(&headers, "text/plain; charset=utf-8");
+    assert_eq!(status, StatusCode::OK);
+
+    // Inappropriate content-type is ignored.
+    let (status, headers, body) = get("/html-or-text", Some("text/html, application/xhtml+xml, application/xml;q=0.9, */*;q=0.8")).await;
+    assert_eq!(body, "<h1>Hello, world!</h1>");
+    assert_content_type(&headers, "text/html; charset=utf-8");
+    assert_eq!(status, StatusCode::OK);
+
+    // Inappropriate content-type is ignored even when placed first.
+    let (status, headers, body) = get("/html-or-text", Some("application/xhtml+xml, text/html, application/xml;q=0.9, */*;q=0.8")).await;
+    assert_eq!(body, "<h1>Hello, world!</h1>");
+    assert_content_type(&headers, "text/html; charset=utf-8");
+    assert_eq!(status, StatusCode::OK);
+
+    // HTML has higher priority over plain text.
+    let (status, headers, body) = get("/html-or-text", Some("*/*")).await;
+    assert_eq!(body, "<h1>Hello, world!</h1>");
+    assert_content_type(&headers, "text/html; charset=utf-8");
+    assert_eq!(status, StatusCode::OK);
+}
+
+/// In this test we check how content-negotiation chooses appropriate serialization of a struct
 /// between Json and Html.
 /// This might be useful if the same backend should be used for both JSON API and HTML page rendering (e.g. for HTMX maybe).
 #[tokio::test]
