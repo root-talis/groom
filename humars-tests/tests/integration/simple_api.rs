@@ -881,8 +881,14 @@ pub async fn test_html_or_text_weights() {
     assert_content_type(&headers, "text/html; charset=utf-8");
     assert_eq!(status, StatusCode::OK);
 
-    // HTML has higher priority over plain text.
+    // HTML has higher priority over plain text when content-type */* is specified.
     let (status, headers, body) = get("/html-or-text", Some("*/*")).await;
+    assert_eq!(body, "<h1>Hello, world!</h1>");
+    assert_content_type(&headers, "text/html; charset=utf-8");
+    assert_eq!(status, StatusCode::OK);
+
+    // HTML has higher priority over plain text when no Accept header is specified.
+    let (status, headers, body) = get("/html-or-text", None).await;
     assert_eq!(body, "<h1>Hello, world!</h1>");
     assert_content_type(&headers, "text/html; charset=utf-8");
     assert_eq!(status, StatusCode::OK);
