@@ -146,7 +146,7 @@ fn generate_impl_enum(_resp_args_t: TokenStream, resp_args: ResponseArgs, enum_i
             });
         } else {
             // If some formats were specified, we need to ensure that we:
-            //  - either have some default format specified,
+            //  - either have some default format specified (including format "fail" - to explicitly force Accept header presence),
             //  - or raise a compile error telling the dev that they need to specify the default response format.
             // todo.
         }
@@ -303,14 +303,14 @@ fn generate_impl_enum(_resp_args_t: TokenStream, resp_args: ResponseArgs, enum_i
                     match accept.negotiate(&#available_mimes_ident) {
                         Ok(negotiated) => {
                             match (negotiated.type_(), negotiated.subtype()) {
-                                (::mime::TEXT, mime::PLAIN) => {
-                                    match self {
-                                        #(#response_bodies_match_text_plain)*
-                                    }
-                                },
                                 (::mime::TEXT, mime::HTML) => {
                                     match self {
                                         #(#response_bodies_match_text_html)*
+                                    }
+                                },
+                                (::mime::TEXT, mime::PLAIN) => {
+                                    match self {
+                                        #(#response_bodies_match_text_plain)*
                                     }
                                 },
                                 (::mime::APPLICATION, mime::JSON) => {
@@ -333,7 +333,7 @@ fn generate_impl_enum(_resp_args_t: TokenStream, resp_args: ResponseArgs, enum_i
                     //       else:
                     //           if there is no response body, return response code
                     //           else return BadRequest
-                    (::axum::http::StatusCode::BAD_REQUEST, "No accept header specified.").into_response()
+                    (::axum::http::StatusCode::BAD_REQUEST, "No accept header specified, but some variants have a body.").into_response()
                 }
             }
         }
@@ -366,6 +366,8 @@ fn generate_impl_enum(_resp_args_t: TokenStream, resp_args: ResponseArgs, enum_i
             fn __humars_into_response(self, accept: Option<::accept_header::Accept>) -> ::axum::response::Response {
                 #content_type_negotiation
             }
+            
+            // todo: __humars_content_type_supported
         }
     }
 }

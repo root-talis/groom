@@ -14,7 +14,7 @@ pub mod api_root {
     async fn __humars_wrapper_get_root(
         headers: ::axum::http::header::HeaderMap,
     ) -> impl ::axum::response::IntoResponse {
-        let accept = headers.get(::axum::http::header::ACCEPT);
+        let accept = ::humars::content_negotiation::parse_accept_header(&headers);
         let result = get_root().await;
         result.__humars_into_response(accept)
     }
@@ -25,7 +25,7 @@ pub mod api_root {
     async fn __humars_wrapper_post_root(
         headers: ::axum::http::header::HeaderMap,
     ) -> impl ::axum::response::IntoResponse {
-        let accept = headers.get(::axum::http::header::ACCEPT);
+        let accept = ::humars::content_negotiation::parse_accept_header(&headers);
         let result = post_root().await;
         result.__humars_into_response(accept)
     }
@@ -47,7 +47,7 @@ pub mod api_root {
         headers: ::axum::http::header::HeaderMap,
         input0: Query<RqConsQueryStruct>,
     ) -> impl ::axum::response::IntoResponse {
-        let accept = headers.get(::axum::http::header::ACCEPT);
+        let accept = ::humars::content_negotiation::parse_accept_header(&headers);
         let result = rq_cons_query_struct(input0).await;
         result.__humars_into_response(accept)
     }
@@ -69,7 +69,7 @@ pub mod api_root {
         headers: ::axum::http::header::HeaderMap,
         input0: Query<HashMap<String, String>>,
     ) -> impl ::axum::response::IntoResponse {
-        let accept = headers.get(::axum::http::header::ACCEPT);
+        let accept = ::humars::content_negotiation::parse_accept_header(&headers);
         let result = rq_cons_query_struct(input0).await;
         result.__humars_into_response(accept)
     }
@@ -85,7 +85,7 @@ pub mod api_root {
         headers: ::axum::http::header::HeaderMap,
         input0: Path<RqConsPathStruct>,
     ) -> impl ::axum::response::IntoResponse {
-        let accept = headers.get(::axum::http::header::ACCEPT);
+        let accept = ::humars::content_negotiation::parse_accept_header(&headers);
         let result = rq_cons_path_struct(input0).await;
         result.__humars_into_response(accept)
     }
@@ -96,7 +96,7 @@ pub mod api_root {
     async fn __humars_wrapper_resp_json(
         headers: ::axum::http::header::HeaderMap,
     ) -> impl ::axum::response::IntoResponse {
-        let accept = headers.get(::axum::http::header::ACCEPT);
+        let accept = ::humars::content_negotiation::parse_accept_header(&headers);
         let result = resp_json().await;
         result.__humars_into_response(accept)
     }
@@ -195,6 +195,12 @@ pub mod api_root {
         };
         assert_impl_any_token(previous._static_assertions_impl_any());
     };
+    #[allow(non_upper_case_globals)]
+    const __HUMARS_RESPONSE_AVAILABLE_MIMES_GetRootResponse: &[::mime::Mime] = &[
+        ::mime::TEXT_PLAIN,
+        ::mime::TEXT_PLAIN,
+        ::mime::TEXT_PLAIN,
+    ];
     impl ::humars::response::Response for GetRootResponse {
         fn __openapi_modify_operation(
             op: ::utoipa::openapi::path::OperationBuilder,
@@ -205,7 +211,7 @@ pub mod api_root {
                     ::utoipa::openapi::ResponseBuilder::new()
                         .description("There you go mate.")
                         .content(
-                            "text/plain",
+                            ::mime::TEXT_PLAIN_UTF_8.as_ref(),
                             ::utoipa::openapi::ContentBuilder::new()
                                 .schema(<String as utoipa::PartialSchema>::schema())
                                 .build(),
@@ -218,7 +224,7 @@ pub mod api_root {
                     ::utoipa::openapi::ResponseBuilder::new()
                         .description("Are you insane?\n\nBad request.")
                         .content(
-                            "text/plain",
+                            ::mime::TEXT_PLAIN_UTF_8.as_ref(),
                             ::utoipa::openapi::ContentBuilder::new()
                                 .schema(<String as utoipa::PartialSchema>::schema())
                                 .build(),
@@ -236,47 +242,76 @@ pub mod api_root {
         }
         fn __humars_into_response(
             self,
-            accept: Option<&::axum::http::HeaderValue>,
+            accept: Option<::accept_header::Accept>,
         ) -> ::axum::response::Response {
-            match accept.map(|x| x.as_bytes()) {
-                Some(b"text/plain") => {
-                    match self {
-                        Self::Ok(body) => {
+            match accept {
+                Some(accept) => {
+                    match accept
+                        .negotiate(&__HUMARS_RESPONSE_AVAILABLE_MIMES_GetRootResponse)
+                    {
+                        Ok(negotiated) => {
+                            match (negotiated.type_(), negotiated.subtype()) {
+                                (::mime::TEXT, mime::HTML) => {
+                                    match self {
+                                        _ => (::axum::http::StatusCode::BAD_REQUEST).into_response(),
+                                        _ => (::axum::http::StatusCode::BAD_REQUEST).into_response(),
+                                        _ => (::axum::http::StatusCode::BAD_REQUEST).into_response(),
+                                    }
+                                }
+                                (::mime::TEXT, mime::PLAIN) => {
+                                    match self {
+                                        Self::Ok(body) => {
+                                            (
+                                                ::axum::http::StatusCode::from_u16(200u16).unwrap(),
+                                                Into::<String>::into(body),
+                                            )
+                                                .into_response()
+                                        }
+                                        Self::BadRequest(body) => {
+                                            (
+                                                ::axum::http::StatusCode::from_u16(400u16).unwrap(),
+                                                Into::<String>::into(body),
+                                            )
+                                                .into_response()
+                                        }
+                                        Self::Forbidden => {
+                                            (::axum::http::StatusCode::from_u16(401u16).unwrap())
+                                                .into_response()
+                                        }
+                                    }
+                                }
+                                (::mime::APPLICATION, mime::JSON) => {
+                                    match self {
+                                        _ => (::axum::http::StatusCode::BAD_REQUEST).into_response(),
+                                        _ => (::axum::http::StatusCode::BAD_REQUEST).into_response(),
+                                        _ => (::axum::http::StatusCode::BAD_REQUEST).into_response(),
+                                    }
+                                }
+                                _ => {
+                                    (
+                                        ::axum::http::StatusCode::BAD_REQUEST,
+                                        "Negotiated some weird poo.",
+                                    )
+                                        .into_response()
+                                }
+                            }
+                        }
+                        Err(_) => {
                             (
-                                ::axum::http::StatusCode::from_u16(200u16).unwrap(),
-                                Into::<String>::into(body),
+                                ::axum::http::StatusCode::BAD_REQUEST,
+                                "Requested content-type not supported.",
                             )
                                 .into_response()
                         }
-                        Self::BadRequest(body) => {
-                            (
-                                ::axum::http::StatusCode::from_u16(400u16).unwrap(),
-                                Into::<String>::into(body),
-                            )
-                                .into_response()
-                        }
-                        Self::Forbidden => {
-                            (::axum::http::StatusCode::from_u16(401u16).unwrap())
-                                .into_response()
-                        }
                     }
                 }
-                Some(b"text/html") => {
-                    match self {
-                        _ => (::axum::http::StatusCode::BAD_REQUEST).into_response(),
-                        _ => (::axum::http::StatusCode::BAD_REQUEST).into_response(),
-                        _ => (::axum::http::StatusCode::BAD_REQUEST).into_response(),
-                    }
+                None => {
+                    (
+                        ::axum::http::StatusCode::BAD_REQUEST,
+                        "No accept header specified, but some variants have a body.",
+                    )
+                        .into_response()
                 }
-                Some(b"application/json") => {
-                    match self {
-                        _ => (::axum::http::StatusCode::BAD_REQUEST).into_response(),
-                        _ => (::axum::http::StatusCode::BAD_REQUEST).into_response(),
-                        _ => (::axum::http::StatusCode::BAD_REQUEST).into_response(),
-                    }
-                }
-                None => (::axum::http::StatusCode::BAD_REQUEST).into_response(),
-                _ => (::axum::http::StatusCode::BAD_REQUEST).into_response(),
             }
         }
     }
@@ -463,136 +498,6 @@ pub mod api_root {
         }
     };
     impl ::humars::DTO for RqConsQueryStruct {}
-    pub enum RqConsQueryResponse {
-        Ok(String),
-        BadRequest(String),
-    }
-    const _: fn() = || {
-        use ::static_assertions::_core::marker::PhantomData;
-        use ::static_assertions::_core::ops::Deref;
-        let previous = AssertImplAnyFallback;
-        struct AssertImplAnyFallback;
-        struct ActualAssertImplAnyToken;
-        trait AssertImplAnyToken {}
-        impl AssertImplAnyToken for ActualAssertImplAnyToken {}
-        fn assert_impl_any_token<T: AssertImplAnyToken>(_: T) {}
-        let previous = {
-            struct Wrapper<T, N>(PhantomData<T>, N);
-            impl<T, N> Deref for Wrapper<T, N> {
-                type Target = N;
-                fn deref(&self) -> &Self::Target {
-                    &self.1
-                }
-            }
-            impl<T: ::utoipa::PartialSchema, N> Wrapper<T, N> {
-                fn _static_assertions_impl_any(&self) -> ActualAssertImplAnyToken {
-                    ActualAssertImplAnyToken
-                }
-            }
-            Wrapper::<String, _>(PhantomData, previous)
-        };
-        let previous = {
-            struct Wrapper<T, N>(PhantomData<T>, N);
-            impl<T, N> Deref for Wrapper<T, N> {
-                type Target = N;
-                fn deref(&self) -> &Self::Target {
-                    &self.1
-                }
-            }
-            impl<T: ::humars::DTO_Response, N> Wrapper<T, N> {
-                fn _static_assertions_impl_any(&self) -> ActualAssertImplAnyToken {
-                    ActualAssertImplAnyToken
-                }
-            }
-            Wrapper::<String, _>(PhantomData, previous)
-        };
-        assert_impl_any_token(previous._static_assertions_impl_any());
-    };
-    const _: fn() = || {
-        use ::static_assertions::_core::marker::PhantomData;
-        use ::static_assertions::_core::ops::Deref;
-        let previous = AssertImplAnyFallback;
-        struct AssertImplAnyFallback;
-        struct ActualAssertImplAnyToken;
-        trait AssertImplAnyToken {}
-        impl AssertImplAnyToken for ActualAssertImplAnyToken {}
-        fn assert_impl_any_token<T: AssertImplAnyToken>(_: T) {}
-        let previous = {
-            struct Wrapper<T, N>(PhantomData<T>, N);
-            impl<T, N> Deref for Wrapper<T, N> {
-                type Target = N;
-                fn deref(&self) -> &Self::Target {
-                    &self.1
-                }
-            }
-            impl<T: ::utoipa::PartialSchema, N> Wrapper<T, N> {
-                fn _static_assertions_impl_any(&self) -> ActualAssertImplAnyToken {
-                    ActualAssertImplAnyToken
-                }
-            }
-            Wrapper::<String, _>(PhantomData, previous)
-        };
-        let previous = {
-            struct Wrapper<T, N>(PhantomData<T>, N);
-            impl<T, N> Deref for Wrapper<T, N> {
-                type Target = N;
-                fn deref(&self) -> &Self::Target {
-                    &self.1
-                }
-            }
-            impl<T: ::humars::DTO_Response, N> Wrapper<T, N> {
-                fn _static_assertions_impl_any(&self) -> ActualAssertImplAnyToken {
-                    ActualAssertImplAnyToken
-                }
-            }
-            Wrapper::<String, _>(PhantomData, previous)
-        };
-        assert_impl_any_token(previous._static_assertions_impl_any());
-    };
-    impl ::humars::response::Response for RqConsQueryResponse {
-        fn __openapi_modify_operation(
-            op: ::utoipa::openapi::path::OperationBuilder,
-        ) -> ::utoipa::openapi::path::OperationBuilder {
-            let op = op
-                .response(
-                    "200",
-                    ::utoipa::openapi::ResponseBuilder::new().description("").build(),
-                );
-            let op = op
-                .response(
-                    "400",
-                    ::utoipa::openapi::ResponseBuilder::new().description("").build(),
-                );
-            op
-        }
-        fn __humars_into_response(
-            self,
-            accept: Option<&::axum::http::HeaderValue>,
-        ) -> ::axum::response::Response {
-            match accept.map(|x| x.as_bytes()) {
-                Some(b"text/plain") => {
-                    match self {
-                        _ => (::axum::http::StatusCode::BAD_REQUEST).into_response(),
-                        _ => (::axum::http::StatusCode::BAD_REQUEST).into_response(),
-                    }
-                }
-                Some(b"text/html") => {
-                    match self {
-                        _ => (::axum::http::StatusCode::BAD_REQUEST).into_response(),
-                        _ => (::axum::http::StatusCode::BAD_REQUEST).into_response(),
-                    }
-                }
-                Some(b"application/json") => {
-                    match self {
-                        _ => (::axum::http::StatusCode::BAD_REQUEST).into_response(),
-                        _ => (::axum::http::StatusCode::BAD_REQUEST).into_response(),
-                    }
-                }
-                None => (::axum::http::StatusCode::BAD_REQUEST).into_response(),
-                _ => (::axum::http::StatusCode::BAD_REQUEST).into_response(),
-            }
-        }
-    }
     pub struct RqConsPathStruct {
         user_id: String,
         team_id: i32,
@@ -817,166 +722,6 @@ pub mod api_root {
         }
     };
     impl ::humars::DTO for RqConsPathStruct {}
-    pub enum RqConsPathResponse {
-        Ok(String),
-    }
-    const _: fn() = || {
-        use ::static_assertions::_core::marker::PhantomData;
-        use ::static_assertions::_core::ops::Deref;
-        let previous = AssertImplAnyFallback;
-        struct AssertImplAnyFallback;
-        struct ActualAssertImplAnyToken;
-        trait AssertImplAnyToken {}
-        impl AssertImplAnyToken for ActualAssertImplAnyToken {}
-        fn assert_impl_any_token<T: AssertImplAnyToken>(_: T) {}
-        let previous = {
-            struct Wrapper<T, N>(PhantomData<T>, N);
-            impl<T, N> Deref for Wrapper<T, N> {
-                type Target = N;
-                fn deref(&self) -> &Self::Target {
-                    &self.1
-                }
-            }
-            impl<T: ::utoipa::PartialSchema, N> Wrapper<T, N> {
-                fn _static_assertions_impl_any(&self) -> ActualAssertImplAnyToken {
-                    ActualAssertImplAnyToken
-                }
-            }
-            Wrapper::<String, _>(PhantomData, previous)
-        };
-        let previous = {
-            struct Wrapper<T, N>(PhantomData<T>, N);
-            impl<T, N> Deref for Wrapper<T, N> {
-                type Target = N;
-                fn deref(&self) -> &Self::Target {
-                    &self.1
-                }
-            }
-            impl<T: ::humars::DTO_Response, N> Wrapper<T, N> {
-                fn _static_assertions_impl_any(&self) -> ActualAssertImplAnyToken {
-                    ActualAssertImplAnyToken
-                }
-            }
-            Wrapper::<String, _>(PhantomData, previous)
-        };
-        assert_impl_any_token(previous._static_assertions_impl_any());
-    };
-    impl ::humars::response::Response for RqConsPathResponse {
-        fn __openapi_modify_operation(
-            op: ::utoipa::openapi::path::OperationBuilder,
-        ) -> ::utoipa::openapi::path::OperationBuilder {
-            let op = op
-                .response(
-                    "200",
-                    ::utoipa::openapi::ResponseBuilder::new().description("").build(),
-                );
-            op
-        }
-        fn __humars_into_response(
-            self,
-            accept: Option<&::axum::http::HeaderValue>,
-        ) -> ::axum::response::Response {
-            match accept.map(|x| x.as_bytes()) {
-                Some(b"text/plain") => {
-                    match self {
-                        _ => (::axum::http::StatusCode::BAD_REQUEST).into_response(),
-                    }
-                }
-                Some(b"text/html") => {
-                    match self {
-                        _ => (::axum::http::StatusCode::BAD_REQUEST).into_response(),
-                    }
-                }
-                Some(b"application/json") => {
-                    match self {
-                        _ => (::axum::http::StatusCode::BAD_REQUEST).into_response(),
-                    }
-                }
-                None => (::axum::http::StatusCode::BAD_REQUEST).into_response(),
-                _ => (::axum::http::StatusCode::BAD_REQUEST).into_response(),
-            }
-        }
-    }
-    pub enum RespJsonResponse {
-        Ok(StructJson),
-    }
-    const _: fn() = || {
-        use ::static_assertions::_core::marker::PhantomData;
-        use ::static_assertions::_core::ops::Deref;
-        let previous = AssertImplAnyFallback;
-        struct AssertImplAnyFallback;
-        struct ActualAssertImplAnyToken;
-        trait AssertImplAnyToken {}
-        impl AssertImplAnyToken for ActualAssertImplAnyToken {}
-        fn assert_impl_any_token<T: AssertImplAnyToken>(_: T) {}
-        let previous = {
-            struct Wrapper<T, N>(PhantomData<T>, N);
-            impl<T, N> Deref for Wrapper<T, N> {
-                type Target = N;
-                fn deref(&self) -> &Self::Target {
-                    &self.1
-                }
-            }
-            impl<T: ::utoipa::PartialSchema, N> Wrapper<T, N> {
-                fn _static_assertions_impl_any(&self) -> ActualAssertImplAnyToken {
-                    ActualAssertImplAnyToken
-                }
-            }
-            Wrapper::<StructJson, _>(PhantomData, previous)
-        };
-        let previous = {
-            struct Wrapper<T, N>(PhantomData<T>, N);
-            impl<T, N> Deref for Wrapper<T, N> {
-                type Target = N;
-                fn deref(&self) -> &Self::Target {
-                    &self.1
-                }
-            }
-            impl<T: ::humars::DTO_Response, N> Wrapper<T, N> {
-                fn _static_assertions_impl_any(&self) -> ActualAssertImplAnyToken {
-                    ActualAssertImplAnyToken
-                }
-            }
-            Wrapper::<StructJson, _>(PhantomData, previous)
-        };
-        assert_impl_any_token(previous._static_assertions_impl_any());
-    };
-    impl ::humars::response::Response for RespJsonResponse {
-        fn __openapi_modify_operation(
-            op: ::utoipa::openapi::path::OperationBuilder,
-        ) -> ::utoipa::openapi::path::OperationBuilder {
-            let op = op
-                .response(
-                    "200",
-                    ::utoipa::openapi::ResponseBuilder::new().description("").build(),
-                );
-            op
-        }
-        fn __humars_into_response(
-            self,
-            accept: Option<&::axum::http::HeaderValue>,
-        ) -> ::axum::response::Response {
-            match accept.map(|x| x.as_bytes()) {
-                Some(b"text/plain") => {
-                    match self {
-                        _ => (::axum::http::StatusCode::BAD_REQUEST).into_response(),
-                    }
-                }
-                Some(b"text/html") => {
-                    match self {
-                        _ => (::axum::http::StatusCode::BAD_REQUEST).into_response(),
-                    }
-                }
-                Some(b"application/json") => {
-                    match self {
-                        _ => (::axum::http::StatusCode::BAD_REQUEST).into_response(),
-                    }
-                }
-                None => (::axum::http::StatusCode::BAD_REQUEST).into_response(),
-                _ => (::axum::http::StatusCode::BAD_REQUEST).into_response(),
-            }
-        }
-    }
     pub fn merge_into_router(other: ::axum::Router) -> ::axum::Router {
         let this_router = ::axum::Router::new()
             .route("/", ::axum::routing::get(__humars_wrapper_get_root))

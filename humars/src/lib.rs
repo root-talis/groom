@@ -2,6 +2,7 @@ use utoipa::ToSchema;
 
 pub mod extract;
 pub mod response;
+pub mod content_negotiation;
 
 /// Indicates that type is annotated with `#[DTO(...)]`.
 /// 
