@@ -44,8 +44,14 @@ pub fn Controller(_args: TokenStream, input: TokenStream) -> TokenStream {
 #[proc_macro_error]
 #[proc_macro_attribute]
 #[allow(non_snake_case)]
-pub fn Response(_args: TokenStream, input: TokenStream) -> TokenStream {
-    response::generate(input.into()).into()
+pub fn Response(args: TokenStream, input: TokenStream) -> TokenStream {
+    let args: proc_macro2::TokenStream = args.into();
+    /*if args.is_empty() {
+        abort!(args, "specify `format` as Response (e.g. `#[Response(format(plain_text))`])")
+    }*/
+
+    let response_args = parse_nested_meta!(response::ResponseArgs, args.clone());
+    response::generate(args, response_args, input.into()).into()
 }
 
 

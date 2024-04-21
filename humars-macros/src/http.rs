@@ -24,3 +24,48 @@ impl Default for HTTPStatusCode {
         Self(200u16)
     }
 }
+
+#[derive(Debug, Copy, Clone, FromMeta, Eq, PartialEq, Hash, Display)]
+#[darling(rename_all = "snake_case")]
+#[strum(serialize_all="snake_case")]
+pub(crate) enum ResponseContentType {
+    PlainText,
+    Html,
+    Json,
+}
+
+#[derive(FromMeta, Default)]
+pub(crate) struct ResponseContentTypesList {
+    #[darling(default)]
+    pub(crate) plain_text: bool,
+
+    #[darling(default)]
+    pub(crate) html: bool,
+
+    #[darling(default)]
+    pub(crate) json: bool,
+}
+
+/*
+impl ResponseContentTypesList {
+    fn is_any(&self) -> bool {
+        return self.plain_text || self.html || self.json;
+    }
+}
+*/
+
+impl Into<Vec<ResponseContentType>> for ResponseContentTypesList {
+    fn into(self) -> Vec<ResponseContentType> {
+        let mut v = Vec::with_capacity(3);
+        if self.plain_text {
+            v.push(ResponseContentType::PlainText)
+        }
+        if self.html {
+            v.push(ResponseContentType::Html)
+        }
+        if self.json {
+            v.push(ResponseContentType::Json)
+        }
+        v
+    }
+}

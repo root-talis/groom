@@ -65,7 +65,7 @@ pub mod api_root {
         let a = 1;
     }
 
-    #[Response]
+    #[Response(format(plain_text))]
     pub enum GetRootResponse {
         /// There you go mate.
         #[Response()]

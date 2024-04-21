@@ -8,4 +8,8 @@ pub mod response;
 /// Do not implement this manually.
 pub trait DTO: ToSchema<'static> {}
 
-pub use response::DTO_Response;
+/// Indicates that type is annotated with `#[DTO(response(...))]`.
+/// 
+/// Do not implement this manually.
+#[allow(non_camel_case_types)]
+pub trait DTO_Response {}

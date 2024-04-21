@@ -32,16 +32,19 @@ fn router() -> Router {
     my_api::merge_into_router(Router::new())
 }
 
-async fn get(url: &str) -> (StatusCode, HeaderMap, String) {
+async fn get(url: &str, accept: Option<&'static str>) -> (StatusCode, HeaderMap, String) {
     let app = router();
 
+    let mut request = Request::builder().uri(url);
+
+    if accept.is_some() {
+        request = request.header("accept", accept.unwrap());
+    }
+
+    let request = request.body(Body::empty()).unwrap();
+
     let response = app
-        .oneshot(
-            Request::builder()
-                .uri(url)
-                .body(Body::empty())
-                .unwrap()
-        )
+        .oneshot(request)
         .await
         .unwrap()
     ;
@@ -70,14 +73,11 @@ fn assert_no_content_type(headers: &HeaderMap) {
 
 #[Controller]
 mod my_api {
-    //use std::collections::HashMap;
-
     use axum::extract::{Path, Query};
-    use axum::response::Html;
     use axum::response::IntoResponse;
 
     use crate::humars_macros::{Response, DTO};
-    use humars::{extract::HumarsExtractor, DTO_Response};
+    use humars::extract::HumarsExtractor;
     use humars::response::Response;
 
     use utoipa::ToSchema;
@@ -92,7 +92,7 @@ mod my_api {
         RootResponse::Ok
     }
 
-    #[Response]
+    #[Response(format(plain_text))]
     pub enum RootResponse {
         #[Response(code = 202)] // todo: allow using constants like axum::http::Status::ACCEPTED?
         Ok,
@@ -116,7 +116,7 @@ mod my_api {
         HelloWorldResponse::Ok("hello, world!".into())
     }
 
-    #[Response]
+    #[Response(format(plain_text))]
     pub enum HelloWorldResponse {
         #[Response()]
         Ok(String),
@@ -149,7 +149,7 @@ mod my_api {
         title: Option<String>,
     }
 
-    #[Response]
+    #[Response(format(plain_text))]
     pub enum RqConsQueryResponse {
         /// A quick brown fox jumped over a lazy dog.
         #[Response()]
@@ -162,7 +162,7 @@ mod my_api {
         BadRequest(String),
     }
 
-    #[Response]
+    #[Response(format(plain_text))]
     pub enum RqConsPathResponse {
         #[Response()]
         Ok(String),
@@ -244,16 +244,47 @@ mod my_api {
     //
 
     #[Route(method = "get", path = "/html")]
-    async fn resp_html_body() -> GetHtmlBodyResult {
-        GetHtmlBodyResult::Ok(Html("<h1>Hello, world!</h1>"))
+    async fn resp_html() -> GetHtmlBodyResult {
+        GetHtmlBodyResult::Ok("<h1>Hello, world!</h1>")
     }
 
-    #[Response]
+    #[Response(format(html))]
     pub enum GetHtmlBodyResult {
         /// Home page
         #[Response()]
-        Ok(Html<&'static str>),
+        Ok(&'static str),
     }
+
+    // --
+
+    #[Route(method = "get", path = "/html-or-text")]
+    async fn resp_html_or_text() -> GetHtmlOrTextBodyResult {
+        GetHtmlOrTextBodyResult::Ok(PageData("Hello, world!".to_string()))
+    }
+    
+    #[DTO(response)]
+    pub struct PageData(String);
+
+    impl Into<String> for PageData {
+        fn into(self) -> String {
+            self.0
+        }
+    }
+    impl Into<axum::body::Body> for PageData {
+        fn into(self) -> axum::body::Body {
+            format!("<h1>{}</h1>", self.0).into()
+        }
+    }
+
+    #[Response(format(plain_text, html))]
+    pub enum GetHtmlOrTextBodyResult {
+        /// Home page
+        #[Response()]
+        Ok(PageData),
+        //Ok(&'static str),
+    }
+    
+    // --
 
     #[Route(method = "get", path = "/struct")]
     async fn resp_struct_body() -> GetStructBodyResult {
@@ -262,17 +293,47 @@ mod my_api {
             message: None,
         })
     }
-    
-    #[DTO(response(json))]
+
+    #[DTO(response)]
     pub struct StructBody {
         pub success: bool,
         pub message: Option<String>,
     }
 
-    #[Response]
+    #[Response(format(json))]
     pub enum GetStructBodyResult {
         #[Response()]
         Ok(StructBody),
+    }
+
+    // --
+
+    #[Route(method = "get", path = "/html-or-json")]
+    async fn resp_html_or_json() -> GetHtmlOrJsonBodyResult {
+        GetHtmlOrJsonBodyResult::Ok(HtmlOrJsonDataObject{
+            status: "open",
+            status_timestamp: 1234567890,
+        })
+    }
+    
+    #[DTO(response)]
+    pub struct HtmlOrJsonDataObject {
+        pub status: &'static str,
+        pub status_timestamp: u64,
+    }
+
+    impl Into<axum::body::Body> for HtmlOrJsonDataObject {
+        fn into(self) -> axum::body::Body {
+            format!("<div><div>status: {}</div><div>status timestamp: {}</div></div>", self.status, self.status_timestamp).into()
+        }
+    }
+
+    #[Response(format(html, json))]
+    pub enum GetHtmlOrJsonBodyResult {
+        /// Current status
+        #[Response()]
+        Ok(HtmlOrJsonDataObject),
+        //Ok(&'static str),
     }
 
     // todo: Response bodies:
@@ -442,6 +503,59 @@ fn api_doc() {
                         }
                     }
                 },
+                "/html-or-text": {
+                    "get": {
+                        "responses": {
+                            "200": {
+                                "description": "Home page",
+                                "content": {
+                                    "text/html": {
+                                        "schema": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "text/plain": {
+                                        "schema": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "/html-or-json": {
+                    "get": {
+                        "responses": {
+                            "200": {
+                                "description": "Current status",
+                                "content": {
+                                    "text/html": {
+                                        "schema": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "application/json": {
+                                        "schema": {
+                                            "type": "object",
+                                            "properties": {
+                                                "status": {
+                                                    "type": "string"
+                                                },
+                                                "status_timestamp": {
+                                                    "format": "int64",
+                                                    "minimum": 0,
+                                                    "type": "integer"
+                                                }
+                                            },
+                                            "required": ["status", "status_timestamp"]
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
                 "/struct": {
                     "get": {
                         "responses": {
@@ -569,7 +683,7 @@ fn api_doc() {
 
 #[tokio::test]
 pub async fn test_root() {
-    let (status, headers, body) = get("/").await;
+    let (status, headers, body) = get("/", None).await;
 
     assert_eq!(status, StatusCode::ACCEPTED);
     assert_eq!(body, "");
@@ -578,7 +692,7 @@ pub async fn test_root() {
 
 #[tokio::test]
 pub async fn test_hello_world() {
-    let (status, headers, body) = get("/hello-world").await;
+    let (status, headers, body) = get("/hello-world", Some("text/plain")).await;
 
     assert_eq!(status, StatusCode::OK);
     assert_eq!(body, "hello, world!");
@@ -587,27 +701,27 @@ pub async fn test_hello_world() {
 
 #[tokio::test]
 pub async fn test_query_struct() {
-    let (status, headers, body) = get("/greet?first_name_renamed=").await;
+    let (status, headers, body) = get("/greet?first_name_renamed=", Some("text/plain")).await;
     assert_eq!(status, StatusCode::BAD_REQUEST);
     assert_eq!(body, "Empty name");
     assert_content_type(&headers, "text/plain; charset=utf-8");
 
-    let (status, headers, body) = get("/greet?first_name_renamed=Max").await;
+    let (status, headers, body) = get("/greet?first_name_renamed=Max", Some("text/plain")).await;
     assert_eq!(status, StatusCode::OK);
     assert_eq!(body, "Hello, Max!");
     assert_content_type(&headers, "text/plain; charset=utf-8");
 
-    let (status, headers, body) = get("/greet?last_name=Doe&first_name_renamed=John").await;
+    let (status, headers, body) = get("/greet?last_name=Doe&first_name_renamed=John", Some("text/plain")).await;
     assert_eq!(status, StatusCode::OK);
     assert_eq!(body, "Hello, John Doe!");
     assert_content_type(&headers, "text/plain; charset=utf-8");
 
-    let (status, headers, body) = get("/greet?first_name_renamed=John&title=Sir").await;
+    let (status, headers, body) = get("/greet?first_name_renamed=John&title=Sir", Some("text/plain")).await;
     assert_eq!(status, StatusCode::OK);
     assert_eq!(body, "Hello, Sir John!");
     assert_content_type(&headers, "text/plain; charset=utf-8");
 
-    let (status, headers, body) = get("/greet?last_name=Backsword&title=Sir&first_name_renamed=John").await;
+    let (status, headers, body) = get("/greet?last_name=Backsword&title=Sir&first_name_renamed=John", Some("text/plain")).await;
     assert_eq!(status, StatusCode::OK);
     assert_eq!(body, "Hello, Sir John Backsword!");
     assert_content_type(&headers, "text/plain; charset=utf-8");
@@ -632,12 +746,12 @@ pub async fn test_query_struct_hashmap() {
 
 #[tokio::test]
 pub async fn test_path() {
-    let (status, headers, body) = get("/team/7/user/1").await;
+    let (status, headers, body) = get("/team/7/user/1", Some("text/plain")).await;
     assert_eq!(status, StatusCode::OK);
     assert_eq!(body, "1 -> 7");
     assert_content_type(&headers, "text/plain; charset=utf-8");
 
-    let (status, headers, body) = get("/team/Hitchhikers/user/42").await;
+    let (status, headers, body) = get("/team/Hitchhikers/user/42", Some("text/plain")).await;
     assert_eq!(status, StatusCode::OK);
     assert_eq!(body, "42 -> Hitchhikers");
     assert_content_type(&headers, "text/plain; charset=utf-8");
@@ -646,11 +760,48 @@ pub async fn test_path() {
 
 #[tokio::test]
 pub async fn test_struct_body() {
-    let (status, headers, body) = get("/struct").await;
+    let (status, headers, body) = get("/struct", Some("application/json")).await;
     assert_eq!(status, StatusCode::OK);
     assert_eq!(body, "{\"success\":true,\"message\":null}");
     assert_content_type(&headers, "application/json");
 }
+
+
+#[tokio::test]
+pub async fn test_html() {
+    let (status, headers, body) = get("/html", Some("text/html")).await;
+    assert_eq!(status, StatusCode::OK);
+    assert_eq!(body, "<h1>Hello, world!</h1>");
+    assert_content_type(&headers, "text/html; charset=utf-8");
+}
+
+
+#[tokio::test]
+pub async fn test_html_or_text() {
+    let (status, headers, body) = get("/html-or-text", Some("text/html")).await;
+    assert_eq!(status, StatusCode::OK);
+    assert_eq!(body, "<h1>Hello, world!</h1>");
+    assert_content_type(&headers, "text/html; charset=utf-8");
+
+    let (status, headers, body) = get("/html-or-text", Some("text/plain")).await;
+    assert_eq!(status, StatusCode::OK);
+    assert_eq!(body, "Hello, world!");
+    assert_content_type(&headers, "text/plain; charset=utf-8");
+}
+
+#[tokio::test]
+pub async fn test_html_or_json() {
+    let (status, headers, body) = get("/html-or-json", Some("text/html")).await;
+    assert_eq!(status, StatusCode::OK);
+    assert_eq!(body, "<div><div>status: open</div><div>status timestamp: 1234567890</div></div>");
+    assert_content_type(&headers, "text/html; charset=utf-8");
+
+    let (status, headers, body) = get("/html-or-json", Some("application/json")).await;
+    assert_eq!(status, StatusCode::OK);
+    assert_eq!(body, "{\"status\":\"open\",\"status_timestamp\":1234567890}");
+    assert_content_type(&headers, "application/json");
+}
+
 
 //
 // endregion: tests ------------------------------------------------
