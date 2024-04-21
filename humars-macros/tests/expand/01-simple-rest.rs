@@ -13,7 +13,7 @@ pub mod api_root {
     }
 
     #[Route(method = "post", path = "/")]
-    pub async fn post_root() {
+    pub async fn post_root() -> GetRootResponse {
         let a = 2;
     }
 

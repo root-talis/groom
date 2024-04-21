@@ -183,6 +183,10 @@ fn generate_impl_enum(enum_impl: ItemEnum) -> TokenStream {
                 #(#openapi_impls)*
                 op
             }
+
+            fn __humars_into_response(self, accept: Option<&::axum::http::HeaderValue>) -> ::axum::response::Response {
+                self.into_response()
+            }
         }
     }
 }

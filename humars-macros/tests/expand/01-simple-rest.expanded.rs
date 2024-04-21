@@ -11,9 +11,23 @@ pub mod api_root {
     pub async fn get_root() -> GetRootResponse {
         let a = 1;
     }
+    async fn __humars_wrapper_get_root(
+        headers: ::axum::http::header::HeaderMap,
+    ) -> impl ::axum::response::IntoResponse {
+        let accept = headers.get(::axum::http::header::ACCEPT);
+        let result = get_root().await;
+        result.__humars_into_response(accept)
+    }
     /// HTTP handler: POST /
-    pub async fn post_root() {
+    pub async fn post_root() -> GetRootResponse {
         let a = 2;
+    }
+    async fn __humars_wrapper_post_root(
+        headers: ::axum::http::header::HeaderMap,
+    ) -> impl ::axum::response::IntoResponse {
+        let accept = headers.get(::axum::http::header::ACCEPT);
+        let result = post_root().await;
+        result.__humars_into_response(accept)
     }
     /// Query<struct>
     ///
@@ -29,6 +43,14 @@ pub mod api_root {
             RqConsQueryResponse::Ok(result)
         }
     }
+    async fn __humars_wrapper_rq_cons_query_struct(
+        headers: ::axum::http::header::HeaderMap,
+        input0: Query<RqConsQueryStruct>,
+    ) -> impl ::axum::response::IntoResponse {
+        let accept = headers.get(::axum::http::header::ACCEPT);
+        let result = rq_cons_query_struct(input0).await;
+        result.__humars_into_response(accept)
+    }
     /// Query<HashMap<String, String>>
     ///
     /// HTTP handler: GET /greet_2
@@ -43,6 +65,14 @@ pub mod api_root {
             RqConsQueryResponse::BadRequest("Empty string".into())
         }
     }
+    async fn __humars_wrapper_rq_cons_query_struct(
+        headers: ::axum::http::header::HeaderMap,
+        input0: Query<HashMap<String, String>>,
+    ) -> impl ::axum::response::IntoResponse {
+        let accept = headers.get(::axum::http::header::ACCEPT);
+        let result = rq_cons_query_struct(input0).await;
+        result.__humars_into_response(accept)
+    }
     /// Path<struct>
     ///
     /// HTTP handler: GET /team/:team_id/user/:user_id
@@ -51,9 +81,24 @@ pub mod api_root {
     ) -> RqConsPathResponse {
         RqConsPathResponse::Ok("ok".into())
     }
+    async fn __humars_wrapper_rq_cons_path_struct(
+        headers: ::axum::http::header::HeaderMap,
+        input0: Path<RqConsPathStruct>,
+    ) -> impl ::axum::response::IntoResponse {
+        let accept = headers.get(::axum::http::header::ACCEPT);
+        let result = rq_cons_path_struct(input0).await;
+        result.__humars_into_response(accept)
+    }
     /// HTTP handler: GET /json
     pub async fn resp_json() -> RespJsonResponse {
         RespJsonResponse::Ok(StructJson { success: true })
+    }
+    async fn __humars_wrapper_resp_json(
+        headers: ::axum::http::header::HeaderMap,
+    ) -> impl ::axum::response::IntoResponse {
+        let accept = headers.get(::axum::http::header::ACCEPT);
+        let result = resp_json().await;
+        result.__humars_into_response(accept)
     }
     async fn not_a_handler() {
         let a = 1;
@@ -193,6 +238,12 @@ pub mod api_root {
                         .build(),
                 );
             op
+        }
+        fn __humars_into_response(
+            self,
+            accept: Option<&::axum::http::HeaderValue>,
+        ) -> ::axum::response::Response {
+            self.into_response()
         }
     }
     pub struct RqConsQueryStruct {
@@ -496,6 +547,12 @@ pub mod api_root {
             let op = op.response("400", response);
             op
         }
+        fn __humars_into_response(
+            self,
+            accept: Option<&::axum::http::HeaderValue>,
+        ) -> ::axum::response::Response {
+            self.into_response()
+        }
     }
     pub struct RqConsPathStruct {
         user_id: String,
@@ -787,6 +844,12 @@ pub mod api_root {
             let op = op.response("200", response);
             op
         }
+        fn __humars_into_response(
+            self,
+            accept: Option<&::axum::http::HeaderValue>,
+        ) -> ::axum::response::Response {
+            self.into_response()
+        }
     }
     pub struct StructJson {
         success: bool,
@@ -905,18 +968,27 @@ pub mod api_root {
             let op = op.response("200", response);
             op
         }
+        fn __humars_into_response(
+            self,
+            accept: Option<&::axum::http::HeaderValue>,
+        ) -> ::axum::response::Response {
+            self.into_response()
+        }
     }
     pub fn merge_into_router(other: ::axum::Router) -> ::axum::Router {
         let this_router = ::axum::Router::new()
-            .route("/", ::axum::routing::get(get_root))
-            .route("/", ::axum::routing::post(post_root))
-            .route("/greet", ::axum::routing::get(rq_cons_query_struct))
-            .route("/greet_2", ::axum::routing::get(rq_cons_query_struct))
+            .route("/", ::axum::routing::get(__humars_wrapper_get_root))
+            .route("/", ::axum::routing::post(__humars_wrapper_post_root))
+            .route("/greet", ::axum::routing::get(__humars_wrapper_rq_cons_query_struct))
+            .route(
+                "/greet_2",
+                ::axum::routing::get(__humars_wrapper_rq_cons_query_struct),
+            )
             .route(
                 "/team/:team_id/user/:user_id",
-                ::axum::routing::get(rq_cons_path_struct),
+                ::axum::routing::get(__humars_wrapper_rq_cons_path_struct),
             )
-            .route("/json", ::axum::routing::get(resp_json));
+            .route("/json", ::axum::routing::get(__humars_wrapper_resp_json));
         other.merge(this_router)
     }
     pub fn merge_into_openapi_builder(
@@ -946,6 +1018,7 @@ pub mod api_root {
                     let mut op_builder = ::utoipa::openapi::path::OperationBuilder::new()
                         .summary(None as Option<String>)
                         .description(None as Option<String>);
+                    op_builder = GetRootResponse::__openapi_modify_operation(op_builder);
                     ::utoipa::openapi::path::PathItemBuilder::new()
                         .operation(
                             ::utoipa::openapi::PathItemType::Post,
@@ -1037,6 +1110,10 @@ pub mod api_root {
             );
         other.paths(paths)
     }
+    const _: fn() = || {
+        fn assert_impl_all<T: ?Sized + ::humars::response::Response>() {}
+        assert_impl_all::<GetRootResponse>();
+    };
     const _: fn() = || {
         fn assert_impl_all<T: ?Sized + ::humars::response::Response>() {}
         assert_impl_all::<GetRootResponse>();

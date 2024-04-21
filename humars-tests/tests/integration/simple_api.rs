@@ -74,6 +74,7 @@ mod my_api {
 
     use axum::extract::{Path, Query};
     use axum::response::Html;
+    use axum::response::IntoResponse;
 
     use crate::humars_macros::{Response, DTO};
     use humars::{extract::HumarsExtractor, DTO_Response};
@@ -358,6 +359,9 @@ fn api_doc_scratchpad() {
     let _json = api.build().to_json().expect("expected a valid json");
 
     let _breakpoint = false;
+
+    let hm = ::axum::http::header::HeaderMap::new();
+    let _has_header = hm.get(::axum::http::header::ACCEPT);
 }
 
 #[test]

@@ -76,158 +76,193 @@ fn generate_impl(input: TokenStream) -> TokenStream {
                 Err(error) => return error.write_errors(),
             };
 
-            if let Some(route) = args {
-                if function.sig.asyncness.is_none() {
-                    return Error::new_spanned(&function.sig.fn_token, "handler should be async fn").to_compile_error();
+            if args.is_none() {
+                module_items.push(function.into_token_stream());
+                continue;
+            }
+
+            let route = args.expect("args parse result is checked right above");
+            
+            if function.sig.asyncness.is_none() {
+                return Error::new_spanned(&function.sig.fn_token, "handler should be async fn").to_compile_error();
+            }
+
+            let path = route.path;
+            let method = route.method;
+            let fn_name = function.sig.ident.clone();
+
+            let duplicate_handler = seen_handlers
+                .entry(path.clone())
+                .or_default()
+                .insert(method, fn_name.to_string())
+            ;
+
+            if duplicate_handler.is_some() {
+                return Error::new_spanned(
+                    &function.sig,
+                    format!(
+                        "duplicate handler: function named `{}` is already assigned to route `{} {}`",
+                        duplicate_handler.unwrap(),
+                        method,
+                        path,
+                    )
+                ).to_compile_error();
+            }
+
+            let mut extractors: Vec<TokenStream> = Vec::new();       // mounting extractors to modify openapi operations
+            let mut wrapper_inputs: Vec<TokenStream> = Vec::new();   // listing inputs for wrapper function
+            let mut delegated_inputs: Vec<TokenStream> = Vec::new();
+            for item in function.sig.inputs.clone() {
+                match item {
+                    syn::FnArg::Receiver(receiver) => {
+                        return Error::new_spanned(
+                            &receiver,
+                            "handlers with receiver are not supported, remove `self` and use State instead: https://docs.rs/axum/latest/axum/extract/struct.State.html"
+                        ).to_compile_error();
+                    },
+                    syn::FnArg::Typed(arg) => {
+                        let ty = arg.ty.as_ref();
+
+                        type_assertions.push(quote!{
+                            assert_impl_all!(#ty: ::humars::extract::HumarsExtractor);
+                        });
+
+                        extractors.push(quote! {
+                            op_builder = <#ty>::__openapi_modify_operation(op_builder);
+                        });
+
+                        let input_ident = format_ident!("input{}", delegated_inputs.len());
+
+                        wrapper_inputs.push(quote! {
+                            #input_ident: #ty,
+                        });
+
+                        delegated_inputs.push(quote!{ 
+                            #input_ident,
+                        });
+                    },
                 }
+            }
 
-                let path = route.path;
-                let method = route.method;
-
-                let duplicate_handler = seen_handlers
-                    .entry(path.clone())
-                    .or_default()
-                    .insert(method, function.sig.ident.to_string())
-                ;
-
-                if duplicate_handler.is_some() {
-                    return Error::new_spanned(
-                        &function.sig,
-                        format!(
-                            "duplicate handler: function named `{}` is already assigned to route `{} {}`",
-                            duplicate_handler.unwrap(),
-                            method,
-                            path,
-                        )
-                    ).to_compile_error();
-                }
-
-                let mut extractors: Vec<TokenStream> = Vec::new(); // mounting extractors to modify openapi operations
-                for item in function.sig.inputs.clone() {
-                    match item {
-                        syn::FnArg::Receiver(receiver) => {
-                            return Error::new_spanned(
-                                &receiver,
-                                "handlers with receiver are not supported, remove `self` and use State instead: https://docs.rs/axum/latest/axum/extract/struct.State.html"
-                            ).to_compile_error();
-                        },
-                        syn::FnArg::Typed(arg) => {
-                            let ty = arg.ty.as_ref();
-                            type_assertions.push(quote!{
-                                assert_impl_all!(#ty: ::humars::extract::HumarsExtractor);
-                            });
-                            extractors.push(quote! {
-                                op_builder = <#ty>::__openapi_modify_operation(op_builder);
-                            });
-                        },
-                    }
-                }
-
-                let response = match function.sig.output.clone() {
+            let (response, wrapper_output) = {
+                let output_clone = function.sig.output.clone();
+                match output_clone {
                     syn::ReturnType::Default => {
-                        /*return Error::new_spanned(
-                            &sig,
+                        return Error::new_spanned(
+                            &function.sig,
                             "handlers must return something"
-                        ).to_compile_error();*/
-                        quote!{}
+                        ).to_compile_error();
                     },
                     syn::ReturnType::Type(_arrow, ty) => {
                         type_assertions.push(quote!{
                             assert_impl_all!(#ty: ::humars::response::Response);
                         });
-
-                        quote! {
-                            op_builder = #ty::__openapi_modify_operation(op_builder);
-                        }
+    
+                        (
+                            quote! {op_builder = #ty::__openapi_modify_operation(op_builder);},
+                            quote! {-> impl ::axum::response::IntoResponse}
+                        )
                     },
-                };
-
-                //
-                // new module item instead of current one:
-                //
-
-                // make new module item:
-                let method_str = method.to_string().to_ascii_uppercase();
-                let handler_comment = format!(" HTTP handler: {method_str} {path}");
-
-                // change comment:
-                let (summary, description) = crate::utils::get_summary_and_description(&function.attrs).unwrap_or_default();
-
-                let mut new_comment: Vec<TokenStream> = Vec::new();
-                if let Some(s) = summary.clone() {
-                    let s = format!(" {s}");
-                    new_comment.push(quote!{#[doc = #s]});
-                    new_comment.push(quote!{#[doc = ""]});
                 }
-                new_comment.push(quote!{#[doc = #handler_comment]});
-                if let Some(s) = description.clone() {
-                    let s = format!(" {s}");
-                    new_comment.push(quote!{#[doc = ""]});
-                    new_comment.push(quote!{#[doc = #s]});
-                }
+            };
 
-                crate::utils::remove_description(&mut function.attrs);
+            let wrapper_name = format_ident!("__humars_wrapper_{}", fn_name);
 
-                // generate module item:
-                module_items.push(quote! {
-                    #(#new_comment)*
-                    #function
-                });
+            //
+            // new module item instead of current one:
+            //
 
-                //
-                // web route setup:
-                //
+            // make new module item:
+            let method_str = method.to_string().to_ascii_uppercase();
+            let handler_comment = format!(" HTTP handler: {method_str} {path}");
 
-                let routing_method = format_ident!("{}", method.to_string());
-                let fn_name = function.sig.ident.clone();
+            // change comment:
+            let (summary, description) = crate::utils::get_summary_and_description(&function.attrs).unwrap_or_default();
 
-                routes_setup.push(quote! {
-                    .route(#path, ::axum::routing::#routing_method(#fn_name))
-                });
-
-                //
-                // openapi path setup:
-                //
-
-                let operation = match method {
-                    HTTPMethod::Connect => quote! {::utoipa::openapi::PathItemType::Connect},
-                    HTTPMethod::Delete  => quote! {::utoipa::openapi::PathItemType::Delete },
-                    HTTPMethod::Get     => quote! {::utoipa::openapi::PathItemType::Get    },
-                    HTTPMethod::Head    => quote! {::utoipa::openapi::PathItemType::Head   },
-                    HTTPMethod::Options => quote! {::utoipa::openapi::PathItemType::Option },
-                    HTTPMethod::Patch   => quote! {::utoipa::openapi::PathItemType::Patch  },
-                    HTTPMethod::Post    => quote! {::utoipa::openapi::PathItemType::Post   },
-                    HTTPMethod::Put     => quote! {::utoipa::openapi::PathItemType::Put    },
-                    HTTPMethod::Trace   => quote! {::utoipa::openapi::PathItemType::Trace  },
-                };
-
-                let summary_tk = match summary {
-                    Some(s) => quote! { Some(#s) },
-                    None => quote! { None as Option<String> },
-                };
-
-                let description_tk = match description {
-                    Some(s) => quote! { Some(#s) },
-                    None => quote! { None as Option<String> },
-                };
-                paths_setup.entry(path.clone()).or_default().push(quote! {
-                    {
-                        let mut op_builder = ::utoipa::openapi::path::OperationBuilder::new()
-                                .summary(#summary_tk)
-                                .description(#description_tk);
-                        
-                        #(#extractors)*
-
-                        #response
-
-                        ::utoipa::openapi::path::PathItemBuilder::new()
-                            .operation(#operation, op_builder.build())
-                            .build()
-                    }
-                });
-            } else {
-                module_items.push(function.into_token_stream());
+            let mut new_comment: Vec<TokenStream> = Vec::new();
+            if let Some(s) = summary.clone() {
+                let s = format!(" {s}");
+                new_comment.push(quote!{#[doc = #s]});
+                new_comment.push(quote!{#[doc = ""]});
             }
+            new_comment.push(quote!{#[doc = #handler_comment]});
+            if let Some(s) = description.clone() {
+                let s = format!(" {s}");
+                new_comment.push(quote!{#[doc = ""]});
+                new_comment.push(quote!{#[doc = #s]});
+            }
+
+            crate::utils::remove_description(&mut function.attrs);
+
+            // generate module item:
+            module_items.push(quote! {
+                #(#new_comment)*
+                #function
+
+                async fn #wrapper_name(headers: ::axum::http::header::HeaderMap, #(#wrapper_inputs)*) #wrapper_output {
+                    let accept = headers.get(::axum::http::header::ACCEPT);
+
+                    // todo: check that accept is valid for output before running code
+
+                    let result = #fn_name(#(#delegated_inputs)*).await;
+
+                    result.__humars_into_response(accept)
+                }
+            });
+
+            // todo: #wrapper_output should be a Result with error type indicating bad accept header;
+            // todo: that error should serialize into an appropriate header and response code.
+
+            //
+            // web route setup:
+            //
+
+            let routing_method = format_ident!("{}", method.to_string());
+
+            routes_setup.push(quote! {
+                .route(#path, ::axum::routing::#routing_method(#wrapper_name))
+            });
+
+            //
+            // openapi path setup:
+            //
+
+            let operation = match method {
+                HTTPMethod::Connect => quote! {::utoipa::openapi::PathItemType::Connect},
+                HTTPMethod::Delete  => quote! {::utoipa::openapi::PathItemType::Delete },
+                HTTPMethod::Get     => quote! {::utoipa::openapi::PathItemType::Get    },
+                HTTPMethod::Head    => quote! {::utoipa::openapi::PathItemType::Head   },
+                HTTPMethod::Options => quote! {::utoipa::openapi::PathItemType::Option },
+                HTTPMethod::Patch   => quote! {::utoipa::openapi::PathItemType::Patch  },
+                HTTPMethod::Post    => quote! {::utoipa::openapi::PathItemType::Post   },
+                HTTPMethod::Put     => quote! {::utoipa::openapi::PathItemType::Put    },
+                HTTPMethod::Trace   => quote! {::utoipa::openapi::PathItemType::Trace  },
+            };
+
+            let summary_tk = match summary {
+                Some(s) => quote! { Some(#s) },
+                None => quote! { None as Option<String> },
+            };
+
+            let description_tk = match description {
+                Some(s) => quote! { Some(#s) },
+                None => quote! { None as Option<String> },
+            };
+            paths_setup.entry(path.clone()).or_default().push(quote! {
+                {
+                    let mut op_builder = ::utoipa::openapi::path::OperationBuilder::new()
+                            .summary(#summary_tk)
+                            .description(#description_tk);
+                    
+                    #(#extractors)*
+
+                    #response
+
+                    ::utoipa::openapi::path::PathItemBuilder::new()
+                        .operation(#operation, op_builder.build())
+                        .build()
+                }
+            });
         } else {
             module_items.push(item.into_token_stream());
         }
