@@ -8,3 +8,6 @@ pub trait Response {
 
     // todo: __humars_content_type_supported() to determine that Accept header is OK beforehand
 }
+
+pub mod html_response;
+pub use html_response::{HtmlFormat, html_format};

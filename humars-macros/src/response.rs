@@ -179,11 +179,15 @@ fn generate_impl_enum(_resp_args_t: TokenStream, resp_args: ResponseArgs, enum_i
                 None => quote! {
                     Self::#variant_name => (#code_ts).into_response(),
                 },
-                Some(_single_field) => quote!{
-                    Self::#variant_name(body) => (
-                        #code_ts,
-                        ::axum::response::Html(body)
-                    ).into_response(),
+                Some(single_field) => {
+                    let ty = single_field.ty;
+
+                    quote!{
+                        Self::#variant_name(body) => (
+                            #code_ts,
+                            <#ty as ::humars::response::HtmlFormat>::render(body)
+                        ).into_response(),
+                    }
                 },
             });
 

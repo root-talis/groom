@@ -75,6 +75,7 @@ fn assert_no_content_type(headers: &HeaderMap) {
 mod my_api {
     use axum::extract::{Path, Query};
     use axum::response::IntoResponse;
+    use ::humars::response::html_format;
 
     use crate::humars_macros::{Response, DTO};
     use humars::extract::HumarsExtractor;
@@ -263,6 +264,11 @@ mod my_api {
         /// Home page
         #[Response()]
         Ok(&'static str),
+        
+        /// Not Found
+        #[Response(code = 404)]
+        #[allow(dead_code)]
+        NotFound(String),
     }
 
     // --
@@ -280,11 +286,9 @@ mod my_api {
             self.0
         }
     }
-    impl Into<axum::body::Body> for PageData {
-        fn into(self) -> axum::body::Body {
-            format!("<h1>{}</h1>", self.0).into()
-        }
-    }
+    html_format!(PageData, self {
+        format!("<h1>{}</h1>", self.0)
+    });
 
     #[Response(format(plain_text, html))]
     pub enum GetHtmlOrTextBodyResult {
@@ -332,11 +336,9 @@ mod my_api {
         pub status_timestamp: u64,
     }
 
-    impl Into<axum::body::Body> for HtmlOrJsonDataObject {
-        fn into(self) -> axum::body::Body {
-            format!("<div><div>status: {}</div><div>status timestamp: {}</div></div>", self.status, self.status_timestamp).into()
-        }
-    }
+    html_format!(HtmlOrJsonDataObject, self {
+        format!("<div><div>status: {}</div><div>status timestamp: {}</div></div>", self.status, self.status_timestamp)
+    });
 
     #[Response(format(html, json))]
     pub enum GetHtmlOrJsonBodyResult {
@@ -511,7 +513,17 @@ fn api_doc() {
                                         }
                                     }
                                 }
-                            }
+                            },
+                            "404": {
+                                "description": "Not Found",
+                                "content": {
+                                    "text/html; charset=utf-8": {
+                                        "schema": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            },
                         }
                     }
                 },
@@ -887,7 +899,7 @@ pub async fn test_html_or_text_weights() {
     assert_content_type(&headers, "text/html; charset=utf-8");
     assert_eq!(status, StatusCode::OK);
 
-    // HTML has higher priority over plain text when no Accept header is specified.
+    // HTML has higher priority over plain text when no Accept header is
     let (status, headers, body) = get("/html-or-text", None).await;
     assert_eq!(body, "<h1>Hello, world!</h1>");
     assert_content_type(&headers, "text/html; charset=utf-8");
