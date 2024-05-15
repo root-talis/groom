@@ -8,6 +8,9 @@ pub trait HumarsExtractor {
     fn __openapi_modify_operation(op: OperationBuilder) -> OperationBuilder;
 }
 
+/// Creates a newtype for axum::body::Bytes with custom content type specified in the openapi spec.
+///
+/// Does not affect content-type negotiation.
 #[macro_export]
 macro_rules! binary_request_body {
     ($name:ident with content_type $content_type:literal) => {

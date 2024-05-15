@@ -7,6 +7,7 @@ edition = "2021"
 
 [dependencies]
 accept-header = "0.2.3"
+async-trait = "0.1.80"
 axum = { version = "0.7.2", features = ["macros"] }
 bytes = "1.5.0"
 http-body-util = "0.1.0"

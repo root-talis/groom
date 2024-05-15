@@ -11,5 +11,6 @@ async-trait = "0.1.77"
 axum = "0.7.2"
 derive_more = { version = "0.99.17", default-features = false, features = ["as_ref", "deref"] }
 http = "1.0.0"
+mime = "0.3.17"
 serde = { version = "1.0.195", default-features = false }
 utoipa = "4.2.0"

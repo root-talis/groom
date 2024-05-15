@@ -1,11 +1,13 @@
+use std::collections::HashSet;
 use darling::FromMeta;
-use syn::{Error, Item, Attribute};
+use mime::Mime;
+use syn::{Attribute, Error, Item};
 use proc_macro2::TokenStream;
 use syn::{ItemEnum, parse2};
 use quote::{format_ident, quote, ToTokens};
+use strum_macros::Display;
 
-use crate::{attrs::{parse_attr, remove_attrs}, http::{HTTPStatusCode, ResponseContentTypesList}, utils::get_description};
-use crate::http::ResponseContentType;
+use crate::{attrs::{parse_attr, remove_attrs}, http::HTTPStatusCode, utils::get_description};
 
 // region: ResponseArgs ------------------------------------------------------------
 //
@@ -75,13 +77,14 @@ fn generate_impl_enum(resp_args_t: TokenStream, resp_args: ResponseArgs, enum_im
 
 
     let available_mimes_ident = format_ident!("__HUMARS_RESPONSE_AVAILABLE_MIMES_{}", ident);
-    let mut available_mimes_list: Vec<TokenStream> = Vec::new();
+    let mut available_mimes_list: Vec<TokenStream> = Vec::new(); // token streams (cannot be hashed, so we also have a set of unique mime types)
+    let mut available_mimes_set: HashSet<Mime> = HashSet::new(); // for deduplication (because token streams cannot be hashed)
 
     let mut type_assertions: Vec<TokenStream> = Vec::new(); // compile-time checks of trait implementation (for better error messages)
 
     let default_format = if resp_args.format.is_any() {
         let default_format = resp_args.default_format.map_or_else(
-            || resp_args.format.get_the_only_value(),
+            || resp_args.format.get_single_value(),
             |val| Some(val),
         );
 
@@ -186,9 +189,11 @@ fn generate_impl_enum(resp_args_t: TokenStream, resp_args: ResponseArgs, enum_im
                 },
             });
 
-            available_mimes_list.push(quote!{ 
-                ::mime::TEXT_PLAIN,
-            });
+            if available_mimes_set.insert(::mime::TEXT_PLAIN) {
+                available_mimes_list.push(quote! {
+                    ::mime::TEXT_PLAIN,
+                });
+            }
         } else {
             // todo: one default match for all?
             response_bodies_match_text_plain.push(quote! {
@@ -213,9 +218,11 @@ fn generate_impl_enum(resp_args_t: TokenStream, resp_args: ResponseArgs, enum_im
                 },
             });
 
-            available_mimes_list.push(quote!{ 
-                ::mime::TEXT_HTML,
-            });
+            if available_mimes_set.insert(::mime::TEXT_HTML) {
+                available_mimes_list.push(quote! {
+                    ::mime::TEXT_HTML,
+                });
+            }
         } else {
             // todo: one default match for all?
             response_bodies_match_text_html.push(quote! {
@@ -236,9 +243,11 @@ fn generate_impl_enum(resp_args_t: TokenStream, resp_args: ResponseArgs, enum_im
                 },
             });
 
-            available_mimes_list.push(quote!{ 
-                ::mime::APPLICATION_JSON,
-            });
+            if available_mimes_set.insert(::mime::APPLICATION_JSON) {
+                available_mimes_list.push(quote! {
+                    ::mime::APPLICATION_JSON,
+                });
+            }
         } else {
             // todo: one default match for all?
             response_bodies_match_application_json.push(quote! {
@@ -322,8 +331,14 @@ fn generate_impl_enum(resp_args_t: TokenStream, resp_args: ResponseArgs, enum_im
         });
     }
 
-    let content_type_negotiation = if resp_args.format.is_any() {
-        // todo: this should be generated as methods on enum
+    let content_type_negotiation = if !resp_args.format.is_any() {
+        quote! {
+            match self {
+                #(#response_bodies_match_blank)*
+            }
+        }
+    } else {
+        // todo: these should be generated as methods on Response enum
         let response_text_plain = quote! {
             match self {
                 #(#response_bodies_match_text_plain)*
@@ -386,12 +401,6 @@ fn generate_impl_enum(resp_args_t: TokenStream, resp_args: ResponseArgs, enum_im
                 }
             }
         }
-    } else {
-        quote! {
-            match self {
-                #(#response_bodies_match_blank)*
-            }
-        }
     };
 
     quote! {
@@ -423,3 +432,77 @@ fn generate_impl_enum(resp_args_t: TokenStream, resp_args: ResponseArgs, enum_im
 
 //
 // endregion: AST parsing and generation ---------------------------------------------------
+
+// region: ResponseContentType -------------------------------------------------------------
+//
+
+#[derive(Debug, Copy, Clone, FromMeta, Eq, PartialEq, Hash, Display)]
+#[darling(rename_all = "snake_case")]
+#[strum(serialize_all="snake_case")]
+pub(crate) enum ResponseContentType {
+    PlainText,
+    Html,
+    Json,
+}
+
+#[derive(FromMeta, Default)]
+pub(crate) struct ResponseContentTypesList {
+    #[darling(default)]
+    pub(crate) plain_text: bool,
+
+    #[darling(default)]
+    pub(crate) html: bool,
+
+    #[darling(default)]
+    pub(crate) json: bool,
+}
+
+
+impl ResponseContentTypesList {
+    pub(crate) fn is_any(&self) -> bool {
+        return self.plain_text || self.html || self.json;
+    }
+
+    pub(crate) fn count(&self) -> usize {
+        let mut result = 0;
+
+        if self.plain_text {
+            result += 1;
+        }
+
+        if self.html {
+            result += 1;
+        }
+
+        if self.json {
+            result += 1;
+        }
+
+        result
+    }
+
+    pub(crate) fn get_single_value(&self) -> Option<ResponseContentType> {
+        if self.count() != 1 {
+            None
+        } else if self.plain_text {
+            Some(ResponseContentType::PlainText)
+        } else if self.html {
+            Some(ResponseContentType::Html)
+        } else if self.json {
+            Some(ResponseContentType::Json)
+        } else {
+            panic!("bug in ResponseContentTypesList::count() or ResponseContentTypesList::get_the_only_value()")
+        }
+    }
+
+    pub(crate) fn has(&self, t: ResponseContentType) -> bool {
+        match t {
+            ResponseContentType::PlainText => self.plain_text,
+            ResponseContentType::Html => self.html,
+            ResponseContentType::Json => self.json,
+        }
+    }
+}
+
+//
+// endregion: ResponseContentType ------------------------------------------------------------

@@ -3,7 +3,7 @@ use darling::FromMeta;
 use syn::{Error, Item, ItemStruct};
 use proc_macro2::TokenStream;
 use syn::parse2;
-use quote::quote;
+use quote::{quote};
 
 // region: DTO args ----------------------------------------------------------------
 //
@@ -11,10 +11,10 @@ use quote::quote;
 #[derive(FromMeta)]
 pub(crate) struct DtoArgs {
     #[darling(default)]
-    pub(crate) request: bool,
+    pub(crate) response: bool,
 
     #[darling(default)]
-    pub(crate) response: bool,
+    pub(crate) request: bool,
 }
 
 //
@@ -36,7 +36,6 @@ fn generate_impl(args_t: TokenStream, args: DtoArgs, input: TokenStream) -> Toke
         Err(error) => error.to_compile_error(),
         Ok(item) => match item {
             Item::Struct(item_struct) => generate_impl_struct(args_t, args, item_struct),
-            // todo: support enums
             _ => Error::new_spanned(item, "DTO should be a struct.").to_compile_error(),
         }
     }
@@ -45,39 +44,32 @@ fn generate_impl(args_t: TokenStream, args: DtoArgs, input: TokenStream) -> Toke
 fn generate_impl_struct(_args_t: TokenStream, args: DtoArgs, item_struct: ItemStruct) -> TokenStream {
     let ident = item_struct.ident.clone();
 
-    let request_derive = match args.request {
-        false => Default::default(),
-        true  => quote!{ #[derive(::serde::Deserialize)] },
-    };
-
-    let (response_derive, response_impl) =
-        if args.response == false {
+    let deserialize_derive =
+        if !args.request {
             Default::default()
         } else {
-            let response_derive = quote!{ #[derive(::serde::Serialize)] };
+            quote! { #[derive(::serde::Deserialize)] }
+        };
 
-            let response_impl = quote! {
-                /*impl ::axum::response::IntoResponse for #ident {
-                    fn into_response(self) -> axum::http::Response<::axum::body::Body> {
-                        ::axum::Json(self).into_response() // todo: this should be done at ::humars::Response level, not heres
-                    }
-                }*/
+    let (serialize_derive, dto_response_impl) =
+        if !args.response {
+            Default::default()
+        } else {
+            let serialize_derive = quote!{ #[derive(::serde::Serialize)] };
+            let response_impl = quote! { impl ::humars::DTO_Response for #ident {} };
 
-                impl ::humars::DTO_Response for #ident {}
-            };
-
-            (response_derive, response_impl)
+            (serialize_derive, response_impl)
         };
 
     quote! {
-        #request_derive
-        #response_derive
+        #deserialize_derive
+        #serialize_derive
         #[derive(::utoipa::ToSchema)]
         #item_struct
 
         impl ::humars::DTO for #ident {}
 
-        #response_impl
+        #dto_response_impl
     }
 }
 

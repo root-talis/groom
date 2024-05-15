@@ -11,6 +11,7 @@ mod attrs;
 mod controller;
 mod dto;
 mod http;
+mod request_body;
 mod response;
 mod utils;
 
@@ -44,6 +45,20 @@ pub fn Controller(_args: TokenStream, input: TokenStream) -> TokenStream {
 #[proc_macro_error]
 #[proc_macro_attribute]
 #[allow(non_snake_case)]
+pub fn RequestBody(args: TokenStream, input: TokenStream) -> TokenStream {
+    let args: proc_macro2::TokenStream = args.into();
+    /*if args.is_empty() {
+        abort!(args, "specify `format` as Response (e.g. `#[Response(format(plain_text))`])")
+    }*/
+
+    let request_body_args = parse_nested_meta!(request_body::RequestBodyArgs, args.clone());
+    request_body::generate(args, request_body_args, input.into()).into()
+}
+
+
+#[proc_macro_error]
+#[proc_macro_attribute]
+#[allow(non_snake_case)]
 pub fn Response(args: TokenStream, input: TokenStream) -> TokenStream {
     let args: proc_macro2::TokenStream = args.into();
     /*if args.is_empty() {
@@ -53,7 +68,6 @@ pub fn Response(args: TokenStream, input: TokenStream) -> TokenStream {
     let response_args = parse_nested_meta!(response::ResponseArgs, args.clone());
     response::generate(args, response_args, input.into()).into()
 }
-
 
 #[proc_macro_error]
 #[proc_macro_attribute]

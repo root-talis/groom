@@ -118,4 +118,13 @@ pub mod api_root {
         #[Response()]
         Ok(StructJson),
     }
+
+    #[RequestBody(formats(json, form))]
+    pub struct RequestBodySimple(String);
+
+    #[RequestBody(formats(json, form))]
+    pub struct RequestBodyStruct {
+        name: String,
+        age: u8,
+    }
 }

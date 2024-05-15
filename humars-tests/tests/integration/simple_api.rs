@@ -17,12 +17,14 @@ use crate::humars_macros::Controller;
 // for scratchpad: ------
 use crate::humars::extract::HumarsExtractor;
 use crate::integration::simple_api::my_api::RqConsPathStruct;
+use axum::extract::FromRequest;
 // end for scratchpad ---
 
 use serde_json::json;
 
 #[cfg(test)]
 use pretty_assertions::{assert_eq, /*assert_ne*/};
+use serde::Deserialize;
 
 
 // region: test bootstrap utils -----------------------------------
@@ -57,13 +59,17 @@ async fn get(url: &str, accept: Option<&'static str>) -> (StatusCode, HeaderMap,
     (status, headers, body)
 }
 
-async fn post(url: &str, accept: Option<&'static str>, body: Body) -> (StatusCode, HeaderMap, String) {
+async fn post(url: &str, accept: Option<&'static str>, content_type: Option<&'static str>, body: Body) -> (StatusCode, HeaderMap, String) {
     let app = router();
 
     let mut request = Request::builder().uri(url).method("POST");
 
     if accept.is_some() {
         request = request.header("accept", accept.unwrap());
+    }
+
+    if content_type.is_some() {
+        request = request.header("content-type", content_type.unwrap());
     }
 
     let request = request.body(body).unwrap();
@@ -107,6 +113,7 @@ mod my_api {
     use humars::response::Response;
 
     use utoipa::ToSchema;
+    use humars_macros::RequestBody;
 
     // region: dumb handlers ---------------------------------------------
     //
@@ -244,29 +251,61 @@ mod my_api {
 
     // Request consumption: String body
     #[Route(method = "post", path = "/string_body")]
-    async fn rq_cons_string_body(body: String) -> crate::integration::simple_api::my_api::RqConsGenericResponse {
-        crate::integration::simple_api::my_api::RqConsGenericResponse::Ok(format!("body: {body}"))
+    async fn rq_cons_string_body(body: String) -> RqConsGenericResponse {
+        RqConsGenericResponse::Ok(format!("body: {body}"))
     }
 
     // Request consumption: Bytes body
     #[Route(method = "post", path = "/bytes_body")]
-    async fn rq_cons_bytes_body(body: axum::body::Bytes) -> crate::integration::simple_api::my_api::RqConsGenericResponse {
-        crate::integration::simple_api::my_api::RqConsGenericResponse::Ok(format!("bytes count: {}", body.iter().count()))
+    async fn rq_cons_bytes_body(body: axum::body::Bytes) -> RqConsGenericResponse {
+        RqConsGenericResponse::Ok(format!("bytes count: {}", body.iter().count()))
     }
 
     // Request consumption: ImageJpeg body
     humars::binary_request_body!(ImageJpeg with content_type "image/jpeg");
+
     #[Route(method = "post", path = "/image_body")]
-    async fn rq_cons_image_body(body: ImageJpeg) -> crate::integration::simple_api::my_api::RqConsGenericResponse {
-        crate::integration::simple_api::my_api::RqConsGenericResponse::Ok(format!("bytes count: {}", body.0.iter().count()))
+    async fn rq_cons_image_body(body: ImageJpeg) -> RqConsGenericResponse {
+        RqConsGenericResponse::Ok(format!("bytes count: {}", body.0.iter().count()))
     }
 
-    // todo: Request bodies:
-        // todo: Bytes             - with content-type override
+    // todo: Request bodies with content-type negotiation:
         // todo: axum::Json<Value> - as a separate feature
         // todo: axum::form::Form  - as a separate feature
         // todo: XML               - as a separate feature
         // todo: BSON              - as a separate feature
+        // todo: CBOR              - as a separate feature
+
+    #[RequestBody(format(json/*, form*/))]
+    pub struct MultiFormatRequestBody {
+        name: String,
+        age: Option<u8>,
+    }
+
+    #[Route(method = "post", path = "/multi_format")]
+    async fn rq_cons_multi_format_body(body: MultiFormatRequestBody) -> RqConsGenericResponse {
+        RqConsGenericResponse::Ok(format!("someone named {} is {} years old", body.name, body.age.map_or(
+            "who knows how many".into(),
+            |v| format!("{v}")
+        )))
+    }
+
+    #[DTO(request)]
+    pub struct MultiFormatDto {
+        name: String,
+        age: Option<u8>,
+    }
+
+    #[RequestBody(format(json/*, form*/))]
+    pub struct MultiFormatRequestBodyDto(MultiFormatDto);
+
+    #[Route(method = "post", path = "/multi_format_dto")]
+    async fn rq_cons_multi_format_body_dto(MultiFormatRequestBodyDto(body): MultiFormatRequestBodyDto) -> RqConsGenericResponse {
+        RqConsGenericResponse::Ok(format!("someone named {} is {} years old", body.name, body.age.map_or(
+            "who knows how many".into(),
+            |v| format!("{v}")
+        )))
+    }
 
     // todo: Request
 
@@ -384,6 +423,7 @@ mod my_api {
     //     todo: JSON - as a separate feature
     //     todo: XML  - as a separate feature
     //     todo: BSON - as a separate feature
+    //     todo: CBOR - as a separate feature
 
     //
     // endregion: responses ---------------------------------------------
@@ -398,8 +438,13 @@ mod my_api {
 // region: tests --------------------------------------------------
 //
 
-#[test]
-fn api_doc_scratchpad() {
+#[derive(Deserialize)]
+struct Foo {
+    name: String,
+}
+
+#[tokio::test]
+async fn api_doc_scratchpad() {
     #[derive(OpenApi)]
     #[openapi()]
     struct ApiDoc;
@@ -467,6 +512,9 @@ fn api_doc_scratchpad() {
 
     let hm = ::axum::http::header::HeaderMap::new();
     let _has_header = hm.get(::axum::http::header::ACCEPT);
+
+    let request = Request::builder().body(Body::empty()).unwrap();
+    let state: Option<u8> = None;
 }
 
 /// In this test we check how OpenAPI spec is generated.
@@ -811,6 +859,66 @@ fn api_doc() {
                         }
                     },
                 },
+                "/multi_format": {
+                    "post": {
+                        "requestBody": {
+                            "required": true,
+                            "content": {
+                                "application/json": {
+                                    "schema": {
+                                        "properties": {
+                                            "age": {
+                                                "format": "int32",
+                                                "minimum": 0,
+                                                "nullable": true,
+                                                "type": "integer"
+                                            },
+                                            "name": {
+                                                "type": "string"
+                                            }
+                                        },
+                                        "required": [
+                                            "name"
+                                        ],
+                                        "type": "object"
+                                    }
+                                }
+                            }
+                        },
+                        "responses": {
+                            "200": {
+                                "description": "",
+                                "content": {
+                                    "text/plain; charset=utf-8": {
+                                        "schema": {
+                                            "type": "string",
+                                        }
+                                    }
+                                }
+                            },
+                        }
+                    },
+                },
+                "/multi_format_dto": {
+                    "post": {
+                        "requestBody": {
+                            "required": true,
+                            "content": {}
+                        },
+                        "responses": {
+                            "200": {
+                                "description": "",
+                                "content": {
+                                    "text/plain; charset=utf-8": {
+                                        "schema": {
+                                            "type": "string",
+                                        }
+                                    }
+                                }
+                            },
+                        }
+                    },
+                },
             }
         })
     );
@@ -1030,12 +1138,12 @@ pub async fn test_html_or_json() {
 
 #[tokio::test]
 pub async fn test_post_string() {
-    let (status, headers, body) = post("/string_body", Some("text/plain"), Body::from("hello, world!")).await;
+    let (status, headers, body) = post("/string_body", Some("text/plain"), None, Body::from("hello, world!")).await;
     assert_content_type(&headers, "text/plain; charset=utf-8");
     assert_eq!(body, "body: hello, world!");
     assert_eq!(status, StatusCode::OK);
 
-    let (status, headers, body) = post("/string_body", Some("text/plain"), Body::empty()).await;
+    let (status, headers, body) = post("/string_body", Some("text/plain"), None, Body::empty()).await;
     assert_content_type(&headers, "text/plain; charset=utf-8");
     assert_eq!(body, "body: ");
     assert_eq!(status, StatusCode::OK);
@@ -1043,12 +1151,12 @@ pub async fn test_post_string() {
 
 #[tokio::test]
 pub async fn test_post_bytes() {
-    let (status, headers, body) = post("/bytes_body", Some("text/plain"), Body::from("hello, world!")).await;
+    let (status, headers, body) = post("/bytes_body", Some("text/plain"), None, Body::from("hello, world!")).await;
     assert_content_type(&headers, "text/plain; charset=utf-8");
     assert_eq!(body, "bytes count: 13");
     assert_eq!(status, StatusCode::OK);
 
-    let (status, headers, body) = post("/bytes_body", Some("text/plain"), Body::empty()).await;
+    let (status, headers, body) = post("/bytes_body", Some("text/plain"), None, Body::empty()).await;
     assert_content_type(&headers, "text/plain; charset=utf-8");
     assert_eq!(body, "bytes count: 0");
     assert_eq!(status, StatusCode::OK);
@@ -1057,17 +1165,46 @@ pub async fn test_post_bytes() {
 
 #[tokio::test]
 pub async fn test_post_image() {
-    let (status, headers, body) = post("/image_body", Some("text/plain"), Body::from("hello, world!")).await;
+    let (status, headers, body) = post("/image_body", Some("text/plain"), None, Body::from("hello, world!")).await;
     assert_content_type(&headers, "text/plain; charset=utf-8");
     assert_eq!(body, "bytes count: 13");
     assert_eq!(status, StatusCode::OK);
 
-    let (status, headers, body) = post("/image_body", Some("text/plain"), Body::empty()).await;
+    let (status, headers, body) = post("/image_body", Some("text/plain"), None, Body::empty()).await;
     assert_content_type(&headers, "text/plain; charset=utf-8");
     assert_eq!(body, "bytes count: 0");
     assert_eq!(status, StatusCode::OK);
 }
 
+#[tokio::test]
+pub async fn test_post_multi_format() {
+    let (status, headers, body) = post("/multi_format", None, Some("application/json"), Body::from("{\"name\": \"Mark\"}")).await;
+    assert_content_type(&headers, "text/plain; charset=utf-8");
+    assert_eq!(body, "someone named Mark is who knows how many years old");
+    assert_eq!(status, StatusCode::OK);
+
+    let (status, headers, body) = post("/multi_format", None, Some("application/json"), Body::from("{\"name\": \"Mark\", \"age\": 20}")).await;
+    assert_content_type(&headers, "text/plain; charset=utf-8");
+    assert_eq!(body, "someone named Mark is 20 years old");
+    assert_eq!(status, StatusCode::OK);
+
+    // todo: form data
+}
+
+#[tokio::test]
+pub async fn test_post_multi_format_dto() {
+    let (status, headers, body) = post("/multi_format_dto", None, Some("application/json"), Body::from("{\"name\": \"Mark\"}")).await;
+    assert_content_type(&headers, "text/plain; charset=utf-8");
+    assert_eq!(body, "someone named Mark is who knows how many years old");
+    assert_eq!(status, StatusCode::OK);
+
+    let (status, headers, body) = post("/multi_format_dto", None, Some("application/json"), Body::from("{\"name\": \"Mark\", \"age\": 20}")).await;
+    assert_content_type(&headers, "text/plain; charset=utf-8");
+    assert_eq!(body, "someone named Mark is 20 years old");
+    assert_eq!(status, StatusCode::OK);
+
+    // todo: form data
+}
 
 //
 // endregion: tests ------------------------------------------------
