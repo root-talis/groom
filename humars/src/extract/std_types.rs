@@ -30,7 +30,7 @@ impl HumarsExtractor for axum::body::Bytes {
         op.request_body(Some(
             RequestBodyBuilder::new()
                 .content(
-                    "application/octet-stream", // todo: ability to override Bytes type to define custom content_type
+                    "application/octet-stream",
                     ContentBuilder::new()
                         .schema(
                             ObjectBuilder::new()

@@ -7,7 +7,7 @@ edition = "2021"
 
 [dependencies]
 accept-header = "0.2.3"
-axum = { version = "0.7.2" }
+axum = { version = "0.7.2", features = ["macros"] }
 bytes = "1.5.0"
 http-body-util = "0.1.0"
 humars = {path = "../humars"}
