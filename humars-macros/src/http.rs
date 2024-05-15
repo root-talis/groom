@@ -1,5 +1,6 @@
 use darling::{self, FromMeta};
 use strum_macros::Display;
+use crate::http::ResponseContentType::{Html, PlainText};
 
 #[derive(Debug, Copy, Clone, FromMeta, Eq, PartialEq, Hash, Display)]
 #[darling(rename_all = "lowercase")]
@@ -50,6 +51,46 @@ pub(crate) struct ResponseContentTypesList {
 impl ResponseContentTypesList {
     pub(crate) fn is_any(&self) -> bool {
         return self.plain_text || self.html || self.json;
+    }
+
+    pub(crate) fn count(&self) -> usize {
+        let mut result = 0;
+
+        if self.plain_text {
+            result += 1;
+        }
+
+        if self.html {
+            result += 1;
+        }
+
+        if self.json {
+            result += 1;
+        }
+
+        result
+    }
+
+    pub(crate) fn get_the_only_value(&self) -> Option<ResponseContentType> {
+        if self.count() != 1 {
+            None
+        } else if self.plain_text {
+            Some(ResponseContentType::PlainText)
+        } else if self.html {
+            Some(ResponseContentType::Html)
+        } else if self.json {
+            Some(ResponseContentType::Json)
+        } else {
+            panic!("bug in ResponseContentTypesList::count() or ResponseContentTypesList::get_the_only_value()")
+        }
+    }
+
+    pub(crate) fn has(&self, t: ResponseContentType) -> bool {
+        match t {
+            PlainText => self.plain_text,
+            Html => self.html,
+            ResponseContentType::Json => self.json,
+        }
     }
 }
 

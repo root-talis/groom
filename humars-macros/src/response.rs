@@ -5,6 +5,7 @@ use syn::{ItemEnum, parse2};
 use quote::{format_ident, quote, ToTokens};
 
 use crate::{attrs::{parse_attr, remove_attrs}, http::{HTTPStatusCode, ResponseContentTypesList}, utils::get_description};
+use crate::http::ResponseContentType;
 
 // region: ResponseArgs ------------------------------------------------------------
 //
@@ -13,6 +14,9 @@ use crate::{attrs::{parse_attr, remove_attrs}, http::{HTTPStatusCode, ResponseCo
 pub(crate) struct ResponseArgs {
     #[darling(default)]
     pub(crate) format: ResponseContentTypesList,
+
+    #[darling(default)]
+    pub(crate) default_format: Option<ResponseContentType>,
 }
 
 #[derive(FromMeta)]
@@ -56,7 +60,7 @@ fn generate_impl(args_t: TokenStream, args: ResponseArgs, input: TokenStream) ->
     }
 }
 
-fn generate_impl_enum(_resp_args_t: TokenStream, resp_args: ResponseArgs, enum_impl: ItemEnum) -> TokenStream {
+fn generate_impl_enum(resp_args_t: TokenStream, resp_args: ResponseArgs, enum_impl: ItemEnum) -> TokenStream {
     let ident = enum_impl.ident;
     let vis = enum_impl.vis;
 
@@ -74,7 +78,30 @@ fn generate_impl_enum(_resp_args_t: TokenStream, resp_args: ResponseArgs, enum_i
     let mut available_mimes_list: Vec<TokenStream> = Vec::new();
 
     let mut type_assertions: Vec<TokenStream> = Vec::new(); // compile-time checks of trait implementation (for better error messages)
-    
+
+    let default_format = if resp_args.format.is_any() {
+        let default_format = resp_args.default_format.map_or_else(
+            || resp_args.format.get_the_only_value(),
+            |val| Some(val),
+        );
+
+        if default_format.is_none() {
+            return syn::Error::new_spanned(
+                resp_args_t,
+                format!("specify default_format for enum `{ident}` (e.g. #[Response(default_format=\"json\")])")
+            ).into_compile_error();
+        } else if !resp_args.format.has(default_format.unwrap()) {
+            return syn::Error::new_spanned(
+                resp_args_t,
+                format!("default_format `{}` of enum `{ident}` is not mentioned in it's formats list", default_format.unwrap())
+            ).into_compile_error();
+        }
+
+        default_format
+    } else {
+        None
+    };
+
     for mut variant in enum_impl.variants {
         let variant_args = match ResponseVariantArgs::parse_from_attrs(&variant.attrs) {
             Ok(Some(args)) => {
@@ -144,11 +171,6 @@ fn generate_impl_enum(_resp_args_t: TokenStream, resp_args: ResponseArgs, enum_i
                     ).into_compile_error();
                 }
             });
-        } else {
-            // If some formats were specified, we need to ensure that we:
-            //  - either have some default format specified (including format "fail" - to explicitly force Accept header presence),
-            //  - or raise a compile error telling the dev that they need to specify the default response format.
-            // todo.
         }
 
         if resp_args.format.plain_text {
@@ -301,6 +323,39 @@ fn generate_impl_enum(_resp_args_t: TokenStream, resp_args: ResponseArgs, enum_i
     }
 
     let content_type_negotiation = if resp_args.format.is_any() {
+        // todo: this should be generated as methods on enum
+        let response_text_plain = quote! {
+            match self {
+                #(#response_bodies_match_text_plain)*
+            }
+        };
+
+        let response_text_html = quote! {
+            match self {
+                #(#response_bodies_match_text_html)*
+            }
+        };
+
+        let response_application_json = quote! {
+            match self {
+                #(#response_bodies_match_application_json)*
+            }
+        };
+
+        let default_content_response = if let Some(default_format) = default_format {
+            match default_format {
+                ResponseContentType::PlainText => quote!{ #response_text_plain },
+                ResponseContentType::Html      => quote!{ #response_text_html },
+                ResponseContentType::Json      => quote!{ #response_application_json },
+                // todo: option to force BadRequest response if client hasn't specified any format in Accept header
+            }
+        } else {
+            return syn::Error::new_spanned(
+                resp_args_t,
+                format!("cannot infer default_format for enum `{ident}` - this is a bug in humars, please report it; thank you~")
+            ).into_compile_error();
+        };
+
         quote! {
             match accept {
                 Some(accept) => {
@@ -308,19 +363,13 @@ fn generate_impl_enum(_resp_args_t: TokenStream, resp_args: ResponseArgs, enum_i
                         Ok(negotiated) => {
                             match (negotiated.type_(), negotiated.subtype()) {
                                 (::mime::TEXT, mime::HTML) => {
-                                    match self {
-                                        #(#response_bodies_match_text_html)*
-                                    }
+                                    #response_text_html
                                 },
                                 (::mime::TEXT, mime::PLAIN) => {
-                                    match self {
-                                        #(#response_bodies_match_text_plain)*
-                                    }
+                                    #response_text_plain
                                 },
                                 (::mime::APPLICATION, mime::JSON) => {
-                                    match self {
-                                        #(#response_bodies_match_application_json)*
-                                    }
+                                    #response_application_json
                                 },
                                 _ => {
                                     (::axum::http::StatusCode::BAD_REQUEST, "Negotiated some weird poo.").into_response()
@@ -333,11 +382,7 @@ fn generate_impl_enum(_resp_args_t: TokenStream, resp_args: ResponseArgs, enum_i
                     }
                 },
                 None => {
-                    // todo: if there is a default content-type specified in #[Response()] args, use it;
-                    //       else:
-                    //           if there is no response body, return response code
-                    //           else return BadRequest
-                    (::axum::http::StatusCode::BAD_REQUEST, "No accept header specified, but some variants have a body.").into_response()
+                    #default_content_response
                 }
             }
         }

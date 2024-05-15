@@ -167,16 +167,6 @@ mod my_api {
     pub enum RqConsPathResponse {
         #[Response()]
         Ok(String),
-
-        /// Access has been denied.
-        #[Response(code = 401)]
-        #[allow(dead_code)]
-        GoToHell,
-
-        /// Something bad just happened, but it's not your fault (probably).
-        #[Response(code = 500)]
-        #[allow(dead_code)]
-        InternalServerError,
     }
 
     // Request consumption: Query<struct> (stuff after `?`)
@@ -290,7 +280,7 @@ mod my_api {
         format!("<h1>{}</h1>", self.0)
     });
 
-    #[Response(format(plain_text, html))]
+    #[Response(format(plain_text, html), default_format="html")]
     pub enum GetHtmlOrTextBodyResult {
         /// Home page
         #[Response()]
@@ -340,7 +330,7 @@ mod my_api {
         format!("<div><div>status: {}</div><div>status timestamp: {}</div></div>", self.status, self.status_timestamp)
     });
 
-    #[Response(format(html, json))]
+    #[Response(format(html, json), default_format="json")]
     pub enum GetHtmlOrJsonBodyResult {
         /// Current status
         #[Response()]
@@ -695,12 +685,6 @@ fn api_doc() {
                                         }
                                     }
                                 }
-                            },
-                            "401": {
-                                "description": "Access has been denied."
-                            },
-                            "500": {
-                                "description": "Something bad just happened, but it's not your fault (probably)."
                             },
                         }
                     },
