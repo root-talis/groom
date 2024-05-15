@@ -57,6 +57,31 @@ async fn get(url: &str, accept: Option<&'static str>) -> (StatusCode, HeaderMap,
     (status, headers, body)
 }
 
+async fn post(url: &str, accept: Option<&'static str>, body: Body) -> (StatusCode, HeaderMap, String) {
+    let app = router();
+
+    let mut request = Request::builder().uri(url).method("POST");
+
+    if accept.is_some() {
+        request = request.header("accept", accept.unwrap());
+    }
+
+    let request = request.body(body).unwrap();
+
+    let response = app
+        .oneshot(request)
+        .await
+        .unwrap()
+    ;
+
+    let status = response.status();
+    let headers = response.headers().to_owned();
+    let body = response.into_body().collect().await.unwrap().to_bytes();
+    let body = std::str::from_utf8(&body).unwrap().to_owned();
+
+    (status, headers, body)
+}
+
 fn assert_content_type(headers: &HeaderMap, expected: &str) {
     assert_eq!(headers.get("content-type").expect("should respond with content-type header"), expected);
 }
@@ -164,7 +189,7 @@ mod my_api {
     }
 
     #[Response(format(plain_text))]
-    pub enum RqConsPathResponse {
+    pub enum RqConsGenericResponse {
         #[Response()]
         Ok(String),
     }
@@ -213,13 +238,17 @@ mod my_api {
 
     // Request consumption: Path<struct>
     #[Route(method = "get", path = "/team/:team_id/user/:user_id")]
-    async fn rq_cons_path_struct(Path(team): Path<RqConsPathStruct>) -> RqConsPathResponse {
-        RqConsPathResponse::Ok(format!("{} -> {}", team.user_id, team.team_id))
+    async fn rq_cons_path_struct(Path(team): Path<RqConsPathStruct>) -> RqConsGenericResponse {
+        RqConsGenericResponse::Ok(format!("{} -> {}", team.user_id, team.team_id))
     }
-    // todo: validate that in Path<T> that if T is a struct, it implements DTO, make good error message
+
+    // Request consumption: String body
+    #[Route(method = "post", path = "/string_body")]
+    async fn rq_cons_string_body(body: String) -> crate::integration::simple_api::my_api::RqConsGenericResponse {
+        crate::integration::simple_api::my_api::RqConsGenericResponse::Ok(format!("body: {body}"))
+    }
 
     // todo: Request bodies:
-        // todo: String
         // todo: Bytes
         // todo: axum::Json<Value> - as a separate feature
         // todo: axum::form::Form  - as a separate feature
@@ -267,7 +296,7 @@ mod my_api {
     async fn resp_html_or_text() -> GetHtmlOrTextBodyResult {
         GetHtmlOrTextBodyResult::Ok(PageData("Hello, world!".to_string()))
     }
-    
+
     #[DTO(response)]
     pub struct PageData(String);
 
@@ -689,6 +718,32 @@ fn api_doc() {
                         }
                     },
                 },
+                "/string_body": {
+                    "post": {
+                        "requestBody": {
+                            "required": true,
+                            "content": {
+                                "text/plain; charset=utf-8": {
+                                    "schema": {
+                                        "type": "string"
+                                    }
+                                }
+                            }
+                        },
+                        "responses": {
+                            "200": {
+                                "description": "",
+                                "content": {
+                                    "text/plain; charset=utf-8": {
+                                        "schema": {
+                                            "type": "string",
+                                        }
+                                    }
+                                }
+                            },
+                        }
+                    },
+                },
             }
         })
     );
@@ -903,6 +958,19 @@ pub async fn test_html_or_json() {
     let (status, headers, body) = get("/html-or-json", Some("application/json")).await;
     assert_content_type(&headers, "application/json");
     assert_eq!(body, "{\"status\":\"open\",\"status_timestamp\":1234567890}");
+    assert_eq!(status, StatusCode::OK);
+}
+
+#[tokio::test]
+pub async fn test_post_string() {
+    let (status, headers, body) = post("/string_body", Some("text/plain"), Body::from("hello, world!")).await;
+    assert_content_type(&headers, "text/plain; charset=utf-8");
+    assert_eq!(body, "body: hello, world!");
+    assert_eq!(status, StatusCode::OK);
+
+    let (status, headers, body) = post("/string_body", Some("text/plain"), Body::empty()).await;
+    assert_content_type(&headers, "text/plain; charset=utf-8");
+    assert_eq!(body, "body: ");
     assert_eq!(status, StatusCode::OK);
 }
 
