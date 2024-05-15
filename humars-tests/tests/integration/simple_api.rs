@@ -248,6 +248,12 @@ mod my_api {
         crate::integration::simple_api::my_api::RqConsGenericResponse::Ok(format!("body: {body}"))
     }
 
+    // Request consumption: String body
+    #[Route(method = "post", path = "/bytes_body")]
+    async fn rq_cons_bytes_body(body: axum::body::Bytes) -> crate::integration::simple_api::my_api::RqConsGenericResponse {
+        crate::integration::simple_api::my_api::RqConsGenericResponse::Ok(format!("bytes count: {}", body.iter().count()))
+    }
+
     // todo: Request bodies:
         // todo: Bytes
         // todo: axum::Json<Value> - as a separate feature
@@ -744,6 +750,33 @@ fn api_doc() {
                         }
                     },
                 },
+                "/bytes_body": {
+                    "post": {
+                        "requestBody": {
+                            "required": true,
+                            "content": {
+                                "application/octet-stream": {
+                                    "schema": {
+                                        "type": "string",
+                                        "format": "binary",
+                                    }
+                                }
+                            }
+                        },
+                        "responses": {
+                            "200": {
+                                "description": "",
+                                "content": {
+                                    "text/plain; charset=utf-8": {
+                                        "schema": {
+                                            "type": "string",
+                                        }
+                                    }
+                                }
+                            },
+                        }
+                    },
+                },
             }
         })
     );
@@ -971,6 +1004,19 @@ pub async fn test_post_string() {
     let (status, headers, body) = post("/string_body", Some("text/plain"), Body::empty()).await;
     assert_content_type(&headers, "text/plain; charset=utf-8");
     assert_eq!(body, "body: ");
+    assert_eq!(status, StatusCode::OK);
+}
+
+#[tokio::test]
+pub async fn test_post_bytes() {
+    let (status, headers, body) = post("/bytes_body", Some("text/plain"), Body::from("hello, world!")).await;
+    assert_content_type(&headers, "text/plain; charset=utf-8");
+    assert_eq!(body, "bytes count: 13");
+    assert_eq!(status, StatusCode::OK);
+
+    let (status, headers, body) = post("/bytes_body", Some("text/plain"), Body::empty()).await;
+    assert_content_type(&headers, "text/plain; charset=utf-8");
+    assert_eq!(body, "bytes count: 0");
     assert_eq!(status, StatusCode::OK);
 }
 
