@@ -160,7 +160,7 @@ fn generate_impl_for_struct(args_t: TokenStream, args: RequestBodyArgs, item_str
 
         openapi_generators.push(quote! {
             .content(
-                ::mime::APPLICATION_JSON.as_ref(),
+                ::mime::APPLICATION_WWW_FORM_URLENCODED.as_ref(),
                 ::utoipa::openapi::ContentBuilder::new()
                     .schema(#schema)
                     .build()

@@ -884,7 +884,27 @@ fn api_doc() {
                                         ],
                                         "type": "object"
                                     }
-                                }
+                                },
+                                "application/x-www-form-urlencoded": {
+                                    "schema": {
+                                        "description": "Request body as a named struct.",
+                                        "properties": {
+                                            "age": {
+                                                "format": "int32",
+                                                "minimum": 0,
+                                                "nullable": true,
+                                                "type": "integer"
+                                            },
+                                            "name": {
+                                                "type": "string"
+                                            }
+                                        },
+                                        "required": [
+                                            "name"
+                                        ],
+                                        "type": "object"
+                                    }
+                                },
                             }
                         },
                         "responses": {
@@ -908,6 +928,26 @@ fn api_doc() {
                             "description": "Request body as an unnamed struct that wraps around a DTO",
                             "content": {
                                 "application/json": {
+                                    "schema": {
+                                        "description": "Some DTO",
+                                        "properties": {
+                                            "age": {
+                                                "format": "int32",
+                                                "minimum": 0,
+                                                "nullable": true,
+                                                "type": "integer"
+                                            },
+                                            "name": {
+                                                "type": "string"
+                                            }
+                                        },
+                                        "required": [
+                                            "name"
+                                        ],
+                                        "type": "object"
+                                    }
+                                },
+                                "application/x-www-form-urlencoded": {
                                     "schema": {
                                         "description": "Some DTO",
                                         "properties": {
