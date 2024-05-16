@@ -30,17 +30,15 @@ use pretty_assertions::{assert_eq, /*assert_ne*/};
 //
 
 fn router() -> Router {
-    let state = MyState {
-        name: "Luca"
-    };
-
     let router = Router::new();
 
     my_api::merge_into_router(router)
-        .with_state(state)
         .layer(Extension(MyState {
-            name: "Victoria"
+            name: "Luca"
         }))
+        .with_state(MyState {
+            name: "Victoria"
+        })
 }
 
 async fn get(url: &str, accept: Option<&'static str>) -> (StatusCode, HeaderMap, String) {
@@ -1437,7 +1435,7 @@ pub async fn test_get_axum_http_header_map() {
 pub async fn test_get_axum_extract_extension() {
     let (status, headers, body) = get("/extension", None).await;
     assert_content_type(&headers, "text/plain; charset=utf-8");
-    assert_eq!(body, "name from extension: Victoria");
+    assert_eq!(body, "name from extension: Luca");
     assert_eq!(status, StatusCode::OK);
 }
 
@@ -1446,7 +1444,7 @@ pub async fn test_get_axum_extract_extension() {
 pub async fn test_get_axum_extract_state() {
     let (status, headers, body) = get("/state", None).await;
     assert_content_type(&headers, "text/plain; charset=utf-8");
-    assert_eq!(body, "name from state: Luca");
+    assert_eq!(body, "name from state: Victoria");
     assert_eq!(status, StatusCode::OK);
 }
 
