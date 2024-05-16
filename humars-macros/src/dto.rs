@@ -35,13 +35,13 @@ fn generate_impl(args_t: TokenStream, args: DtoArgs, input: TokenStream) -> Toke
     match parse2::<Item>(input) {
         Err(error) => error.to_compile_error(),
         Ok(item) => match item {
-            Item::Struct(item_struct) => generate_impl_struct(args_t, args, item_struct),
+            Item::Struct(item_struct) => generate_impl_for_struct(args_t, args, item_struct),
             _ => Error::new_spanned(item, "DTO should be a struct.").to_compile_error(),
         }
     }
 }
 
-fn generate_impl_struct(_args_t: TokenStream, args: DtoArgs, item_struct: ItemStruct) -> TokenStream {
+fn generate_impl_for_struct(_args_t: TokenStream, args: DtoArgs, item_struct: ItemStruct) -> TokenStream {
     let ident = item_struct.ident.clone();
 
     let (deserialize_derive, dto_request_impl) =

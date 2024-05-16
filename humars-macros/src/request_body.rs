@@ -32,13 +32,13 @@ fn generate_impl(args_t: TokenStream, args: RequestBodyArgs, input: TokenStream)
     match parse2::<Item>(input) {
         Err(error) => error.to_compile_error(),
         Ok(item) => match item {
-            Item::Struct(item_struct) => generate_impl_struct(args_t, args, item_struct),
+            Item::Struct(item_struct) => generate_impl_for_struct(args_t, args, item_struct),
             _ => Error::new_spanned(item, "RequestBody should be a struct.").to_compile_error(),
         }
     }
 }
 
-fn generate_impl_struct(args_t: TokenStream, args: RequestBodyArgs, item_struct: ItemStruct) -> TokenStream {
+fn generate_impl_for_struct(args_t: TokenStream, args: RequestBodyArgs, item_struct: ItemStruct) -> TokenStream {
     let ident = item_struct.ident.clone();
     let vis = item_struct.vis.clone();
 

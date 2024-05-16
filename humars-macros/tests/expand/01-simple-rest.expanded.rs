@@ -511,6 +511,7 @@ pub mod api_root {
         }
     };
     impl ::humars::DTO for RqConsQueryStruct {}
+    impl ::humars::DTO_Request for RqConsQueryStruct {}
     pub struct RqConsPathStruct {
         user_id: String,
         team_id: i32,
@@ -735,6 +736,7 @@ pub mod api_root {
         }
     };
     impl ::humars::DTO for RqConsPathStruct {}
+    impl ::humars::DTO_Request for RqConsPathStruct {}
     pub fn merge_into_router(other: ::axum::Router) -> ::axum::Router {
         let this_router = ::axum::Router::new()
             .route("/", ::axum::routing::get(__humars_wrapper_get_root))

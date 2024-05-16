@@ -56,13 +56,13 @@ fn generate_impl(args_t: TokenStream, args: ResponseArgs, input: TokenStream) ->
     match parse2::<Item>(input) {
         Err(error) => error.to_compile_error(),
         Ok(item) => match item {
-            Item::Enum(item_enum) => generate_impl_enum(args_t, args, item_enum),
+            Item::Enum(item_enum) => generate_impl_for_enum(args_t, args, item_enum),
             _ => Error::new_spanned(item, "Response should be an enum.").to_compile_error(),
         }
     }
 }
 
-fn generate_impl_enum(resp_args_t: TokenStream, resp_args: ResponseArgs, enum_impl: ItemEnum) -> TokenStream {
+fn generate_impl_for_enum(resp_args_t: TokenStream, resp_args: ResponseArgs, enum_impl: ItemEnum) -> TokenStream {
     let ident = enum_impl.ident;
     let vis = enum_impl.vis;
 
