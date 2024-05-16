@@ -274,6 +274,7 @@ mod my_api {
         // todo: XML        - as a separate feature
         // todo: BSON       - as a separate feature
         // todo: CBOR       - as a separate feature
+    // todo: don't require content-type header if only one content-type is possible
 
     /// Request body as a named struct.
     #[RequestBody(format(json, url_encoded))]
@@ -1241,12 +1242,9 @@ pub async fn test_post_image() {
     assert_eq!(status, StatusCode::OK);
 }
 
+// Request body JSON - named struct
 #[tokio::test]
-pub async fn test_post_multi_format_json() {
-    //
-    // RequestBody as a named struct
-    //
-
+pub async fn test_post_multi_format_json_named_struct() {
     let (status, headers, body) = post("/multi_format", None, Some("application/json"), Body::from("{\"name\": \"Mark\"}")).await;
     assert_content_type(&headers, "text/plain; charset=utf-8");
     assert_eq!(body, "someone named Mark is who knows how many years old");
@@ -1256,11 +1254,11 @@ pub async fn test_post_multi_format_json() {
     assert_content_type(&headers, "text/plain; charset=utf-8");
     assert_eq!(body, "someone named Mark is 20 years old");
     assert_eq!(status, StatusCode::OK);
+}
 
-    //
-    // RequestBody as wrapper around a DTO(request)
-    //
-
+// Request body JSON - DTO wrapper
+#[tokio::test]
+pub async fn test_post_multi_format_json_unnamed_struct() {
     let (status, headers, body) = post("/multi_format_dto", None, Some("application/json"), Body::from("{\"name\": \"Mark\"}")).await;
     assert_content_type(&headers, "text/plain; charset=utf-8");
     assert_eq!(body, "someone named Mark is who knows how many years old");
@@ -1272,8 +1270,9 @@ pub async fn test_post_multi_format_json() {
     assert_eq!(status, StatusCode::OK);
 }
 
+// Request body url-encoded - named struct
 #[tokio::test]
-pub async fn test_post_multi_format_form() {
+pub async fn test_post_multi_format_url_encoded_named_struct() {
     //
     // RequestBody as a named struct
     //
@@ -1288,10 +1287,11 @@ pub async fn test_post_multi_format_form() {
     assert_eq!(body, "someone named Mark is 20 years old");
     assert_eq!(status, StatusCode::OK);
 
-    //
-    // RequestBody as wrapper around a DTO(request)
-    //
+}
 
+// Request body url-encoded - DTO wrapper
+#[tokio::test]
+pub async fn test_post_multi_format_url_encoded_unnamed_struct() {
     let (status, headers, body) = post("/multi_format_dto", None, Some("application/x-www-form-urlencoded"), Body::from("name=Mark")).await;
     assert_content_type(&headers, "text/plain; charset=utf-8");
     assert_eq!(body, "someone named Mark is who knows how many years old");
