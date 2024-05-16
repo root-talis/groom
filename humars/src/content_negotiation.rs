@@ -18,9 +18,10 @@ pub fn parse_accept_header(headers: &HeaderMap) -> Option<Accept> {
         })
 }
 
+#[derive(Debug)]
 pub enum BodyContentType {
-    //Form,
     Json,
+    FormUrlEncoded,
 }
 
 pub fn parse_content_type(headers: &HeaderMap) -> Option<Mime> {
@@ -38,12 +39,16 @@ pub fn parse_content_type(headers: &HeaderMap) -> Option<Mime> {
         })
 }
 
-pub fn is_json(mime: Mime) -> bool {
+pub fn is_json(mime: &Mime) -> bool {
     // taken from axum::json since their function is private
     let is_json_content_type = mime.type_() == "application"
         && (mime.subtype() == "json" || mime.suffix().map_or(false, |name| name == "json"));
 
     is_json_content_type
+}
+
+pub fn is_form_url_encoded(mime: &Mime) -> bool {
+    *mime == mime::APPLICATION_WWW_FORM_URLENCODED
 }
 
 pub fn get_body_content_type(mime: Option<Mime>) -> Option<BodyContentType> {
@@ -53,9 +58,11 @@ pub fn get_body_content_type(mime: Option<Mime>) -> Option<BodyContentType> {
 
     let mime = mime.unwrap();
 
-    if is_json(mime) {
-        return Some(BodyContentType::Json)
+    if is_form_url_encoded(&mime) {
+        Some(BodyContentType::FormUrlEncoded)
+    } else if is_json(&mime) {
+        Some(BodyContentType::Json)
+    } else {
+        None
     }
-
-    None
 }

@@ -275,7 +275,7 @@ mod my_api {
         // todo: CBOR              - as a separate feature
 
     /// Request body as a named struct.
-    #[RequestBody(format(json/*, form*/))]
+    #[RequestBody(format(json, form))]
     pub struct MultiFormatRequestBody {
         name: String,
         age: Option<u8>,
@@ -297,7 +297,7 @@ mod my_api {
     }
 
     /// Request body as an unnamed struct that wraps around a DTO
-    #[RequestBody(format(json/*, form*/))]
+    #[RequestBody(format(json, form))]
     pub struct MultiFormatRequestBodyDto(MultiFormatDto);
 
     #[Route(method = "post", path = "/multi_format_dto")]
@@ -307,6 +307,8 @@ mod my_api {
             |v| format!("{v}")
         )))
     }
+
+    // todo: Multipart (for multipart/form-data)
 
     // todo: Request
 
@@ -1199,7 +1201,11 @@ pub async fn test_post_image() {
 }
 
 #[tokio::test]
-pub async fn test_post_multi_format() {
+pub async fn test_post_multi_format_json() {
+    //
+    // RequestBody as a named struct
+    //
+
     let (status, headers, body) = post("/multi_format", None, Some("application/json"), Body::from("{\"name\": \"Mark\"}")).await;
     assert_content_type(&headers, "text/plain; charset=utf-8");
     assert_eq!(body, "someone named Mark is who knows how many years old");
@@ -1210,11 +1216,10 @@ pub async fn test_post_multi_format() {
     assert_eq!(body, "someone named Mark is 20 years old");
     assert_eq!(status, StatusCode::OK);
 
-    // todo: form data
-}
+    //
+    // RequestBody as wrapper around a DTO(request)
+    //
 
-#[tokio::test]
-pub async fn test_post_multi_format_dto() {
     let (status, headers, body) = post("/multi_format_dto", None, Some("application/json"), Body::from("{\"name\": \"Mark\"}")).await;
     assert_content_type(&headers, "text/plain; charset=utf-8");
     assert_eq!(body, "someone named Mark is who knows how many years old");
@@ -1224,8 +1229,37 @@ pub async fn test_post_multi_format_dto() {
     assert_content_type(&headers, "text/plain; charset=utf-8");
     assert_eq!(body, "someone named Mark is 20 years old");
     assert_eq!(status, StatusCode::OK);
+}
 
-    // todo: form data
+#[tokio::test]
+pub async fn test_post_multi_format_form() {
+    //
+    // RequestBody as a named struct
+    //
+
+    let (status, headers, body) = post("/multi_format", None, Some("application/x-www-form-urlencoded"), Body::from("name=Mark")).await;
+    assert_content_type(&headers, "text/plain; charset=utf-8");
+    assert_eq!(body, "someone named Mark is who knows how many years old");
+    assert_eq!(status, StatusCode::OK);
+
+    let (status, headers, body) = post("/multi_format", None, Some("application/x-www-form-urlencoded"), Body::from("name=Mark&age=20")).await;
+    assert_content_type(&headers, "text/plain; charset=utf-8");
+    assert_eq!(body, "someone named Mark is 20 years old");
+    assert_eq!(status, StatusCode::OK);
+
+    //
+    // RequestBody as wrapper around a DTO(request)
+    //
+
+    let (status, headers, body) = post("/multi_format_dto", None, Some("application/x-www-form-urlencoded"), Body::from("name=Mark")).await;
+    assert_content_type(&headers, "text/plain; charset=utf-8");
+    assert_eq!(body, "someone named Mark is who knows how many years old");
+    assert_eq!(status, StatusCode::OK);
+
+    let (status, headers, body) = post("/multi_format_dto", None, Some("application/x-www-form-urlencoded"), Body::from("name=Mark&age=20")).await;
+    assert_content_type(&headers, "text/plain; charset=utf-8");
+    assert_eq!(body, "someone named Mark is 20 years old");
+    assert_eq!(status, StatusCode::OK);
 }
 
 //

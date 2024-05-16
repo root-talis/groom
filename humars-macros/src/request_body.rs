@@ -58,8 +58,11 @@ fn generate_impl_for_struct(args_t: TokenStream, args: RequestBodyArgs, item_str
         ).into_compile_error();
     }
 
-
-    let schema = match item_struct.fields.clone() {
+    // schema     - schema of #ident for OpenAPI spec
+    // extract_ty - typename into which request body should be extracted
+    //              (either #ident for named struct or typename of the DTO that it's wrapping for unnamed struct)
+    // pack_dto   - code to pack the extracted DTO into #ident (if #ident is an unnamed struct that wraps DTO)
+    let (schema, extract_ty, pack_dto) = match item_struct.fields.clone() {
         Fields::Unit => {
             return syn::Error::new_spanned(
                 item_struct.into_token_stream(),
@@ -67,9 +70,11 @@ fn generate_impl_for_struct(args_t: TokenStream, args: RequestBodyArgs, item_str
             ).into_compile_error();
         }
         Fields::Named(_) => {
-            quote! {
-                #ident::schema().1
-            }
+            let schema = quote! {#ident::schema().1};
+            let extract_ty = quote! {#ident};
+            let pack_dto = quote! { dto };
+
+            (schema, extract_ty, pack_dto)
         }
         Fields::Unnamed(f) => {
             if f.unnamed.len() == 0 {
@@ -93,21 +98,24 @@ fn generate_impl_for_struct(args_t: TokenStream, args: RequestBodyArgs, item_str
                 assert_impl_all!(#ty: ::humars::DTO);
             });
 
-            quote! {
-                #ty::schema().1
-            }
+            let schema = quote! {#ty::schema().1};
+            let extract_ty = quote! {#ty};
+            let pack_dto = quote! { #ident(dto) };
+
+            (schema, extract_ty, pack_dto)
         }
     };
 
     if args.format.json {
         body_extractors.push(quote! {
-            Some(Json) => {
-                Ok(
-                    ::axum::extract::Json::<#ident>::from_request(req, state)
-                        .await
-                        .map_err(|e| #rejection_ident::JsonRejection(e))?
-                        .0
-                )
+            Some(::humars::content_negotiation::BodyContentType::Json) => {
+                let dto = ::axum::extract::Json::<#extract_ty>::from_request(req, state)
+                    .await
+                    .map_err(|e| #rejection_ident::JsonRejection(e))?
+                    .0
+                ;
+
+                Ok(#pack_dto)
             },
         });
 
@@ -117,6 +125,37 @@ fn generate_impl_for_struct(args_t: TokenStream, args: RequestBodyArgs, item_str
 
         rejections_into_response.push(quote! {
             #rejection_ident::JsonRejection(r) => r.into_response(),
+        });
+
+        openapi_generators.push(quote! {
+            .content(
+                ::mime::APPLICATION_JSON.as_ref(),
+                ::utoipa::openapi::ContentBuilder::new()
+                    .schema(#schema)
+                    .build()
+            )
+        });
+    }
+
+    if args.format.form {
+        body_extractors.push(quote! {
+            Some(::humars::content_negotiation::BodyContentType::FormUrlEncoded) => {
+                let dto = ::axum::extract::Form::<#extract_ty>::from_request(req, state)
+                    .await
+                    .map_err(|e| #rejection_ident::FormRejection(e))?
+                    .0
+                ;
+
+                Ok(#pack_dto)
+            },
+        });
+
+        rejection_types.push(quote! {
+            FormRejection(::axum::extract::rejection::FormRejection),
+        });
+
+        rejections_into_response.push(quote! {
+            #rejection_ident::FormRejection(r) => r.into_response(),
         });
 
         openapi_generators.push(quote! {
@@ -161,7 +200,7 @@ fn generate_impl_for_struct(args_t: TokenStream, args: RequestBodyArgs, item_str
             async fn from_request(req: ::axum::extract::Request, state: &S) -> Result<Self, Self::Rejection> {
                 let content_type = ::humars::content_negotiation::parse_content_type(req.headers());
 
-                match (::humars::content_negotiation::get_body_content_type(content_type)) {
+                match ::humars::content_negotiation::get_body_content_type(content_type) {
                     #(#body_extractors)*
 
                     _ => {
@@ -196,8 +235,8 @@ fn generate_impl_for_struct(args_t: TokenStream, args: RequestBodyArgs, item_str
 
 #[derive(FromMeta, Default)]
 pub(crate) struct RequestBodyTypesList {
-    /*#[darling(default)]
-    pub(crate) form: bool,*/
+    #[darling(default)]
+    pub(crate) form: bool,
 
     #[darling(default)]
     pub(crate) json: bool,
@@ -205,7 +244,7 @@ pub(crate) struct RequestBodyTypesList {
 
 impl RequestBodyTypesList {
     pub(crate) fn is_any(&self) -> bool {
-        return /*self.form || */self.json;
+        return self.form || self.json;
     }
 }
 
