@@ -59,7 +59,7 @@ impl HtmlFormat for &'static str {
 /// ```
 #[macro_export]
 macro_rules! html_format {
-    ($ty:ident, $self:ident { $template:expr }) => {
+    ($ty:ty, $self:ident { $template:expr }) => {
         impl ::humars::response::HtmlFormat for $ty {
             fn render($self) -> ::axum::response::Html<axum::body::Body> {
                 ::axum::response::Html(

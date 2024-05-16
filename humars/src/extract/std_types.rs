@@ -45,3 +45,46 @@ impl HumarsExtractor for axum::body::Bytes {
         ))
     }
 }
+
+/// Implements an empty HumarsExtractor to allow any type to be used as a handler argument
+/// without affecting OpenAPI definition.
+#[macro_export]
+macro_rules! humars_empty_extractor {
+    ($ty:ty) => {
+        impl ::humars::extract::HumarsExtractor for $ty {
+            fn __openapi_modify_operation(op: OperationBuilder) -> OperationBuilder {
+                op
+            }
+        }
+    };
+}
+
+/// Implements an empty HumarsExtractor to allow any type to be used as a handler argument
+/// without affecting OpenAPI definition.
+///
+/// This macro is to define standard implementations.
+macro_rules! _humars_empty_extractor_crate {
+    ($ty:ty) => {
+        impl HumarsExtractor for $ty {
+            fn __openapi_modify_operation(op: OperationBuilder) -> OperationBuilder {
+                op
+            }
+        }
+    };
+}
+
+_humars_empty_extractor_crate!(axum::extract::Request);
+_humars_empty_extractor_crate!(axum::http::HeaderMap);
+
+
+impl<T> crate::extract::HumarsExtractor for axum::extract::Extension<T> {
+    fn __openapi_modify_operation(op: OperationBuilder) -> OperationBuilder {
+        op
+    }
+}
+
+impl<T> crate::extract::HumarsExtractor for axum::extract::State<T> {
+    fn __openapi_modify_operation(op: OperationBuilder) -> OperationBuilder {
+        op
+    }
+}

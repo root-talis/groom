@@ -7,6 +7,23 @@ use syn::Attribute;
 
 use crate::{http::HTTPMethod, attrs::{parse_attr, remove_attrs}};
 
+// region: ControllerArgs  -----------------------------------------------------------
+//
+
+#[derive(FromMeta, Default)]
+pub(crate) struct ControllerArgs {
+    /// State type for router. `S` from `::axum::Router<S>`.
+    ///
+    /// Value of this type goes into `Router::new().with_state(s)`.
+    ///
+    /// Defaults to `()` (unit type).
+    #[darling(default)]
+    pub(crate) state_type: Option<syn::Expr>, // defaults to "()" (unit type)
+}
+
+//
+// endregion: ControllerArgs -------------------------------------------------------
+
 // region: RouteArgs ---------------------------------------------------------------
 //
 
@@ -32,15 +49,15 @@ impl RouteArgs {
 // region: AST parsing and generation ----------------------------------------------
 //
 
-pub(crate) fn generate(input: TokenStream) -> TokenStream {
-    let generated_impl = generate_impl(input);
+pub(crate) fn generate(args_t: TokenStream, args: ControllerArgs, input: TokenStream) -> TokenStream {
+    let generated_impl = generate_impl(args_t, args, input);
 
     quote! {
         #generated_impl
     }
 }
 
-fn generate_impl(input: TokenStream) -> TokenStream {
+fn generate_impl(_args_t: TokenStream, args: ControllerArgs, input: TokenStream) -> TokenStream {
     let item_mod = match parse2::<ItemMod>(input) {
         Ok(syntax_tree) => syntax_tree,
         Err(error) => return error.to_compile_error(),
@@ -54,6 +71,10 @@ fn generate_impl(input: TokenStream) -> TokenStream {
     }
 
     let items = item_mod.content.unwrap().1;
+
+    let state_ty = args.state_type.unwrap_or_else(
+        || syn::parse_str::<syn::Expr>("()").unwrap()
+    );
 
     //
     // Walk through all handlers and parse them
@@ -289,7 +310,7 @@ fn generate_impl(input: TokenStream) -> TokenStream {
             
             #(#module_items)*
 
-            pub fn merge_into_router(other: ::axum::Router) -> ::axum::Router {
+            pub fn merge_into_router(other: ::axum::Router<#state_ty>) -> ::axum::Router<#state_ty> {
                 let this_router = ::axum::Router::new()
                     #(#routes_setup)*
                 ;

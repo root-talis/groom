@@ -1,4 +1,5 @@
-use axum::Router;
+use std::collections::HashMap;
+use axum::{Extension, Router};
 use axum::body::Body;
 use axum::http::{HeaderMap, Request, StatusCode};
 
@@ -16,7 +17,7 @@ use crate::humars_macros::Controller;
 
 // for scratchpad: ------
 use crate::humars::extract::HumarsExtractor;
-use crate::integration::simple_api::my_api::RqConsPathStruct;
+use crate::integration::simple_api::my_api::{MyState, RqConsPathStruct};
 // end for scratchpad ---
 
 use serde_json::json;
@@ -29,16 +30,33 @@ use pretty_assertions::{assert_eq, /*assert_ne*/};
 //
 
 fn router() -> Router {
-    my_api::merge_into_router(Router::new())
+    let state = MyState {
+        name: "Luca"
+    };
+
+    let router = Router::new();
+
+    my_api::merge_into_router(router)
+        .with_state(state)
+        .layer(Extension(MyState {
+            name: "Victoria"
+        }))
 }
 
 async fn get(url: &str, accept: Option<&'static str>) -> (StatusCode, HeaderMap, String) {
+    get_headers(url, accept.map_or(
+        HashMap::new(),
+        |a| HashMap::from([("accept", a)]))
+    ).await
+}
+
+async fn get_headers(url: &str, headers: HashMap<&'static str, &'static str>) -> (StatusCode, HeaderMap, String) {
     let app = router();
 
     let mut request = Request::builder().uri(url);
 
-    if accept.is_some() {
-        request = request.header("accept", accept.unwrap());
+    for h in headers {
+        request = request.header(h.0, h.1);
     }
 
     let request = request.body(Body::empty()).unwrap();
@@ -47,7 +65,7 @@ async fn get(url: &str, accept: Option<&'static str>) -> (StatusCode, HeaderMap,
         .oneshot(request)
         .await
         .unwrap()
-    ;
+        ;
 
     let status = response.status();
     let headers = response.headers().to_owned();
@@ -100,9 +118,11 @@ fn assert_no_content_type(headers: &HeaderMap) {
 // region: api implementation to test ------------------------------------
 //
 
-#[Controller]
+#[Controller(state_type = crate::integration::simple_api::my_api::MyState)]
 mod my_api {
-    use axum::extract::{Path, Query};
+    use axum::Extension;
+    use axum::extract::{Path, Query, Request, State};
+    use axum::http::HeaderMap;
     use axum::response::IntoResponse;
     use ::humars::response::html_format;
 
@@ -112,6 +132,11 @@ mod my_api {
 
     use utoipa::ToSchema;
     use humars_macros::RequestBody;
+
+    #[derive(Clone)]
+    pub struct MyState {
+        pub name: &'static str
+    }
 
     // region: dumb handlers ---------------------------------------------
     //
@@ -311,8 +336,6 @@ mod my_api {
 
     // todo: Multipart (for multipart/form-data)
 
-    // todo: Request
-
     // todo: HeaderMap
 
     // todo: Extension<State>
@@ -322,6 +345,31 @@ mod my_api {
     // todo: multiple HTTP methods in one handler
 
     // todo: extractors wrapped in Option<> and Result<>
+
+    #[Route(method = "get", path = "/request-extractor")]
+    async fn rq_cons_request(req: Request) -> RqConsGenericResponse {
+        let uri = req.uri().to_string();
+        RqConsGenericResponse::Ok(format!("uri: {uri}"))
+    }
+
+    #[Route(method = "get", path = "/header-map")]
+    async fn rq_cons_header_map(h: HeaderMap) -> RqConsGenericResponse {
+        let token = h.get("x-access-token");
+        RqConsGenericResponse::Ok(format!(
+            "token: {}",
+            token.map_or("none", |t| t.to_str().unwrap())
+        ))
+    }
+
+    #[Route(method = "get", path = "/extension")]
+    async fn rq_cons_extension(e: Extension<MyState>) -> RqConsGenericResponse {
+        RqConsGenericResponse::Ok(format!("name from extension: {}", e.name))
+    }
+
+    #[Route(method = "get", path = "/state")]
+    async fn rq_cons_state(e: State<MyState>) -> RqConsGenericResponse {
+        RqConsGenericResponse::Ok(format!("name from state: {}", e.name))
+    }
 
     //
     // endregion: request consumption ---------------------------------
@@ -984,6 +1032,70 @@ fn api_doc() {
                         }
                     },
                 },
+                "/request-extractor": {
+                    "get": {
+                        "responses": {
+                            "200": {
+                                "content": {
+                                    "text/plain; charset=utf-8": {
+                                        "schema": {
+                                            "type": "string"
+                                        }
+                                    }
+                                },
+                                "description": ""
+                            }
+                        }
+                    }
+                },
+                "/header-map": {
+                    "get": {
+                        "responses": {
+                            "200": {
+                                "content": {
+                                    "text/plain; charset=utf-8": {
+                                        "schema": {
+                                            "type": "string"
+                                        }
+                                    }
+                                },
+                                "description": ""
+                            }
+                        }
+                    }
+                },
+                "/extension": {
+                    "get": {
+                        "responses": {
+                            "200": {
+                                "content": {
+                                    "text/plain; charset=utf-8": {
+                                        "schema": {
+                                            "type": "string"
+                                        }
+                                    }
+                                },
+                                "description": ""
+                            }
+                        }
+                    }
+                },
+                "/state": {
+                    "get": {
+                        "responses": {
+                            "200": {
+                                "content": {
+                                    "text/plain; charset=utf-8": {
+                                        "schema": {
+                                            "type": "string"
+                                        }
+                                    }
+                                },
+                                "description": ""
+                            }
+                        }
+                    }
+                },
             }
         })
     );
@@ -1299,6 +1411,42 @@ pub async fn test_post_multi_format_url_encoded_unnamed_struct() {
     let (status, headers, body) = post("/multi_format_dto", None, Some("application/x-www-form-urlencoded"), Body::from("name=Mark&age=20")).await;
     assert_content_type(&headers, "text/plain; charset=utf-8");
     assert_eq!(body, "someone named Mark is 20 years old");
+    assert_eq!(status, StatusCode::OK);
+}
+
+// axum::extract::Request
+#[tokio::test]
+pub async fn test_get_axum_extract_request() {
+    let (status, headers, body) = get("/request-extractor?id=123456", None).await;
+    assert_content_type(&headers, "text/plain; charset=utf-8");
+    assert_eq!(body, "uri: /request-extractor?id=123456");
+    assert_eq!(status, StatusCode::OK);
+}
+
+// axum::http::HeaderMap
+#[tokio::test]
+pub async fn test_get_axum_http_header_map() {
+    let (status, headers, body) = get_headers("/header-map", HashMap::from([("x-access-token", "123456789")])).await;
+    assert_content_type(&headers, "text/plain; charset=utf-8");
+    assert_eq!(body, "token: 123456789");
+    assert_eq!(status, StatusCode::OK);
+}
+
+// axum::extract::Extension
+#[tokio::test]
+pub async fn test_get_axum_extract_extension() {
+    let (status, headers, body) = get("/extension", None).await;
+    assert_content_type(&headers, "text/plain; charset=utf-8");
+    assert_eq!(body, "name from extension: Victoria");
+    assert_eq!(status, StatusCode::OK);
+}
+
+// axum::extract::State
+#[tokio::test]
+pub async fn test_get_axum_extract_state() {
+    let (status, headers, body) = get("/state", None).await;
+    assert_content_type(&headers, "text/plain; charset=utf-8");
+    assert_eq!(body, "name from state: Luca");
     assert_eq!(status, StatusCode::OK);
 }
 

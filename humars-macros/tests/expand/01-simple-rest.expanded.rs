@@ -737,7 +737,7 @@ pub mod api_root {
     };
     impl ::humars::DTO for RqConsPathStruct {}
     impl ::humars::DTO_Request for RqConsPathStruct {}
-    pub fn merge_into_router(other: ::axum::Router) -> ::axum::Router {
+    pub fn merge_into_router(other: ::axum::Router<()>) -> ::axum::Router<()> {
         let this_router = ::axum::Router::new()
             .route("/", ::axum::routing::get(__humars_wrapper_get_root))
             .route("/", ::axum::routing::post(__humars_wrapper_post_root))
