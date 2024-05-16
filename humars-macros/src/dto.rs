@@ -44,11 +44,14 @@ fn generate_impl(args_t: TokenStream, args: DtoArgs, input: TokenStream) -> Toke
 fn generate_impl_struct(_args_t: TokenStream, args: DtoArgs, item_struct: ItemStruct) -> TokenStream {
     let ident = item_struct.ident.clone();
 
-    let deserialize_derive =
+    let (deserialize_derive, dto_request_impl) =
         if !args.request {
             Default::default()
         } else {
-            quote! { #[derive(::serde::Deserialize)] }
+            let deserialize_derive = quote! { #[derive(::serde::Deserialize)] };
+            let request_impl = quote! { impl ::humars::DTO_Request for #ident {} };
+
+            (deserialize_derive, request_impl)
         };
 
     let (serialize_derive, dto_response_impl) =
@@ -69,6 +72,7 @@ fn generate_impl_struct(_args_t: TokenStream, args: DtoArgs, item_struct: ItemSt
 
         impl ::humars::DTO for #ident {}
 
+        #dto_request_impl
         #dto_response_impl
     }
 }

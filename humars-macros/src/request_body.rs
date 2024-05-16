@@ -2,6 +2,7 @@ use darling::FromMeta;
 use proc_macro2::TokenStream;
 use quote::{format_ident, quote, ToTokens};
 use syn::{Error, Fields, Item, ItemStruct, parse2};
+use crate::utils::get_description;
 
 // region: RequestBodyArgs args ----------------------------------------------------------------
 //
@@ -48,12 +49,15 @@ fn generate_impl_struct(args_t: TokenStream, args: RequestBodyArgs, item_struct:
     let mut rejections_into_response: Vec<TokenStream> = Vec::new();
     let mut openapi_generators: Vec<TokenStream> = Vec::new();
 
+    let mut type_assertions: Vec<TokenStream> = Vec::new(); // compile-time checks of trait implementation (for better error messages)
+
     if !args.format.is_any() {
         return syn::Error::new_spanned(
             args_t,
             format!("specify at least one request format for struct `{ident}` to be able to extract data from request body (e.g. #[RequestBody(format(json))])")
         ).into_compile_error();
     }
+
 
     let schema = match item_struct.fields.clone() {
         Fields::Unit => {
@@ -84,6 +88,10 @@ fn generate_impl_struct(args_t: TokenStream, args: RequestBodyArgs, item_struct:
 
             let first_field = f.unnamed.first().unwrap();
             let ty = first_field.ty.clone();
+
+            type_assertions.push(quote!{
+                assert_impl_all!(#ty: ::humars::DTO);
+            });
 
             quote! {
                 #ty::schema().1
@@ -121,6 +129,11 @@ fn generate_impl_struct(args_t: TokenStream, args: RequestBodyArgs, item_struct:
         });
     }
 
+    let description_tk = match get_description(&item_struct.attrs).unwrap_or_default() {
+        Some(s) => quote! { .description(Some(#s)) },
+        None           => quote! {  },
+    };
+
     quote! {
         #[derive(::serde::Deserialize)]
         #[derive(::utoipa::ToSchema)]
@@ -131,6 +144,7 @@ fn generate_impl_struct(args_t: TokenStream, args: RequestBodyArgs, item_struct:
                 op.request_body(Some(
                     ::utoipa::openapi::request_body::RequestBodyBuilder::new()
                         #(#openapi_generators)*
+                        #description_tk
                         .required(Some(::utoipa::openapi::Required::True))
                         .build()
                 ))
@@ -172,6 +186,8 @@ fn generate_impl_struct(args_t: TokenStream, args: RequestBodyArgs, item_struct:
                 }
             }
         }
+
+        #(#type_assertions)*
     }
 }
 

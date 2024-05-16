@@ -274,6 +274,7 @@ mod my_api {
         // todo: BSON              - as a separate feature
         // todo: CBOR              - as a separate feature
 
+    /// Request body as a named struct.
     #[RequestBody(format(json/*, form*/))]
     pub struct MultiFormatRequestBody {
         name: String,
@@ -288,12 +289,14 @@ mod my_api {
         )))
     }
 
+    /// Some DTO
     #[DTO(request)]
     pub struct MultiFormatDto {
         name: String,
         age: Option<u8>,
     }
 
+    /// Request body as an unnamed struct that wraps around a DTO
     #[RequestBody(format(json/*, form*/))]
     pub struct MultiFormatRequestBodyDto(MultiFormatDto);
 
@@ -858,9 +861,11 @@ fn api_doc() {
                     "post": {
                         "requestBody": {
                             "required": true,
+                            "description": "Request body as a named struct.",
                             "content": {
                                 "application/json": {
                                     "schema": {
+                                        "description": "Request body as a named struct.",
                                         "properties": {
                                             "age": {
                                                 "format": "int32",
@@ -898,9 +903,11 @@ fn api_doc() {
                     "post": {
                         "requestBody": {
                             "required": true,
+                            "description": "Request body as an unnamed struct that wraps around a DTO",
                             "content": {
                                 "application/json": {
                                     "schema": {
+                                        "description": "Some DTO",
                                         "properties": {
                                             "age": {
                                                 "format": "int32",
