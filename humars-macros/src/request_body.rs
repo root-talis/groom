@@ -1,7 +1,7 @@
 use darling::FromMeta;
 use proc_macro2::TokenStream;
-use quote::{format_ident, quote};
-use syn::{Error, Item, ItemStruct, parse2};
+use quote::{format_ident, quote, ToTokens};
+use syn::{Error, Fields, Item, ItemStruct, parse2};
 
 // region: RequestBodyArgs args ----------------------------------------------------------------
 //
@@ -55,6 +55,42 @@ fn generate_impl_struct(args_t: TokenStream, args: RequestBodyArgs, item_struct:
         ).into_compile_error();
     }
 
+    let schema = match item_struct.fields.clone() {
+        Fields::Unit => {
+            return syn::Error::new_spanned(
+                item_struct.into_token_stream(),
+                format!("`{ident}`: RequestBody should not be an empty struct. Try making it an empty named struct: `struct {ident} {{}}`.")
+            ).into_compile_error();
+        }
+        Fields::Named(_) => {
+            quote! {
+                #ident::schema().1
+            }
+        }
+        Fields::Unnamed(f) => {
+            if f.unnamed.len() == 0 {
+                return syn::Error::new_spanned(
+                    item_struct.into_token_stream(),
+                    format!("`{ident}`: RequestBody should not be an empty unnamed struct. Try making it an empty named struct: `struct {ident} {{}}`.")
+                ).into_compile_error();
+            }
+
+            if f.unnamed.len() > 1 {
+                return syn::Error::new_spanned(
+                    item_struct.into_token_stream(),
+                    format!("`{ident}`: RequestBody should either have named fields or have a single unnamed field. Try making it a named struct: `struct {ident} {{...}}`.")
+                ).into_compile_error();
+            }
+
+            let first_field = f.unnamed.first().unwrap();
+            let ty = first_field.ty.clone();
+
+            quote! {
+                #ty::schema().1
+            }
+        }
+    };
+
     if args.format.json {
         body_extractors.push(quote! {
             Some(Json) => {
@@ -79,7 +115,7 @@ fn generate_impl_struct(args_t: TokenStream, args: RequestBodyArgs, item_struct:
             .content(
                 ::mime::APPLICATION_JSON.as_ref(),
                 ::utoipa::openapi::ContentBuilder::new()
-                    .schema(#ident::schema().1)
+                    .schema(#schema)
                     .build()
             )
         });

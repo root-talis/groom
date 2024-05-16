@@ -17,14 +17,12 @@ use crate::humars_macros::Controller;
 // for scratchpad: ------
 use crate::humars::extract::HumarsExtractor;
 use crate::integration::simple_api::my_api::RqConsPathStruct;
-use axum::extract::FromRequest;
 // end for scratchpad ---
 
 use serde_json::json;
 
 #[cfg(test)]
 use pretty_assertions::{assert_eq, /*assert_ne*/};
-use serde::Deserialize;
 
 
 // region: test bootstrap utils -----------------------------------
@@ -438,11 +436,6 @@ mod my_api {
 // region: tests --------------------------------------------------
 //
 
-#[derive(Deserialize)]
-struct Foo {
-    name: String,
-}
-
 #[tokio::test]
 async fn api_doc_scratchpad() {
     #[derive(OpenApi)]
@@ -459,13 +452,15 @@ async fn api_doc_scratchpad() {
         .build()
     ;
 
+    let component_schema_name = RqConsPathStruct::schema().0;
+
     let components = ComponentsBuilder::new()
-        .schema("my_component", my_api::RqConsPathStruct::schema().1)
+        .schema(component_schema_name, my_api::RqConsPathStruct::schema().1)
         .build()
     ;
 
     let content = ContentBuilder::new()
-        .schema(components.schemas["my_component"].clone())
+        .schema(components.schemas[component_schema_name].clone())
         .build()
     ;
 
@@ -502,19 +497,19 @@ async fn api_doc_scratchpad() {
     let paths = PathsBuilder::from(paths).build();
 
     let api = api.paths(paths);
-    //let api = api.components(Some(components));
+    let api = api.components(Some(components));
 
     // endregion: should generate this for /hello-world
 
-    let _json = api.build().to_json().expect("expected a valid json");
+    let json = api.build().to_pretty_json().expect("expected a valid json");
 
     let _breakpoint = false;
 
     let hm = ::axum::http::header::HeaderMap::new();
     let _has_header = hm.get(::axum::http::header::ACCEPT);
 
-    let request = Request::builder().body(Body::empty()).unwrap();
-    let state: Option<u8> = None;
+    eprintln!("{}", json);
+    //assert_eq!(true, false)
 }
 
 /// In this test we check how OpenAPI spec is generated.
@@ -903,7 +898,27 @@ fn api_doc() {
                     "post": {
                         "requestBody": {
                             "required": true,
-                            "content": {}
+                            "content": {
+                                "application/json": {
+                                    "schema": {
+                                        "properties": {
+                                            "age": {
+                                                "format": "int32",
+                                                "minimum": 0,
+                                                "nullable": true,
+                                                "type": "integer"
+                                            },
+                                            "name": {
+                                                "type": "string"
+                                            }
+                                        },
+                                        "required": [
+                                            "name"
+                                        ],
+                                        "type": "object"
+                                    }
+                                }
+                            }
                         },
                         "responses": {
                             "200": {

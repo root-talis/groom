@@ -198,8 +198,6 @@ pub mod api_root {
     #[allow(non_upper_case_globals)]
     const __HUMARS_RESPONSE_AVAILABLE_MIMES_GetRootResponse: &[::mime::Mime] = &[
         ::mime::TEXT_PLAIN,
-        ::mime::TEXT_PLAIN,
-        ::mime::TEXT_PLAIN,
     ];
     impl ::humars::response::Response for GetRootResponse {
         fn __openapi_modify_operation(
@@ -306,11 +304,26 @@ pub mod api_root {
                     }
                 }
                 None => {
-                    (
-                        ::axum::http::StatusCode::BAD_REQUEST,
-                        "No accept header specified, but some variants have a body.",
-                    )
-                        .into_response()
+                    match self {
+                        Self::Ok(body) => {
+                            (
+                                ::axum::http::StatusCode::from_u16(200u16).unwrap(),
+                                Into::<String>::into(body),
+                            )
+                                .into_response()
+                        }
+                        Self::BadRequest(body) => {
+                            (
+                                ::axum::http::StatusCode::from_u16(400u16).unwrap(),
+                                Into::<String>::into(body),
+                            )
+                                .into_response()
+                        }
+                        Self::Forbidden => {
+                            (::axum::http::StatusCode::from_u16(401u16).unwrap())
+                                .into_response()
+                        }
+                    }
                 }
             }
         }
