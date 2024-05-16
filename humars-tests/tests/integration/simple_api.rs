@@ -274,7 +274,6 @@ mod my_api {
         // todo: XML        - as a separate feature
         // todo: BSON       - as a separate feature
         // todo: CBOR       - as a separate feature
-    // todo: don't require content-type header if only one content-type is possible
 
     /// Request body as a named struct.
     #[RequestBody(format(json, url_encoded))]
