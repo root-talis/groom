@@ -137,7 +137,7 @@ fn generate_impl_for_struct(args_t: TokenStream, args: RequestBodyArgs, item_str
         });
     }
 
-    if args.format.form {
+    if args.format.url_encoded {
         body_extractors.push(quote! {
             Some(::humars::content_negotiation::BodyContentType::FormUrlEncoded) => {
                 let dto = ::axum::extract::Form::<#extract_ty>::from_request(req, state)
@@ -236,7 +236,7 @@ fn generate_impl_for_struct(args_t: TokenStream, args: RequestBodyArgs, item_str
 #[derive(FromMeta, Default)]
 pub(crate) struct RequestBodyTypesList {
     #[darling(default)]
-    pub(crate) form: bool,
+    pub(crate) url_encoded: bool,
 
     #[darling(default)]
     pub(crate) json: bool,
@@ -244,7 +244,7 @@ pub(crate) struct RequestBodyTypesList {
 
 impl RequestBodyTypesList {
     pub(crate) fn is_any(&self) -> bool {
-        return self.form || self.json;
+        return self.url_encoded || self.json;
     }
 }
 

@@ -268,14 +268,15 @@ mod my_api {
     }
 
     // todo: Request bodies with content-type negotiation:
-        // todo: axum::Json<Value> - as a separate feature
-        // todo: axum::form::Form  - as a separate feature
-        // todo: XML               - as a separate feature
-        // todo: BSON              - as a separate feature
-        // todo: CBOR              - as a separate feature
+        // done: Json       - as a separate feature
+        // done: Form       - as a separate feature
+        // todo: Multipart  - as a separate feature
+        // todo: XML        - as a separate feature
+        // todo: BSON       - as a separate feature
+        // todo: CBOR       - as a separate feature
 
     /// Request body as a named struct.
-    #[RequestBody(format(json, form))]
+    #[RequestBody(format(json, url_encoded))]
     pub struct MultiFormatRequestBody {
         name: String,
         age: Option<u8>,
@@ -297,7 +298,7 @@ mod my_api {
     }
 
     /// Request body as an unnamed struct that wraps around a DTO
-    #[RequestBody(format(json, form))]
+    #[RequestBody(format(json, url_encoded))]
     pub struct MultiFormatRequestBodyDto(MultiFormatDto);
 
     #[Route(method = "post", path = "/multi_format_dto")]
