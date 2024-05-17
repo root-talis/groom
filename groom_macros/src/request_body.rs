@@ -95,7 +95,7 @@ fn generate_impl_for_struct(args_t: TokenStream, args: RequestBodyArgs, item_str
             let ty = first_field.ty.clone();
 
             type_assertions.push(quote!{
-                assert_impl_all!(#ty: ::humars::DTO);
+                assert_impl_all!(#ty: ::groom::DTO);
             });
 
             let schema = quote! {#ty::schema().1};
@@ -108,7 +108,7 @@ fn generate_impl_for_struct(args_t: TokenStream, args: RequestBodyArgs, item_str
 
     if args.format.json {
         body_extractors.push(quote! {
-            Some(::humars::content_negotiation::BodyContentType::Json) => {
+            Some(::groom::content_negotiation::BodyContentType::Json) => {
                 let dto = ::axum::extract::Json::<#extract_ty>::from_request(req, state)
                     .await
                     .map_err(|e| #rejection_ident::JsonRejection(e))?
@@ -139,7 +139,7 @@ fn generate_impl_for_struct(args_t: TokenStream, args: RequestBodyArgs, item_str
 
     if args.format.url_encoded {
         body_extractors.push(quote! {
-            Some(::humars::content_negotiation::BodyContentType::FormUrlEncoded) => {
+            Some(::groom::content_negotiation::BodyContentType::FormUrlEncoded) => {
                 let dto = ::axum::extract::Form::<#extract_ty>::from_request(req, state)
                     .await
                     .map_err(|e| #rejection_ident::FormRejection(e))?
@@ -178,7 +178,7 @@ fn generate_impl_for_struct(args_t: TokenStream, args: RequestBodyArgs, item_str
         #[derive(::utoipa::ToSchema)]
         #item_struct
 
-        impl ::humars::extract::HumarsExtractor for #ident {
+        impl ::groom::extract::GroomExtractor for #ident {
             fn __openapi_modify_operation(op: ::utoipa::openapi::path::OperationBuilder) -> ::utoipa::openapi::path::OperationBuilder {
                 op.request_body(Some(
                     ::utoipa::openapi::request_body::RequestBodyBuilder::new()
@@ -198,9 +198,9 @@ fn generate_impl_for_struct(args_t: TokenStream, args: RequestBodyArgs, item_str
             type Rejection = #rejection_ident;
 
             async fn from_request(req: ::axum::extract::Request, state: &S) -> Result<Self, Self::Rejection> {
-                let content_type = ::humars::content_negotiation::parse_content_type(req.headers());
+                let content_type = ::groom::content_negotiation::parse_content_type(req.headers());
 
-                match ::humars::content_negotiation::get_body_content_type(content_type) {
+                match ::groom::content_negotiation::get_body_content_type(content_type) {
                     #(#body_extractors)*
 
                     _ => {

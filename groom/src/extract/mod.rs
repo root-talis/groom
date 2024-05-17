@@ -4,7 +4,7 @@ mod query;
 mod path;
 mod std_types;
 
-pub trait HumarsExtractor {
+pub trait GroomExtractor {
     fn __openapi_modify_operation(op: OperationBuilder) -> OperationBuilder;
 }
 
@@ -17,7 +17,7 @@ macro_rules! binary_request_body {
         #[derive(::axum::extract::FromRequest)]
         struct $name(::axum::body::Bytes);
 
-        impl ::humars::extract::HumarsExtractor for $name {
+        impl ::groom::extract::GroomExtractor for $name {
             fn __openapi_modify_operation(op: ::utoipa::openapi::path::OperationBuilder) -> ::utoipa::openapi::path::OperationBuilder {
                 op.request_body(Some(
                     ::utoipa::openapi::request_body::RequestBodyBuilder::new()

@@ -1,9 +1,9 @@
 use axum::extract::Path;
 use utoipa::openapi::path::{OperationBuilder, ParameterBuilder};
 
-use crate::{extract::HumarsExtractor, DTO};
+use crate::{extract::GroomExtractor, DTO};
 
-impl<T: DTO> HumarsExtractor for Path<T> {
+impl<T: DTO> GroomExtractor for Path<T> {
     fn __openapi_modify_operation(op: OperationBuilder) -> OperationBuilder {
         let (name, schema) = T::schema();
 

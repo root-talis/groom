@@ -1,5 +1,5 @@
 [package]
-name = "humars-tests"
+name = "groom_tests"
 version = "0.1.0"
 edition = "2021"
 
@@ -11,8 +11,8 @@ async-trait = "0.1.80"
 axum = { version = "0.7.2", features = ["macros"] }
 bytes = "1.5.0"
 http-body-util = "0.1.0"
-humars = {path = "../humars"}
-humars_macros = {path = "../humars-macros"}
+groom = {path = "../groom" }
+groom_macros = {path = "../groom_macros" }
 mime = "0.3.17"
 serde = { version = "1.0.195", features = ["derive"] }
 static_assertions = "1.1.0"

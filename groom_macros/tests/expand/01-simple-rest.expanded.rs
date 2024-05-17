@@ -1,5 +1,5 @@
 #[macro_use]
-extern crate humars_macros;
+extern crate groom_macros;
 pub mod api_root {
     use ::static_assertions::{assert_impl_all, assert_impl_any};
     use axum::extract::{Path, Query};
@@ -11,23 +11,23 @@ pub mod api_root {
     pub async fn get_root() -> GetRootResponse {
         let a = 1;
     }
-    async fn __humars_wrapper_get_root(
+    async fn __groom_wrapper_get_root(
         headers: ::axum::http::header::HeaderMap,
     ) -> impl ::axum::response::IntoResponse {
-        let accept = ::humars::content_negotiation::parse_accept_header(&headers);
+        let accept = ::groom::content_negotiation::parse_accept_header(&headers);
         let result = get_root().await;
-        result.__humars_into_response(accept)
+        result.__groom_into_response(accept)
     }
     /// HTTP handler: POST /
     pub async fn post_root() -> GetRootResponse {
         let a = 2;
     }
-    async fn __humars_wrapper_post_root(
+    async fn __groom_wrapper_post_root(
         headers: ::axum::http::header::HeaderMap,
     ) -> impl ::axum::response::IntoResponse {
-        let accept = ::humars::content_negotiation::parse_accept_header(&headers);
+        let accept = ::groom::content_negotiation::parse_accept_header(&headers);
         let result = post_root().await;
-        result.__humars_into_response(accept)
+        result.__groom_into_response(accept)
     }
     /// Query<struct>
     ///
@@ -43,13 +43,13 @@ pub mod api_root {
             RqConsQueryResponse::Ok(result)
         }
     }
-    async fn __humars_wrapper_rq_cons_query_struct(
+    async fn __groom_wrapper_rq_cons_query_struct(
         headers: ::axum::http::header::HeaderMap,
         input0: Query<RqConsQueryStruct>,
     ) -> impl ::axum::response::IntoResponse {
-        let accept = ::humars::content_negotiation::parse_accept_header(&headers);
+        let accept = ::groom::content_negotiation::parse_accept_header(&headers);
         let result = rq_cons_query_struct(input0).await;
-        result.__humars_into_response(accept)
+        result.__groom_into_response(accept)
     }
     /// Query<HashMap<String, String>>
     ///
@@ -65,13 +65,13 @@ pub mod api_root {
             RqConsQueryResponse::BadRequest("Empty string".into())
         }
     }
-    async fn __humars_wrapper_rq_cons_query_struct(
+    async fn __groom_wrapper_rq_cons_query_struct(
         headers: ::axum::http::header::HeaderMap,
         input0: Query<HashMap<String, String>>,
     ) -> impl ::axum::response::IntoResponse {
-        let accept = ::humars::content_negotiation::parse_accept_header(&headers);
+        let accept = ::groom::content_negotiation::parse_accept_header(&headers);
         let result = rq_cons_query_struct(input0).await;
-        result.__humars_into_response(accept)
+        result.__groom_into_response(accept)
     }
     /// Path<struct>
     ///
@@ -81,24 +81,24 @@ pub mod api_root {
     ) -> RqConsPathResponse {
         RqConsPathResponse::Ok("ok".into())
     }
-    async fn __humars_wrapper_rq_cons_path_struct(
+    async fn __groom_wrapper_rq_cons_path_struct(
         headers: ::axum::http::header::HeaderMap,
         input0: Path<RqConsPathStruct>,
     ) -> impl ::axum::response::IntoResponse {
-        let accept = ::humars::content_negotiation::parse_accept_header(&headers);
+        let accept = ::groom::content_negotiation::parse_accept_header(&headers);
         let result = rq_cons_path_struct(input0).await;
-        result.__humars_into_response(accept)
+        result.__groom_into_response(accept)
     }
     /// HTTP handler: GET /json
     pub async fn resp_json() -> RespJsonResponse {
         RespJsonResponse::Ok(StructJson { success: true })
     }
-    async fn __humars_wrapper_resp_json(
+    async fn __groom_wrapper_resp_json(
         headers: ::axum::http::header::HeaderMap,
     ) -> impl ::axum::response::IntoResponse {
-        let accept = ::humars::content_negotiation::parse_accept_header(&headers);
+        let accept = ::groom::content_negotiation::parse_accept_header(&headers);
         let result = resp_json().await;
-        result.__humars_into_response(accept)
+        result.__groom_into_response(accept)
     }
     async fn not_a_handler() {
         let a = 1;
@@ -145,7 +145,7 @@ pub mod api_root {
                     &self.1
                 }
             }
-            impl<T: ::humars::DTO_Response, N> Wrapper<T, N> {
+            impl<T: ::groom::DTO_Response, N> Wrapper<T, N> {
                 fn _static_assertions_impl_any(&self) -> ActualAssertImplAnyToken {
                     ActualAssertImplAnyToken
                 }
@@ -186,7 +186,7 @@ pub mod api_root {
                     &self.1
                 }
             }
-            impl<T: ::humars::DTO_Response, N> Wrapper<T, N> {
+            impl<T: ::groom::DTO_Response, N> Wrapper<T, N> {
                 fn _static_assertions_impl_any(&self) -> ActualAssertImplAnyToken {
                     ActualAssertImplAnyToken
                 }
@@ -196,10 +196,10 @@ pub mod api_root {
         assert_impl_any_token(previous._static_assertions_impl_any());
     };
     #[allow(non_upper_case_globals)]
-    const __HUMARS_RESPONSE_AVAILABLE_MIMES_GetRootResponse: &[::mime::Mime] = &[
+    const __GROOM_RESPONSE_AVAILABLE_MIMES_GetRootResponse: &[::mime::Mime] = &[
         ::mime::TEXT_PLAIN,
     ];
-    impl ::humars::response::Response for GetRootResponse {
+    impl ::groom::response::Response for GetRootResponse {
         fn __openapi_modify_operation(
             op: ::utoipa::openapi::path::OperationBuilder,
         ) -> ::utoipa::openapi::path::OperationBuilder {
@@ -238,14 +238,14 @@ pub mod api_root {
                 );
             op
         }
-        fn __humars_into_response(
+        fn __groom_into_response(
             self,
             accept: Option<::accept_header::Accept>,
         ) -> ::axum::response::Response {
             match accept {
                 Some(accept) => {
                     match accept
-                        .negotiate(&__HUMARS_RESPONSE_AVAILABLE_MIMES_GetRootResponse)
+                        .negotiate(&__GROOM_RESPONSE_AVAILABLE_MIMES_GetRootResponse)
                     {
                         Ok(negotiated) => {
                             match (negotiated.type_(), negotiated.subtype()) {
@@ -510,8 +510,8 @@ pub mod api_root {
             }
         }
     };
-    impl ::humars::DTO for RqConsQueryStruct {}
-    impl ::humars::DTO_Request for RqConsQueryStruct {}
+    impl ::groom::DTO for RqConsQueryStruct {}
+    impl ::groom::DTO_Request for RqConsQueryStruct {}
     pub struct RqConsPathStruct {
         user_id: String,
         team_id: i32,
@@ -735,22 +735,22 @@ pub mod api_root {
             }
         }
     };
-    impl ::humars::DTO for RqConsPathStruct {}
-    impl ::humars::DTO_Request for RqConsPathStruct {}
+    impl ::groom::DTO for RqConsPathStruct {}
+    impl ::groom::DTO_Request for RqConsPathStruct {}
     pub fn merge_into_router(other: ::axum::Router<()>) -> ::axum::Router<()> {
         let this_router = ::axum::Router::new()
-            .route("/", ::axum::routing::get(__humars_wrapper_get_root))
-            .route("/", ::axum::routing::post(__humars_wrapper_post_root))
-            .route("/greet", ::axum::routing::get(__humars_wrapper_rq_cons_query_struct))
+            .route("/", ::axum::routing::get(__groom_wrapper_get_root))
+            .route("/", ::axum::routing::post(__groom_wrapper_post_root))
+            .route("/greet", ::axum::routing::get(__groom_wrapper_rq_cons_query_struct))
             .route(
                 "/greet_2",
-                ::axum::routing::get(__humars_wrapper_rq_cons_query_struct),
+                ::axum::routing::get(__groom_wrapper_rq_cons_query_struct),
             )
             .route(
                 "/team/:team_id/user/:user_id",
-                ::axum::routing::get(__humars_wrapper_rq_cons_path_struct),
+                ::axum::routing::get(__groom_wrapper_rq_cons_path_struct),
             )
-            .route("/json", ::axum::routing::get(__humars_wrapper_resp_json));
+            .route("/json", ::axum::routing::get(__groom_wrapper_resp_json));
         other.merge(this_router)
     }
     pub fn merge_into_openapi_builder(
@@ -873,39 +873,39 @@ pub mod api_root {
         other.paths(paths)
     }
     const _: fn() = || {
-        fn assert_impl_all<T: ?Sized + ::humars::response::Response>() {}
+        fn assert_impl_all<T: ?Sized + ::groom::response::Response>() {}
         assert_impl_all::<GetRootResponse>();
     };
     const _: fn() = || {
-        fn assert_impl_all<T: ?Sized + ::humars::response::Response>() {}
+        fn assert_impl_all<T: ?Sized + ::groom::response::Response>() {}
         assert_impl_all::<GetRootResponse>();
     };
     const _: fn() = || {
-        fn assert_impl_all<T: ?Sized + ::humars::extract::HumarsExtractor>() {}
+        fn assert_impl_all<T: ?Sized + ::groom::extract::GroomExtractor>() {}
         assert_impl_all::<Query<RqConsQueryStruct>>();
     };
     const _: fn() = || {
-        fn assert_impl_all<T: ?Sized + ::humars::response::Response>() {}
+        fn assert_impl_all<T: ?Sized + ::groom::response::Response>() {}
         assert_impl_all::<RqConsQueryResponse>();
     };
     const _: fn() = || {
-        fn assert_impl_all<T: ?Sized + ::humars::extract::HumarsExtractor>() {}
+        fn assert_impl_all<T: ?Sized + ::groom::extract::GroomExtractor>() {}
         assert_impl_all::<Query<HashMap<String, String>>>();
     };
     const _: fn() = || {
-        fn assert_impl_all<T: ?Sized + ::humars::response::Response>() {}
+        fn assert_impl_all<T: ?Sized + ::groom::response::Response>() {}
         assert_impl_all::<RqConsQueryResponse>();
     };
     const _: fn() = || {
-        fn assert_impl_all<T: ?Sized + ::humars::extract::HumarsExtractor>() {}
+        fn assert_impl_all<T: ?Sized + ::groom::extract::GroomExtractor>() {}
         assert_impl_all::<Path<RqConsPathStruct>>();
     };
     const _: fn() = || {
-        fn assert_impl_all<T: ?Sized + ::humars::response::Response>() {}
+        fn assert_impl_all<T: ?Sized + ::groom::response::Response>() {}
         assert_impl_all::<RqConsPathResponse>();
     };
     const _: fn() = || {
-        fn assert_impl_all<T: ?Sized + ::humars::response::Response>() {}
+        fn assert_impl_all<T: ?Sized + ::groom::response::Response>() {}
         assert_impl_all::<RespJsonResponse>();
     };
 }

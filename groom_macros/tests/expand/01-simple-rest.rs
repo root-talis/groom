@@ -1,5 +1,5 @@
 #[macro_use]
-extern crate humars_macros;
+extern crate groom_macros;
 #[Controller]
 pub mod api_root {
     use axum::extract::{Path,Query};

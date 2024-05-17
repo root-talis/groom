@@ -6,10 +6,10 @@
 use utoipa::openapi::{ContentBuilder, KnownFormat, ObjectBuilder, Required, SchemaFormat, SchemaType};
 use utoipa::openapi::path::{OperationBuilder};
 use utoipa::openapi::request_body::RequestBodyBuilder;
-use crate::extract::HumarsExtractor;
+use crate::extract::GroomExtractor;
 use utoipa::PartialSchema;
 
-impl HumarsExtractor for String {
+impl GroomExtractor for String {
     fn __openapi_modify_operation(op: OperationBuilder) -> OperationBuilder {
         op.request_body(Some(
             RequestBodyBuilder::new()
@@ -25,7 +25,7 @@ impl HumarsExtractor for String {
     }
 }
 
-impl HumarsExtractor for axum::body::Bytes {
+impl GroomExtractor for axum::body::Bytes {
     fn __openapi_modify_operation(op: OperationBuilder) -> OperationBuilder {
         op.request_body(Some(
             RequestBodyBuilder::new()
@@ -46,12 +46,12 @@ impl HumarsExtractor for axum::body::Bytes {
     }
 }
 
-/// Implements an empty HumarsExtractor to allow any type to be used as a handler argument
+/// Implements an empty GroomExtractor to allow any type to be used as a handler argument
 /// without affecting OpenAPI definition.
 #[macro_export]
-macro_rules! humars_empty_extractor {
+macro_rules! groom_empty_extractor {
     ($ty:ty) => {
-        impl ::humars::extract::HumarsExtractor for $ty {
+        impl ::groom::extract::GroomExtractor for $ty {
             fn __openapi_modify_operation(op: OperationBuilder) -> OperationBuilder {
                 op
             }
@@ -59,13 +59,13 @@ macro_rules! humars_empty_extractor {
     };
 }
 
-/// Implements an empty HumarsExtractor to allow any type to be used as a handler argument
+/// Implements an empty GroomExtractor to allow any type to be used as a handler argument
 /// without affecting OpenAPI definition.
 ///
 /// This macro is to define standard implementations.
-macro_rules! _humars_empty_extractor_crate {
+macro_rules! _groom_empty_extractor_crate {
     ($ty:ty) => {
-        impl HumarsExtractor for $ty {
+        impl GroomExtractor for $ty {
             fn __openapi_modify_operation(op: OperationBuilder) -> OperationBuilder {
                 op
             }
@@ -73,17 +73,17 @@ macro_rules! _humars_empty_extractor_crate {
     };
 }
 
-_humars_empty_extractor_crate!(axum::extract::Request);
-_humars_empty_extractor_crate!(axum::http::HeaderMap);
+_groom_empty_extractor_crate!(axum::extract::Request);
+_groom_empty_extractor_crate!(axum::http::HeaderMap);
 
 
-impl<T> crate::extract::HumarsExtractor for axum::extract::Extension<T> {
+impl<T> crate::extract::GroomExtractor for axum::extract::Extension<T> {
     fn __openapi_modify_operation(op: OperationBuilder) -> OperationBuilder {
         op
     }
 }
 
-impl<T> crate::extract::HumarsExtractor for axum::extract::State<T> {
+impl<T> crate::extract::GroomExtractor for axum::extract::State<T> {
     fn __openapi_modify_operation(op: OperationBuilder) -> OperationBuilder {
         op
     }

@@ -76,7 +76,7 @@ fn generate_impl_for_enum(resp_args_t: TokenStream, resp_args: ResponseArgs, enu
     let mut response_bodies_match_application_json: Vec<TokenStream> = Vec::new();
 
 
-    let available_mimes_ident = format_ident!("__HUMARS_RESPONSE_AVAILABLE_MIMES_{}", ident);
+    let available_mimes_ident = format_ident!("__GROOM_RESPONSE_AVAILABLE_MIMES_{}", ident);
     let mut available_mimes_list: Vec<TokenStream> = Vec::new(); // token streams (cannot be hashed, so we also have a set of unique mime types)
     let mut available_mimes_set: HashSet<Mime> = HashSet::new(); // for deduplication (because token streams cannot be hashed)
 
@@ -212,7 +212,7 @@ fn generate_impl_for_enum(resp_args_t: TokenStream, resp_args: ResponseArgs, enu
                     quote!{
                         Self::#variant_name(body) => (
                             #code_ts,
-                            <#ty as ::humars::response::HtmlFormat>::render(body)
+                            <#ty as ::groom::response::HtmlFormat>::render(body)
                         ).into_response(),
                     }
                 },
@@ -276,7 +276,7 @@ fn generate_impl_for_enum(resp_args_t: TokenStream, resp_args: ResponseArgs, enu
                 let ty = single_field.ty;
 
                 type_assertions.push(quote!{
-                    assert_impl_any!(#ty: ::utoipa::PartialSchema, ::humars::DTO_Response);
+                    assert_impl_any!(#ty: ::utoipa::PartialSchema, ::groom::DTO_Response);
                 });
 
                 let mut response_impls: Vec<TokenStream> = Vec::new();
@@ -367,7 +367,7 @@ fn generate_impl_for_enum(resp_args_t: TokenStream, resp_args: ResponseArgs, enu
         } else {
             return syn::Error::new_spanned(
                 resp_args_t,
-                format!("cannot infer default_format for enum `{ident}` - this is a bug in humars, please report it; thank you~")
+                format!("cannot infer default_format for enum `{ident}` - this is a bug in groom, please report it; thank you~")
             ).into_compile_error();
         };
 
@@ -415,17 +415,17 @@ fn generate_impl_for_enum(resp_args_t: TokenStream, resp_args: ResponseArgs, enu
             #(#available_mimes_list)*
         ];
 
-        impl ::humars::response::Response for #ident {
+        impl ::groom::response::Response for #ident {
             fn __openapi_modify_operation(op: ::utoipa::openapi::path::OperationBuilder) -> ::utoipa::openapi::path::OperationBuilder {
                 #(#openapi_impls)*
                 op
             }
 
-            fn __humars_into_response(self, accept: Option<::accept_header::Accept>) -> ::axum::response::Response {
+            fn __groom_into_response(self, accept: Option<::accept_header::Accept>) -> ::axum::response::Response {
                 #content_type_negotiation
             }
             
-            // todo: __humars_content_type_supported
+            // todo: __groom_content_type_supported
         }
     }
 }

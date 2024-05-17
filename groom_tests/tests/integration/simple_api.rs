@@ -13,10 +13,10 @@ use utoipa::{OpenApi, openapi::OpenApiBuilder};
 use tower::ServiceExt; // for `call`, `oneshot` and `ready`
 use http_body_util::BodyExt;
 
-use crate::humars_macros::Controller;
+use crate::groom_macros::Controller;
 
 // for scratchpad: ------
-use crate::humars::extract::HumarsExtractor;
+use crate::groom::extract::GroomExtractor;
 use crate::integration::simple_api::my_api::{MyState, RqConsPathStruct};
 // end for scratchpad ---
 
@@ -122,14 +122,14 @@ mod my_api {
     use axum::extract::{Path, Query, Request, State};
     use axum::http::HeaderMap;
     use axum::response::IntoResponse;
-    use ::humars::response::html_format;
+    use ::groom::response::html_format;
 
-    use crate::humars_macros::{Response, DTO};
-    use humars::extract::HumarsExtractor;
-    use humars::response::Response;
+    use crate::groom_macros::{Response, DTO};
+    use groom::extract::GroomExtractor;
+    use groom::response::Response;
 
     use utoipa::ToSchema;
-    use humars_macros::RequestBody;
+    use groom_macros::RequestBody;
 
     #[derive(Clone)]
     pub struct MyState {
@@ -283,7 +283,7 @@ mod my_api {
     }
 
     // Request consumption: ImageJpeg body
-    humars::binary_request_body!(ImageJpeg with content_type "image/jpeg");
+    groom::binary_request_body!(ImageJpeg with content_type "image/jpeg");
 
     #[Route(method = "post", path = "/image_body")]
     async fn rq_cons_image_body(body: ImageJpeg) -> RqConsGenericResponse {

@@ -1,7 +1,7 @@
 [workspace]
 resolver = "2"
 members = [
-    "humars",
-    "humars-macros",
-    "humars-tests"
+    "groom",
+    "groom_macros",
+    "groom_tests"
 ]

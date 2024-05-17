@@ -49,7 +49,7 @@ fn generate_impl_for_struct(_args_t: TokenStream, args: DtoArgs, item_struct: It
             Default::default()
         } else {
             let deserialize_derive = quote! { #[derive(::serde::Deserialize)] };
-            let request_impl = quote! { impl ::humars::DTO_Request for #ident {} };
+            let request_impl = quote! { impl ::groom::DTO_Request for #ident {} };
 
             (deserialize_derive, request_impl)
         };
@@ -59,7 +59,7 @@ fn generate_impl_for_struct(_args_t: TokenStream, args: DtoArgs, item_struct: It
             Default::default()
         } else {
             let serialize_derive = quote!{ #[derive(::serde::Serialize)] };
-            let response_impl = quote! { impl ::humars::DTO_Response for #ident {} };
+            let response_impl = quote! { impl ::groom::DTO_Response for #ident {} };
 
             (serialize_derive, response_impl)
         };
@@ -70,7 +70,7 @@ fn generate_impl_for_struct(_args_t: TokenStream, args: DtoArgs, item_struct: It
         #[derive(::utoipa::ToSchema)]
         #item_struct
 
-        impl ::humars::DTO for #ident {}
+        impl ::groom::DTO for #ident {}
 
         #dto_request_impl
         #dto_response_impl

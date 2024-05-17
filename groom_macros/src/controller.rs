@@ -18,7 +18,7 @@ pub(crate) struct ControllerArgs {
     ///
     /// Defaults to `()` (unit type).
     #[darling(default)]
-    pub(crate) state_type: Option<syn::Expr>, // defaults to "()" (unit type)
+    pub(crate) state_type: Option<syn::Expr>,
 }
 
 //
@@ -145,7 +145,7 @@ fn generate_impl(_args_t: TokenStream, args: ControllerArgs, input: TokenStream)
                         let ty = arg.ty.as_ref();
 
                         type_assertions.push(quote!{
-                            assert_impl_all!(#ty: ::humars::extract::HumarsExtractor);
+                            assert_impl_all!(#ty: ::groom::extract::GroomExtractor);
                         });
 
                         extractors.push(quote! {
@@ -176,7 +176,7 @@ fn generate_impl(_args_t: TokenStream, args: ControllerArgs, input: TokenStream)
                     },
                     syn::ReturnType::Type(_arrow, ty) => {
                         type_assertions.push(quote!{
-                            assert_impl_all!(#ty: ::humars::response::Response);
+                            assert_impl_all!(#ty: ::groom::response::Response);
                         });
     
                         (
@@ -187,7 +187,7 @@ fn generate_impl(_args_t: TokenStream, args: ControllerArgs, input: TokenStream)
                 }
             };
 
-            let wrapper_name = format_ident!("__humars_wrapper_{}", fn_name);
+            let wrapper_name = format_ident!("__groom_wrapper_{}", fn_name);
 
             //
             // new module item instead of current one:
@@ -221,13 +221,13 @@ fn generate_impl(_args_t: TokenStream, args: ControllerArgs, input: TokenStream)
                 #function
 
                 async fn #wrapper_name(headers: ::axum::http::header::HeaderMap, #(#wrapper_inputs)*) #wrapper_output {
-                    let accept = ::humars::content_negotiation::parse_accept_header(&headers);
+                    let accept = ::groom::content_negotiation::parse_accept_header(&headers);
 
                     // todo: check that accept is valid for output before running code
 
                     let result = #fn_name(#(#delegated_inputs)*).await;
 
-                    result.__humars_into_response(accept)
+                    result.__groom_into_response(accept)
                 }
             });
 
