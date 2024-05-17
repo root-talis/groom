@@ -5,7 +5,7 @@ use quote::{format_ident, quote, ToTokens};
 use darling::FromMeta;
 use syn::Attribute;
 
-use crate::{http::HTTPMethod, attrs::{parse_attr, remove_attrs}};
+use crate::{http::HTTPMethod, annotation_attrs::{parse_attr, remove_attrs}};
 
 // region: ControllerArgs  -----------------------------------------------------------
 //
@@ -198,7 +198,7 @@ fn generate_impl(_args_t: TokenStream, args: ControllerArgs, input: TokenStream)
             let handler_comment = format!(" HTTP handler: {method_str} {path}");
 
             // change comment:
-            let (summary, description) = crate::utils::get_summary_and_description(&function.attrs).unwrap_or_default();
+            let (summary, description) = crate::comments::get_docblock_parts(&function.attrs).unwrap_or_default();
 
             let mut new_comment: Vec<TokenStream> = Vec::new();
             if let Some(s) = summary.clone() {
@@ -213,7 +213,7 @@ fn generate_impl(_args_t: TokenStream, args: ControllerArgs, input: TokenStream)
                 new_comment.push(quote!{#[doc = #s]});
             }
 
-            crate::utils::remove_description(&mut function.attrs);
+            crate::comments::remove_docblock(&mut function.attrs);
 
             // generate module item:
             module_items.push(quote! {

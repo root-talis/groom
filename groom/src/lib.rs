@@ -15,7 +15,7 @@ pub trait DTO: ToSchema<'static> {}
 #[allow(non_camel_case_types)]
 pub trait DTO_Request {}
 
-/// Indicates that type is annotated with `#[DTO(response(...))]`.
+/// Indicates that type is annotated with `#[DTO(response)]`.
 /// 
 /// Do not implement this manually.
 #[allow(non_camel_case_types)]

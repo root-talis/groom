@@ -51,10 +51,12 @@ impl HtmlFormat for &'static str {
 /// async fn resp_html_or_json() -> GetHtmlOrJsonBodyResult {
 ///     // Your handler returns raw data.
 ///     // Content negotiation will automatically choose JSON or HTML based on Accept header.
-///     GetHtmlOrJsonBodyResult::Ok(HtmlOrJsonDataObject{
-///         status: "open",
-///         status_timestamp: 1234567890,
-///     })
+///     GetHtmlOrJsonBodyResult::Ok(
+///         HtmlOrJsonDataObject {
+///            status: "open",
+///            status_timestamp: 1234567890,
+///         }
+///     )
 /// }
 /// ```
 #[macro_export]

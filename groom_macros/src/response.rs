@@ -7,7 +7,7 @@ use derive_more::{Deref, DerefMut};
 use proc_macro2::{Ident, TokenStream};
 use quote::{format_ident, quote};
 
-use crate::{attrs::{parse_attr, remove_attrs}, http::HTTPStatusCode};
+use crate::{annotation_attrs::{parse_attr, remove_attrs}, http::HTTPStatusCode};
 
 // region: Annotations -----------------------------------------------------------------------------
 //
@@ -404,7 +404,7 @@ mod enum_impl {
     use syn::{Attribute, Field, ItemEnum, Variant};
     use quote::{quote, ToTokens};
 
-    use crate::utils::get_description;
+    use crate::comments::get_docblock;
     use crate::response::{NewAstFragments, ResponseArgs, ResponseFormatsList, ResponseVariantAnnotation, SupportedMimesTokenStreams};
 
     /// Each enum variant produces a list of matchers for each supported content type.
@@ -656,7 +656,7 @@ mod enum_impl {
         fragments: &mut NewAstFragments,
     )
     {
-        let description_tk = match get_description(&variant_attributes).unwrap_or_default() {
+        let description_tk = match get_docblock(&variant_attributes).unwrap_or_default() {
             Some(s) => quote! { #s },
             None => quote! { "" },
         };

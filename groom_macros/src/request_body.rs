@@ -35,19 +35,26 @@ impl RequestBodyTypesList {
 // region: AST parsing and generation --------------------------------------------------------------
 //
 
-/// Parses AST that has been annotated with `#[RequestBody]` and generates new implementation
+/// Entry point for `#[RequestBody]` macro.
 pub(crate) fn generate(args_t: TokenStream, args: RequestBodyArgs, input: TokenStream) -> TokenStream {
-    match parse2::<Item>(input) {
-        Err(error) =>
-            error.to_compile_error(),
+    generate_implementation(args_t, args, input).unwrap_or_else(|t| t)
+}
 
-        Ok(item) => match item {
-            Item::Struct(item_struct) =>
-                struct_impl::generate(args_t, args, item_struct),
+/// Generates appropriate implementation (based on input type).
+fn generate_implementation(args_t: TokenStream, args: RequestBodyArgs, input: TokenStream)
+    -> Result<TokenStream, TokenStream>
+{
+    let item = parse2::<Item>(input).map_err(
+        |e| e.to_compile_error()
+    )?;
 
-            _ =>
-                Error::new_spanned(item, "RequestBody should be a struct.").to_compile_error(),
-        }
+    match item {
+        Item::Struct(item_struct) =>
+            struct_impl::generate(args_t, args, item_struct),
+
+        _ => Err(
+            Error::new_spanned(item, "RequestBody should be a struct.").to_compile_error()
+        ),
     }
 }
 
@@ -57,7 +64,7 @@ mod struct_impl {
     use quote::{format_ident, quote, ToTokens};
     use syn::{Fields, ItemStruct};
     use crate::request_body::RequestBodyArgs;
-    use crate::utils::get_description;
+    use crate::comments::get_docblock;
 
     /// All AST fragments for implementation generation
     struct AllFragments {
@@ -92,19 +99,21 @@ mod struct_impl {
     }
 
     /// Generates RequestBody implementation for `struct`
-    pub(crate) fn generate(args_t: TokenStream, args: RequestBodyArgs, item_struct: ItemStruct) -> TokenStream {
+    pub(crate) fn generate(args_t: TokenStream, args: RequestBodyArgs, item_struct: ItemStruct) -> Result<TokenStream, TokenStream> {
         let ident = &item_struct.ident;
 
         if !args.format.is_any() {
-            return syn::Error::new_spanned(
-                args_t,
-                format!("specify at least one request format for struct `{ident}` to be able to extract data from request body (e.g. #[RequestBody(format(json))])")
-            ).into_compile_error();
+            return Err(
+                syn::Error::new_spanned(
+                    args_t,
+                    format!("error in #[RequestBody] annotation: specify at least one request format for struct `{ident}` to be able to extract data from request body (e.g. #[RequestBody(format(json))])")
+                ).into_compile_error()
+            );
         }
 
         let mut context = AllFragments {
             rejection_ident: format_ident!("{ident}Rejection"),
-            description_tk: match get_description(&item_struct.attrs).unwrap_or_default() {
+            description_tk: match get_docblock(&item_struct.attrs).unwrap_or_default() {
                 Some(s) => quote! { .description(Some(#s)) },
                 None => quote! {  },
             },
@@ -117,10 +126,7 @@ mod struct_impl {
             type_assertions: Vec::new(),
         };
 
-        let dto_fragments = match make_dto_fragments(&item_struct, &mut context) {
-            Ok(value) => value,
-            Err(value) => return value,
-        };
+        let dto_fragments = make_dto_fragments(&item_struct, &mut context)?;
 
         context.dto_fragments = dto_fragments;
 
@@ -132,7 +138,7 @@ mod struct_impl {
             make_fragments_for_format_url_encoded(&mut context);
         }
 
-        make_new_struct_ast(item_struct, &context)
+        Ok(make_new_struct_ast(item_struct, &context))
     }
 
     /// Makes AST fragments to work with target DTO
@@ -143,7 +149,7 @@ mod struct_impl {
             Fields::Unit => {
                 Err(syn::Error::new_spanned(
                     item_struct.into_token_stream(),
-                    format!("`{ident}`: RequestBody should not be an empty struct. Try making it an empty named struct: `struct {ident} {{}}`.")
+                    format!("`error in #[RequestBody] annotation: {ident}`: RequestBody should not be an empty struct. Try making it an empty named struct: `struct {ident} {{}}`.")
                 ).into_compile_error())
             }
 
@@ -156,17 +162,17 @@ mod struct_impl {
             },
 
             Fields::Unnamed(f) => {
-                if f.unnamed.len() == 0 {
-                    return Err(syn::Error::new_spanned(
-                        item_struct.into_token_stream(),
-                        format!("`{ident}`: RequestBody should not be an empty unnamed struct. Try making it an empty named struct: `struct {ident} {{}}`.")
-                    ).into_compile_error());
-                }
+                let fields_count = f.unnamed.len();
 
-                if f.unnamed.len() > 1 {
+                if fields_count == 0 {
                     return Err(syn::Error::new_spanned(
                         item_struct.into_token_stream(),
-                        format!("`{ident}`: RequestBody should either have named fields or have a single unnamed field. Try making it a named struct: `struct {ident} {{...}}`.")
+                        format!("error in #[RequestBody] annotation: `{ident}`: RequestBody should not be an empty unnamed struct. Try making it an empty named struct: `struct {ident} {{}}`.")
+                    ).into_compile_error());
+                } else if fields_count > 1 {
+                    return Err(syn::Error::new_spanned(
+                        item_struct.into_token_stream(),
+                        format!("`error in #[RequestBody] annotation: {ident}`: RequestBody should either have named fields or have a single unnamed field. Try making it a named struct: `struct {ident} {{...}}`.")
                     ).into_compile_error());
                 }
 
@@ -264,33 +270,33 @@ mod struct_impl {
         let pack_dto = &context.dto_fragments.pack_dto;
 
         context.body_extractors.push(quote! {
-                Some(::groom::content_negotiation::BodyContentType::FormUrlEncoded) => {
-                    let dto = ::axum::extract::Form::<#extract_ty>::from_request(req, state)
-                        .await
-                        .map_err(|e| #rejection_ident::FormRejection(e))?
-                        .0
-                    ;
+            Some(::groom::content_negotiation::BodyContentType::FormUrlEncoded) => {
+                let dto = ::axum::extract::Form::<#extract_ty>::from_request(req, state)
+                    .await
+                    .map_err(|e| #rejection_ident::FormRejection(e))?
+                    .0
+                ;
 
-                    Ok(#pack_dto)
-                },
-            });
+                Ok(#pack_dto)
+            },
+        });
 
         context.rejection_types.push(quote! {
-                FormRejection(::axum::extract::rejection::FormRejection),
-            });
+            FormRejection(::axum::extract::rejection::FormRejection),
+        });
 
         context.rejections_into_response.push(quote! {
-                #rejection_ident::FormRejection(r) => r.into_response(),
-            });
+            #rejection_ident::FormRejection(r) => r.into_response(),
+        });
 
         context.openapi_generators.push(quote! {
-                .content(
-                    ::mime::APPLICATION_WWW_FORM_URLENCODED.as_ref(),
-                    ::utoipa::openapi::ContentBuilder::new()
-                        .schema(#schema)
-                        .build()
-                )
-            });
+            .content(
+                ::mime::APPLICATION_WWW_FORM_URLENCODED.as_ref(),
+                ::utoipa::openapi::ContentBuilder::new()
+                    .schema(#schema)
+                    .build()
+            )
+        });
     }
 
     /// Makes AST fragment to support application/json
@@ -301,33 +307,33 @@ mod struct_impl {
         let pack_dto = &context.dto_fragments.pack_dto;
 
         context.body_extractors.push(quote! {
-                Some(::groom::content_negotiation::BodyContentType::Json) => {
-                    let dto = ::axum::extract::Json::<#extract_ty>::from_request(req, state)
-                        .await
-                        .map_err(|e| #rejection_ident::JsonRejection(e))?
-                        .0
-                    ;
+            Some(::groom::content_negotiation::BodyContentType::Json) => {
+                let dto = ::axum::extract::Json::<#extract_ty>::from_request(req, state)
+                    .await
+                    .map_err(|e| #rejection_ident::JsonRejection(e))?
+                    .0
+                ;
 
-                    Ok(#pack_dto)
-                },
-            });
+                Ok(#pack_dto)
+            },
+        });
 
         context.rejection_types.push(quote! {
-                JsonRejection(::axum::extract::rejection::JsonRejection),
-            });
+            JsonRejection(::axum::extract::rejection::JsonRejection),
+        });
 
         context.rejections_into_response.push(quote! {
-                #rejection_ident::JsonRejection(r) => r.into_response(),
-            });
+            #rejection_ident::JsonRejection(r) => r.into_response(),
+        });
 
         context.openapi_generators.push(quote! {
-                .content(
-                    ::mime::APPLICATION_JSON.as_ref(),
-                    ::utoipa::openapi::ContentBuilder::new()
-                        .schema(#schema)
-                        .build()
-                )
-            });
+            .content(
+                ::mime::APPLICATION_JSON.as_ref(),
+                ::utoipa::openapi::ContentBuilder::new()
+                    .schema(#schema)
+                    .build()
+            )
+        });
     }
 }
 
