@@ -569,7 +569,7 @@ async fn api_doc_scratchpad() {
 fn api_doc() {
     #[derive(OpenApi)]
     #[openapi(
-        info(title = "t", description = "d", license(name = "n"), version = "0.0.0")
+        info(title = "t", description = "d", license(name = "n"), version = "0.0.0", contact(name = "name", email = "mail@example.com"))
     )]
     struct ApiDoc;
 
@@ -584,7 +584,16 @@ fn api_doc() {
         json.parse::<serde_json::Value>().expect("expected a parsed json"),
         json!({
             "openapi": "3.0.3",
-            "info": {"title": "t", "description": "d", "license": {"name": "n"}, "version": "0.0.0"},
+            "info": {
+                "title": "t",
+                "description": "d",
+                "license": {"name": "n"},
+                "version": "0.0.0",
+                "contact": {
+                    "name": "name",
+                    "email": "mail@example.com"
+                }
+            },
             "paths": {
                 "/": {
                     "get": {

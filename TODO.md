@@ -60,8 +60,9 @@
 - [ ] **Websockets**
 - [ ] **SSE**
 - [ ] **Overall design**:
-    - [ ] better organize macro generation code - quite messy at the moment
-    - [ ] better tests
-    - [ ] examples
-    - [ ] documentation with cookbook
-    - [ ] website
+    - [ ] **split into features**
+    - [ ] **better organize macro generation code - quite messy at the moment**
+    - [ ] **better tests**
+    - [ ] **examples**
+    - [ ] **documentation with cookbook**
+    - [ ] **website**

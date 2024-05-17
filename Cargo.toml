@@ -5,3 +5,12 @@ members = [
     "groom_macros",
     "groom_tests"
 ]
+
+[workspace.package]
+authors = ["root-talis <root.talis@gmail.com>"]
+edition = "2021"
+rust-version = "1.78"
+homepage = "https://github.com/root-talis/groom"
+repository = "https://github.com/root-talis/groom"
+documentation = "https://github.com/root-talis/groom"
+license = "MIT OR Apache-2.0"
