@@ -17,19 +17,22 @@
             - [x] application/x-www-url-encoded
             - [ ] **multipart/form-data**
             - [x] application/octet-stream
-                - [x] macro to generate newtype for `Bytes` with custom content-type
+                - [x] macro to generate newtype for `axum::body::Bytes` with custom content-type
             - [ ] **text/plain**
             - [ ] **text/xml, application/xml**
             - [ ] **application/bson**
             - [ ] **application/cbor**
     - [ ] **thin wrappers around axum standard extractors:**
         - [x] Query
-        - [x] Path
+        - [ ] Query<HashMap> - we can't possibly type it, though
+        - [x] Path<struct>
         - [x] HeaderMap
         - [x] Request
         - [ ] **Method**
         - [x] Extension
         - [x] State
+        - [x] String
+        - [x] axum::body::Bytes
 - [ ] **Responses**:
     - [ ] **Response variants generation**:
         - [x] for `enum`
@@ -44,7 +47,10 @@
         - [ ] **text/xml, application/xml**
         - [ ] **application/bson**
         - [ ] **application/cbor**
+        - [x] enforce a default Content-Type if no `Accept` header is specified
+          - [x] allow developer to amend `default_format` if there is only one possible format
     - [ ] **Reject request before running the handler if handler cannot return an appropriate content type**
+    - [x] HTTP response codes through annotation
 - [x] DTO (Data transfer objects):
     - [x] macro to generate DTOs for requests and responses through `serde`:
 - [ ] **OpenAPI spec generation through `utoipa`**

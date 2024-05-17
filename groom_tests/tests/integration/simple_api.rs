@@ -21,6 +21,7 @@ use pretty_assertions::{assert_eq, /*assert_ne*/};
 // region: test bootstrap utils -----------------------------------
 //
 
+/// Setup router
 fn router() -> Router {
     let router = Router::new();
 
@@ -33,6 +34,7 @@ fn router() -> Router {
         })
 }
 
+/// Send a GET request
 async fn get(url: &str, accept: Option<&'static str>) -> (StatusCode, HeaderMap, String) {
     get_headers(url, accept.map_or(
         HashMap::new(),
@@ -40,6 +42,7 @@ async fn get(url: &str, accept: Option<&'static str>) -> (StatusCode, HeaderMap,
     ).await
 }
 
+/// Send a GET request with custom headers
 async fn get_headers(url: &str, headers: HashMap<&'static str, &'static str>) -> (StatusCode, HeaderMap, String) {
     let app = router();
 
@@ -65,6 +68,7 @@ async fn get_headers(url: &str, headers: HashMap<&'static str, &'static str>) ->
     (status, headers, body)
 }
 
+/// Send a POST request
 async fn post(url: &str, accept: Option<&'static str>, content_type: Option<&'static str>, body: Body) -> (StatusCode, HeaderMap, String) {
     let app = router();
 
@@ -94,10 +98,12 @@ async fn post(url: &str, accept: Option<&'static str>, content_type: Option<&'st
     (status, headers, body)
 }
 
+/// Assert Content-Type value in response
 fn assert_content_type(headers: &HeaderMap, expected: &str) {
     assert_eq!(headers.get("content-type").expect("should respond with content-type header"), expected);
 }
 
+/// Assert that Content-Type is missing from response
 fn assert_no_content_type(headers: &HeaderMap) {
     assert_eq!(headers.get("content-type"), None, "should respond without content-type header");
 }
@@ -108,6 +114,7 @@ fn assert_no_content_type(headers: &HeaderMap) {
 // region: api implementation to test ------------------------------------
 //
 
+/// This is a huge API with to test every aspect of Groom
 #[Controller(state_type = crate::integration::simple_api::my_api::MyState)]
 mod my_api {
     use axum::Extension;
@@ -496,6 +503,8 @@ fn api_doc() {
 
     eprintln!("generated openapi definition as json:\n---\n{json}\n---");
 
+    // warning: huge JSON spec below. use folds.
+    // region: huge json spec ---
     assert_eq!(
         json.parse::<serde_json::Value>().expect("expected a parsed json"),
         json!({
@@ -1022,6 +1031,7 @@ fn api_doc() {
             }
         })
     );
+    // endregion: huge json spec
 }
 
 /// In this test content-negotiation should ignore any Accept header's value
