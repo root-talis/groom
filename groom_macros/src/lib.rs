@@ -50,11 +50,8 @@ pub fn Controller(args: TokenStream, input: TokenStream) -> TokenStream {
 #[allow(non_snake_case)]
 pub fn RequestBody(args: TokenStream, input: TokenStream) -> TokenStream {
     let args: proc_macro2::TokenStream = args.into();
-    /*if args.is_empty() {
-        abort!(args, "specify `format` as Response (e.g. `#[Response(format(plain_text))`])")
-    }*/
-
     let request_body_args = parse_nested_meta!(request_body::RequestBodyArgs, args.clone());
+
     request_body::generate(args, request_body_args, input.into()).into()
 }
 
@@ -64,11 +61,8 @@ pub fn RequestBody(args: TokenStream, input: TokenStream) -> TokenStream {
 #[allow(non_snake_case)]
 pub fn Response(args: TokenStream, input: TokenStream) -> TokenStream {
     let args: proc_macro2::TokenStream = args.into();
-    /*if args.is_empty() {
-        abort!(args, "specify `format` as Response (e.g. `#[Response(format(plain_text))`])")
-    }*/
-
     let response_args = parse_nested_meta!(response::ResponseArgs, args.clone());
+
     response::generate(args, response_args, input.into()).into()
 }
 

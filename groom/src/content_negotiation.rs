@@ -1,11 +1,12 @@
 use accept_header::Accept;
 use ::axum::http::header::HeaderMap;
+use axum::http::header::{ACCEPT, CONTENT_TYPE};
 use http::HeaderName;
 use mime::Mime;
 
 pub fn parse_accept_header(headers: &HeaderMap) -> Option<Accept> {
-    get_header_as_string(headers, ::axum::http::header::ACCEPT).map(|val| {
-        val.parse::<::accept_header::Accept>().expect("Failed to parse header `Accept`.")
+    get_header_as_string(headers, ACCEPT).map(|val| {
+        val.parse::<Accept>().expect("Failed to parse header `Accept`.")
     })
 }
 
@@ -16,7 +17,7 @@ pub enum BodyContentType {
 }
 
 pub fn parse_content_type_header(headers: &HeaderMap) -> Option<Mime> {
-    get_header_as_string(headers, ::axum::http::header::CONTENT_TYPE).map_or(None, |val| {
+    get_header_as_string(headers, CONTENT_TYPE).map_or(None, |val| {
         val.parse::<Mime>().map_or(None, |v| Some(v))
     })
 }
