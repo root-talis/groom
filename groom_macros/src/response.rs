@@ -307,7 +307,7 @@ fn generate_impl_for_enum(resp_args_t: TokenStream, resp_args: ResponseArgs, enu
 
     let mut mime_type_matches: Vec<TokenStream> = Vec::new();
 
-    let response_default_ident = format_ident!("into_response_default");
+    let response_default_ident = format_ident!("into_response_any_content_type");
     let response_default_fn = if !resp_args.format.is_any() {
         quote! {
             fn #response_default_ident(self) -> ::axum::response::Response {

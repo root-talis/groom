@@ -1,3 +1,6 @@
+//! This is an old expansion preview that is too messy and should be broken down into separate
+//! files and then removed.
+
 #[macro_use]
 extern crate groom_macros;
 #[Controller]

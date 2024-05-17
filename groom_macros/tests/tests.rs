@@ -5,6 +5,11 @@
 /// Real tests are all under `/groom_tests`.
 
 #[test]
-pub fn expansion_tests() {
-    macrotest::expand("tests/expand/00-simple-rest");
+pub fn expand_00_simple_rest() {
+    macrotest::expand("tests/expand/00-simple-rest.rs");
+}
+
+#[test]
+pub fn expand_01_response() {
+    macrotest::expand("tests/expand/01-response.rs");
 }

@@ -121,13 +121,14 @@ mod my_api {
     use axum::extract::{Path, Query, Request, State};
     use axum::http::HeaderMap;
     use axum::response::IntoResponse;
-    use ::groom::response::html_format;
-
-    use crate::groom_macros::{Response, DTO};
-    use groom::extract::GroomExtractor;
-    use groom::response::Response;
 
     use utoipa::ToSchema;
+
+    use groom::extract::GroomExtractor;
+    use groom::response::Response;
+    use groom::response::html_format;
+
+    use crate::groom_macros::{Response, DTO};
     use groom_macros::RequestBody;
 
     #[derive(Clone)]

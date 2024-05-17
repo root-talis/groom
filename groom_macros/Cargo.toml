@@ -31,6 +31,7 @@ strum = { version = "0.25.0", features = ["strum_macros"] }
 strum_macros = "0.25.3"
 syn = { version = "2.0.41", features = ["full"] }
 thiserror = "1.0.51"
+groom = {path = "../groom" }
 
 [dev-dependencies]
 macrotest = "1.0.9"
