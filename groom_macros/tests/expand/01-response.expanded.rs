@@ -437,9 +437,9 @@ mod multiple_content_types {
     }
     #[allow(non_upper_case_globals)]
     const __GROOM_RESPONSE_SUPPORTED_MIMES_RespMultipleTypesResponse: &[::mime::Mime] = &[
-        ::mime::APPLICATION_JSON,
-        ::mime::TEXT_HTML,
         ::mime::TEXT_PLAIN,
+        ::mime::TEXT_HTML,
+        ::mime::APPLICATION_JSON,
     ];
     impl RespMultipleTypesResponse {
         fn into_response_text_plain(self) -> ::axum::response::Response {
