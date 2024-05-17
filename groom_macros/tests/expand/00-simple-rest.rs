@@ -29,18 +29,6 @@ pub mod api_root {
         }
     }
 
-    /// Query<HashMap<String, String>>
-    #[Route(method = "get", path = "/greet_2")]
-    pub async fn rq_cons_query_struct(query: Query<HashMap<String, String>>) -> RqConsQueryResponse {
-        if let Some(name) = query.get("name") {
-            let mut result = "Hello, ".to_owned();
-            result.push_str(name);
-            RqConsQueryResponse::Ok(result)
-        } else {
-            RqConsQueryResponse::BadRequest("Empty string".into())
-        }
-    }
-
     /*
     /// Path<tuple>
     #[Route(method = "get", path = "/user/:user_id/team/:team_id")]
@@ -87,7 +75,7 @@ pub mod api_root {
         name: String,
     }
 
-    #[Response]
+    #[Response(format(plain_text))]
     pub enum RqConsQueryResponse {
         #[Response()]
         Ok(String),
@@ -102,29 +90,29 @@ pub mod api_root {
         team_id: i32,
     }
 
-    #[Response]
+    #[Response(format(plain_text))]
     pub enum RqConsPathResponse {
         #[Response()]
         Ok(String),
     }
 
-    #[DTO(response(json))]
+    #[DTO(response)]
     pub struct StructJson {
         success: bool
     }
 
-    #[Response]
+    #[Response(format(json))]
     pub enum RespJsonResponse {
         #[Response()]
         Ok(StructJson),
     }
 
-    #[RequestBody(formats(json, form))]
+    /*#[RequestBody(formats(json, form))]
     pub struct RequestBodySimple(String);
 
     #[RequestBody(formats(json, form))]
     pub struct RequestBodyStruct {
         name: String,
         age: u8,
-    }
+    }*/
 }

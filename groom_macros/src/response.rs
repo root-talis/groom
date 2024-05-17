@@ -1,4 +1,5 @@
-use std::collections::HashSet;
+use std::collections::HashMap;
+use std::collections::hash_map::Entry;
 use darling::FromMeta;
 use mime::Mime;
 use syn::{Attribute, Error, Item};
@@ -9,7 +10,7 @@ use strum_macros::Display;
 
 use crate::{attrs::{parse_attr, remove_attrs}, http::HTTPStatusCode, utils::get_description};
 
-// region: ResponseArgs ------------------------------------------------------------
+// region: ResponseArgs ----------------------------------------------------------------------------
 //
 
 #[derive(FromMeta)]
@@ -22,15 +23,15 @@ pub(crate) struct ResponseArgs {
 }
 
 #[derive(FromMeta)]
-pub(crate) struct ResponseVariantArgs {
+pub(crate) struct ResponseVariantAnnotation {
     #[darling(default)]
     pub(crate) code: HTTPStatusCode,
 }
 
 
-impl ResponseVariantArgs {
+impl ResponseVariantAnnotation {
     pub(crate) fn parse_from_attrs(attrs: &[Attribute]) -> Result<Option<Self>, darling::Error> {
-        parse_attr("Response", attrs)  
+        parse_attr("Response", attrs)
     }
 
     pub(crate) fn remove_from_attrs(attrs: &mut Vec<Attribute>) {
@@ -39,78 +40,58 @@ impl ResponseVariantArgs {
 }
 
 //
-// endregion: ResponseArgs ---------------------------------------------------------
+// endregion: ResponseArgs -------------------------------------------------------------------------
 
-// region: AST parsing and generation ----------------------------------------------
+// region: AST parsing and generation --------------------------------------------------------------
 //
 
 pub(crate) fn generate(args_t: TokenStream, args: ResponseArgs, input: TokenStream) -> TokenStream {
-    let generated_impl = generate_impl(args_t, args, input);
-
-    quote! {
-        #generated_impl
-    }
-}
-
-fn generate_impl(args_t: TokenStream, args: ResponseArgs, input: TokenStream) -> TokenStream {
     match parse2::<Item>(input) {
-        Err(error) => error.to_compile_error(),
+        Err(error) =>
+            error.to_compile_error(),
+
         Ok(item) => match item {
-            Item::Enum(item_enum) => generate_impl_for_enum(args_t, args, item_enum),
-            _ => Error::new_spanned(item, "Response should be an enum.").to_compile_error(),
+            Item::Enum(item_enum) =>
+                generate_impl_for_enum(args_t, args, item_enum),
+
+            _ =>
+                Error::new_spanned(item, "Response should be an enum.").to_compile_error(),
         }
     }
 }
 
 fn generate_impl_for_enum(resp_args_t: TokenStream, resp_args: ResponseArgs, enum_impl: ItemEnum) -> TokenStream {
-    let ident = enum_impl.ident;
-    let vis = enum_impl.vis;
+    let ident = &enum_impl.ident;
+    let vis = &enum_impl.vis;
 
-    let mut variants: Vec<TokenStream> = Vec::new();
-    let mut openapi_impls: Vec<TokenStream> = Vec::new();
+    let mut variants: Vec<TokenStream> = Vec::new();      // variants of output enum
+    let mut openapi_impls: Vec<TokenStream> = Vec::new(); // openapi docs for each enum variant
 
     // todo: make this more dynamic and extensible somehow...
-    let mut response_bodies_match_blank: Vec<TokenStream> = Vec::new();
-    let mut response_bodies_match_text_plain: Vec<TokenStream> = Vec::new();
-    let mut response_bodies_match_text_html: Vec<TokenStream> = Vec::new();
-    let mut response_bodies_match_application_json: Vec<TokenStream> = Vec::new();
+    let mut match_enum_when_no_accept_header_found: Vec<TokenStream> = Vec::new();
+    let mut match_enum_for_text_plain: Vec<TokenStream> = Vec::new();
+    let mut match_enum_for_text_html: Vec<TokenStream> = Vec::new();
+    let mut match_enum_for_application_json: Vec<TokenStream> = Vec::new();
 
+    // List of available content-types that can be produced from this Response (generated as a constant array):
+    let supported_mimes_ident = format_ident!("__GROOM_RESPONSE_SUPPORTED_MIMES_{}", ident);
+    let mut supported_mimes: HashMap<Mime, TokenStream> = HashMap::new(); // hashmap for deduplication
 
-    let available_mimes_ident = format_ident!("__GROOM_RESPONSE_AVAILABLE_MIMES_{}", ident);
-    let mut available_mimes_list: Vec<TokenStream> = Vec::new(); // token streams (cannot be hashed, so we also have a set of unique mime types)
-    let mut available_mimes_set: HashSet<Mime> = HashSet::new(); // for deduplication (because token streams cannot be hashed)
+    // compile-time checks of trait implementation (for better error messages):
+    let mut type_assertions: Vec<TokenStream> = Vec::new();
 
-    let mut type_assertions: Vec<TokenStream> = Vec::new(); // compile-time checks of trait implementation (for better error messages)
-
-    let default_format = if resp_args.format.is_any() {
-        let default_format = resp_args.default_format.map_or_else(
-            || resp_args.format.get_single_value(),
-            |val| Some(val),
-        );
-
-        if default_format.is_none() {
-            return syn::Error::new_spanned(
-                resp_args_t,
-                format!("specify default_format for enum `{ident}` (e.g. #[Response(default_format=\"json\")])")
-            ).into_compile_error();
-        } else if !resp_args.format.has(default_format.unwrap()) {
-            return syn::Error::new_spanned(
-                resp_args_t,
-                format!("default_format `{}` of enum `{ident}` is not mentioned in it's formats list", default_format.unwrap())
-            ).into_compile_error();
-        }
-
-        default_format
-    } else {
-        None
-    };
+    let default_format =
+        match get_response_default_format(&enum_impl, &resp_args, &resp_args_t) {
+            Ok(value) => value,
+            Err(value) => return value,
+        };
 
     for mut variant in enum_impl.variants {
-        let variant_args = match ResponseVariantArgs::parse_from_attrs(&variant.attrs) {
-            Ok(Some(args)) => {
-                ResponseVariantArgs::remove_from_attrs(&mut variant.attrs);
-                args
-            },
+        let variant_annotation = match ResponseVariantAnnotation::parse_from_attrs(&variant.attrs) {
+            Ok(Some(annotation)) => {
+                ResponseVariantAnnotation::remove_from_attrs(&mut variant.attrs);
+                annotation
+            }
             Ok(None) => {
                 return syn::Error::new_spanned(
                     variant.into_token_stream(),
@@ -120,9 +101,9 @@ fn generate_impl_for_enum(resp_args_t: TokenStream, resp_args: ResponseArgs, enu
             Err(error) => return error.write_errors(),
         };
 
-        let code_u16 = variant_args.code.0;
-
-        let code_ts = match ::axum::http::StatusCode::from_u16(code_u16) {
+        let response_code_u16 = variant_annotation.code.0;
+        let response_code_str_for_openapi = format!("{response_code_u16}");
+        let response_code_ts = match ::axum::http::StatusCode::from_u16(response_code_u16) {
             Ok(code) => {
                 let code = code.as_u16();
                 quote! {
@@ -132,16 +113,14 @@ fn generate_impl_for_enum(resp_args_t: TokenStream, resp_args: ResponseArgs, enu
             Err(e) => {
                 return syn::Error::new_spanned(
                     &variant,
-                    format!("{e}: \"{}\"", code_u16)
+                    format!("{e}: response code `{}`", response_code_u16)
                 ).to_compile_error()
             },
         };
 
-        let code_str = format!("{code_u16}");
+        let variant_ident = &variant.ident;
 
-        let variant_name = variant.ident.clone();
-
-        let variant_field = match variant.fields.clone() {
+        let response_body_field = match &variant.fields {
             syn::Fields::Named(fields) => {
                 return syn::Error::new_spanned(fields, "named fields are not supported").into_compile_error();
                 // todo: support something like http::response::Parts
@@ -152,128 +131,123 @@ fn generate_impl_for_enum(resp_args_t: TokenStream, resp_args: ResponseArgs, enu
                     return syn::Error::new_spanned(fields, "only exactly one unnamed field is supported").into_compile_error();
                 }
 
-                Some(fields.unnamed.first().expect("length is checked right above").clone())
+                Some(fields.unnamed.first().expect("length is checked right above"))
             },
 
             syn::Fields::Unit => None,
         };
-        
+
         // Let's make enum variants conversion for when no Accept header was supplied by the client.
         if !resp_args.format.is_any() {
             // If no formats were specified for this Response, we need to ensure that we:
             //  - either have only variants without fields in this enum and respond only with HTTP codes,
             //  - or raise a compile error telling the dev that they need to specify some response format.
-            response_bodies_match_blank.push(match variant_field.clone() {
-                None => quote! {
-                    Self::#variant_name => (#code_ts).into_response(),
-                },
+            match_enum_when_no_accept_header_found.push(match &response_body_field {
+                None =>
+                    quote! {
+                        Self::#variant_ident => (#response_code_ts).into_response(),
+                    },
+
                 Some(single_field) => {
                     return syn::Error::new_spanned(
                         single_field,
-                        format!("specify at least one response format for enum `{ident}` to be able to return data through it's variant `{variant_name}` (e.g. #[Response(format(json))])")
+                        format!("specify at least one response format for enum `{ident}` to be able to return data through it's variant `{variant_ident}` (e.g. #[Response(format(json))])")
                     ).into_compile_error();
                 }
             });
         }
 
         if resp_args.format.plain_text {
-            response_bodies_match_text_plain.push(match variant_field.clone() {
-                None => quote! {
-                    Self::#variant_name => (#code_ts).into_response(),
-                },
-                Some(_single_field) => quote!{
-                    Self::#variant_name(body) => (
-                        #code_ts,
-                        Into::<String>::into(body)
-                    ).into_response(),
-                },
+            match_enum_for_text_plain.push(match &response_body_field {
+                None =>
+                    quote! {
+                        Self::#variant_ident => (#response_code_ts).into_response(),
+                    },
+
+                Some(_single_field) =>
+                    quote!{
+                        Self::#variant_ident(body) => (
+                            #response_code_ts,
+                            Into::<String>::into(body)
+                        ).into_response(),
+                    },
             });
 
-            if available_mimes_set.insert(::mime::TEXT_PLAIN) {
-                available_mimes_list.push(quote! {
+            if let Entry::Vacant(e) = supported_mimes.entry(::mime::TEXT_PLAIN) {
+                e.insert(quote! {
                     ::mime::TEXT_PLAIN,
                 });
             }
-        } else {
-            // todo: one default match for all?
-            response_bodies_match_text_plain.push(quote! {
-                _ => (::axum::http::StatusCode::BAD_REQUEST).into_response(),
-            });
         }
 
         if resp_args.format.html {
-            response_bodies_match_text_html.push(match variant_field.clone() {
-                None => quote! {
-                    Self::#variant_name => (#code_ts).into_response(),
-                },
+            match_enum_for_text_html.push(match &response_body_field {
+                None =>
+                    quote! {
+                        Self::#variant_ident => (#response_code_ts).into_response(),
+                    },
+
                 Some(single_field) => {
-                    let ty = single_field.ty;
+                    let ty = &single_field.ty;
 
                     quote!{
-                        Self::#variant_name(body) => (
-                            #code_ts,
+                        Self::#variant_ident(body) => (
+                            #response_code_ts,
                             <#ty as ::groom::response::HtmlFormat>::render(body)
                         ).into_response(),
                     }
                 },
             });
 
-            if available_mimes_set.insert(::mime::TEXT_HTML) {
-                available_mimes_list.push(quote! {
+            if let Entry::Vacant(e) = supported_mimes.entry(::mime::TEXT_HTML) {
+                e.insert(quote! {
                     ::mime::TEXT_HTML,
                 });
             }
-        } else {
-            // todo: one default match for all?
-            response_bodies_match_text_html.push(quote! {
-                _ => (::axum::http::StatusCode::BAD_REQUEST).into_response(),
-            });
         }
 
         if resp_args.format.json {
-            response_bodies_match_application_json.push(match variant_field.clone() {
-                None => quote! {
-                    Self::#variant_name => (#code_ts).into_response(),
-                },
-                Some(_single_field) => quote!{
-                    Self::#variant_name(body) => (
-                        #code_ts,
-                        ::axum::Json(body)
-                    ).into_response(),
-                },
+            match_enum_for_application_json.push(match &response_body_field {
+                None =>
+                    quote! {
+                        Self::#variant_ident => (#response_code_ts).into_response(),
+                    },
+
+                Some(_single_field) =>
+                    quote!{
+                        Self::#variant_ident(body) => (
+                            #response_code_ts,
+                            ::axum::Json(body)
+                        ).into_response(),
+                    },
             });
 
-            if available_mimes_set.insert(::mime::APPLICATION_JSON) {
-                available_mimes_list.push(quote! {
+            if let Entry::Vacant(e) = supported_mimes.entry(::mime::APPLICATION_JSON) {
+                e.insert(quote! {
                     ::mime::APPLICATION_JSON,
                 });
             }
-        } else {
-            // todo: one default match for all?
-            response_bodies_match_application_json.push(quote! {
-                _ => (::axum::http::StatusCode::BAD_REQUEST).into_response(),
-            });
         }
 
         let description_tk = match get_description(&variant.attrs).unwrap_or_default() {
             Some(s) => quote! { #s },
-            None            => quote! { "" },
+            None           => quote! { "" },
         };
 
-        match variant_field.clone() {
+        match &response_body_field {
             None => {
                 openapi_impls.push(quote! {
                     let op = op.response(
-                        #code_str,
+                        #response_code_str_for_openapi,
                         ::utoipa::openapi::ResponseBuilder::new()
                             .description(#description_tk)
                             .build()
                     );
                 });
             },
-            
+
             Some(single_field) => {
-                let ty = single_field.ty;
+                let ty = &single_field.ty;
 
                 type_assertions.push(quote!{
                     assert_impl_any!(#ty: ::utoipa::PartialSchema, ::groom::DTO_Response);
@@ -316,7 +290,7 @@ fn generate_impl_for_enum(resp_args_t: TokenStream, resp_args: ResponseArgs, enu
 
                 openapi_impls.push(quote! {
                     let op = op.response(
-                        #code_str, 
+                        #response_code_str_for_openapi,
                         ::utoipa::openapi::ResponseBuilder::new()
                             .description(#description_tk)
                             #(#response_impls)*
@@ -331,37 +305,82 @@ fn generate_impl_for_enum(resp_args_t: TokenStream, resp_args: ResponseArgs, enu
         });
     }
 
-    let content_type_negotiation = if !resp_args.format.is_any() {
+    let mut mime_type_matches: Vec<TokenStream> = Vec::new();
+
+    let response_default_ident = format_ident!("into_response_default");
+    let response_default_fn = if !resp_args.format.is_any() {
         quote! {
-            match self {
-                #(#response_bodies_match_blank)*
+            fn #response_default_ident(self) -> ::axum::response::Response {
+                match self {
+                    #(#match_enum_when_no_accept_header_found)*
+                }
             }
         }
     } else {
-        // todo: these should be generated as methods on Response enum
-        let response_text_plain = quote! {
-            match self {
-                #(#response_bodies_match_text_plain)*
-            }
-        };
+        Default::default()
+    };
 
-        let response_text_html = quote! {
-            match self {
-                #(#response_bodies_match_text_html)*
-            }
-        };
+    let response_text_plain_ident = format_ident!("into_response_text_plain");
+    let response_text_plain_fn = if resp_args.format.plain_text {
+        mime_type_matches.push(quote! {
+            (::mime::TEXT, mime::PLAIN) => self.#response_text_plain_ident(),
+        });
 
-        let response_application_json = quote! {
-            match self {
-                #(#response_bodies_match_application_json)*
+        quote! {
+            fn #response_text_plain_ident(self) -> ::axum::response::Response {
+                match self {
+                    #(#match_enum_for_text_plain)*
+                }
             }
-        };
+        }
+    } else {
+        Default::default()
+    };
 
+    let response_text_html_ident = format_ident!("into_response_text_html");
+    let response_text_html_fn = if resp_args.format.html {
+        mime_type_matches.push(quote! {
+            (::mime::TEXT, mime::HTML) => self.#response_text_html_ident(),
+        });
+
+        quote! {
+            fn #response_text_html_ident(self) -> ::axum::response::Response {
+                match self {
+                    #(#match_enum_for_text_html)*
+                }
+            }
+        }
+    } else {
+        Default::default()
+    };
+
+    let response_application_json_ident = format_ident!("into_response_application_json");
+    let response_application_json_fn = if resp_args.format.json {
+        mime_type_matches.push(quote! {
+            (::mime::APPLICATION, mime::JSON) => self.#response_application_json_ident(),
+        });
+
+        quote! {
+            fn #response_application_json_ident(self) -> ::axum::response::Response {
+                match self {
+                    #(#match_enum_for_application_json)*
+                }
+            }
+        }
+    } else {
+        Default::default()
+    };
+
+    let content_type_negotiation = if !resp_args.format.is_any() {
+        quote! {
+            self.#response_default_ident()
+        }
+    } else {
         let default_content_response = if let Some(default_format) = default_format {
             match default_format {
-                ResponseContentType::PlainText => quote!{ #response_text_plain },
-                ResponseContentType::Html      => quote!{ #response_text_html },
-                ResponseContentType::Json      => quote!{ #response_application_json },
+                ResponseContentType::PlainText => quote!{ self.#response_text_plain_ident() },
+                ResponseContentType::Html      => quote!{ self.#response_text_html_ident() },
+                ResponseContentType::Json      => quote!{ self.#response_application_json_ident() },
                 // todo: option to force BadRequest response if client hasn't specified any format in Accept header
             }
         } else {
@@ -373,67 +392,110 @@ fn generate_impl_for_enum(resp_args_t: TokenStream, resp_args: ResponseArgs, enu
 
         quote! {
             match accept {
+                None => {
+                    // no Accept header found
+                    #default_content_response
+                },
                 Some(accept) => {
-                    match accept.negotiate(&#available_mimes_ident) {
+                    // some Accept header found
+                    // #available_mimes_ident is a const array with a list of supported mime types for this enum
+                    match accept.negotiate(&#supported_mimes_ident) {
+                        Err(_) => {
+                            // todo: is this response body good enough?
+                            (::axum::http::StatusCode::BAD_REQUEST, "Requested Content-Type is not supported.").into_response()
+                        },
+
                         Ok(negotiated) => {
+                            // todo: this match's arms should not include formats that aren't valid for this enum
                             match (negotiated.type_(), negotiated.subtype()) {
-                                (::mime::TEXT, mime::HTML) => {
-                                    #response_text_html
-                                },
-                                (::mime::TEXT, mime::PLAIN) => {
-                                    #response_text_plain
-                                },
-                                (::mime::APPLICATION, mime::JSON) => {
-                                    #response_application_json
-                                },
+                                #(#mime_type_matches)*
+
                                 _ => {
-                                    (::axum::http::StatusCode::BAD_REQUEST, "Negotiated some weird poo.").into_response()
+                                    // todo: somehow log this error?
+                                    (::axum::http::StatusCode::BAD_REQUEST, "Content-Type negotiation produced an unexpected type/subtype pair.")
+                                        .into_response()
                                 }
                             }
-                        },
-                        Err(_) => {
-                            (::axum::http::StatusCode::BAD_REQUEST, "Requested content-type not supported.").into_response()
                         }
                     }
-                },
-                None => {
-                    #default_content_response
                 }
             }
         }
     };
+
+    let supported_mimes = supported_mimes.values();
 
     quote! {
         #vis enum #ident {
             #(#variants)*
         }
 
-        #(#type_assertions)*
-
         #[allow(non_upper_case_globals)]
-        const #available_mimes_ident: &[::mime::Mime] = &[
-            #(#available_mimes_list)*
+        const #supported_mimes_ident: &[::mime::Mime] = &[
+            #(#supported_mimes)*
         ];
 
+        impl #ident {
+            #response_default_fn
+            #response_text_plain_fn
+            #response_text_html_fn
+            #response_application_json_fn
+        }
+
         impl ::groom::response::Response for #ident {
+            fn __groom_into_response(self, accept: Option<::accept_header::Accept>) -> ::axum::response::Response {
+                #content_type_negotiation
+            }
+
             fn __openapi_modify_operation(op: ::utoipa::openapi::path::OperationBuilder) -> ::utoipa::openapi::path::OperationBuilder {
                 #(#openapi_impls)*
                 op
             }
 
-            fn __groom_into_response(self, accept: Option<::accept_header::Accept>) -> ::axum::response::Response {
-                #content_type_negotiation
-            }
-            
             // todo: __groom_content_type_supported
         }
+
+        #(#type_assertions)*
     }
 }
 
-//
-// endregion: AST parsing and generation ---------------------------------------------------
+fn get_response_default_format(
+    enum_impl: &ItemEnum,
+    resp_args: &ResponseArgs,
+    resp_args_span: &TokenStream
+) -> Result<Option<ResponseContentType>, TokenStream> {
+    let ident = &enum_impl.ident;
 
-// region: ResponseContentType -------------------------------------------------------------
+    Ok(
+        if !resp_args.format.is_any() {
+            None
+        } else {
+            let default_format = resp_args.default_format.map_or_else(
+                || resp_args.format.get_single_value(),
+                |val| Some(val),
+            );
+
+            if default_format.is_none() {
+                return Err(syn::Error::new_spanned(
+                    resp_args_span,
+                    format!("specify default_format for enum `{ident}` (e.g. #[Response(default_format=\"json\")])")
+                ).into_compile_error());
+            } else if !resp_args.format.has(default_format.unwrap()) {
+                return Err(syn::Error::new_spanned(
+                    resp_args_span,
+                    format!("default_format `{}` of enum `{ident}` is not mentioned in it's formats list", default_format.unwrap())
+                ).into_compile_error());
+            }
+
+            default_format
+        }
+    )
+}
+
+//
+// endregion: AST parsing and generation -----------------------------------------------------------
+
+// region: ResponseContentType ---------------------------------------------------------------------
 //
 
 #[derive(Debug, Copy, Clone, FromMeta, Eq, PartialEq, Hash, Display)]
@@ -505,4 +567,4 @@ impl ResponseContentTypesList {
 }
 
 //
-// endregion: ResponseContentType ------------------------------------------------------------
+// endregion: ResponseContentType ------------------------------------------------------------------
