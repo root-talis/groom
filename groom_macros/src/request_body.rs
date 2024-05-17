@@ -198,7 +198,7 @@ fn generate_impl_for_struct(args_t: TokenStream, args: RequestBodyArgs, item_str
             type Rejection = #rejection_ident;
 
             async fn from_request(req: ::axum::extract::Request, state: &S) -> Result<Self, Self::Rejection> {
-                let content_type = ::groom::content_negotiation::parse_content_type(req.headers());
+                let content_type = ::groom::content_negotiation::parse_content_type_header(req.headers());
 
                 match ::groom::content_negotiation::get_body_content_type(content_type) {
                     #(#body_extractors)*

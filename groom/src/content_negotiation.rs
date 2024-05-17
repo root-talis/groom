@@ -1,21 +1,12 @@
 use accept_header::Accept;
 use ::axum::http::header::HeaderMap;
+use http::HeaderName;
 use mime::Mime;
 
 pub fn parse_accept_header(headers: &HeaderMap) -> Option<Accept> {
-    headers
-        .get(::axum::http::header::ACCEPT)
-        .map(|accept_value| {
-            let utf_accept = String::from_utf8(accept_value.as_bytes().to_vec())
-                .map_err(|non_utf8| String::from_utf8_lossy(non_utf8.as_bytes()).into_owned())
-                .expect("Accept header failed to be read as a utf-8 string.");
-
-            let accept_parsed: ::accept_header::Accept = utf_accept
-                .parse()
-                .expect("Accept header failed to parse.");
-
-            accept_parsed
-        })
+    get_header_as_string(headers, ::axum::http::header::ACCEPT).map(|val| {
+        val.parse::<::accept_header::Accept>().expect("Failed to parse header `Accept`.")
+    })
 }
 
 #[derive(Debug)]
@@ -24,31 +15,10 @@ pub enum BodyContentType {
     FormUrlEncoded,
 }
 
-pub fn parse_content_type(headers: &HeaderMap) -> Option<Mime> {
-    headers.get(::axum::http::header::CONTENT_TYPE)
-        .map_or(None, |content_type| {
-            let utf_content_type = String::from_utf8(content_type.as_bytes().to_vec())
-                .map_err(|non_utf8| String::from_utf8_lossy(non_utf8.as_bytes()).into_owned())
-                .expect("Content-Type header failed to be read as a utf-8 string.");
-
-            if let Ok(mime) = utf_content_type.parse::<Mime>() {
-                Some(mime)
-            } else {
-                None
-            }
-        })
-}
-
-pub fn is_json(mime: &Mime) -> bool {
-    // taken from axum::json since their function is private
-    let is_json_content_type = mime.type_() == "application"
-        && (mime.subtype() == "json" || mime.suffix().map_or(false, |name| name == "json"));
-
-    is_json_content_type
-}
-
-pub fn is_form_url_encoded(mime: &Mime) -> bool {
-    *mime == mime::APPLICATION_WWW_FORM_URLENCODED
+pub fn parse_content_type_header(headers: &HeaderMap) -> Option<Mime> {
+    get_header_as_string(headers, ::axum::http::header::CONTENT_TYPE).map_or(None, |val| {
+        val.parse::<Mime>().map_or(None, |v| Some(v))
+    })
 }
 
 pub fn get_body_content_type(mime: Option<Mime>) -> Option<BodyContentType> {
@@ -65,4 +35,28 @@ pub fn get_body_content_type(mime: Option<Mime>) -> Option<BodyContentType> {
     } else {
         None
     }
+}
+
+fn get_header_as_string(headers: &HeaderMap, header_name: HeaderName) -> Option<String>
+{
+    headers.get(&header_name)
+        .map_or(None, |content_type| {
+            Some(
+                String::from_utf8(content_type.as_bytes().to_vec())
+                    .map_err(|non_utf8| String::from_utf8_lossy(non_utf8.as_bytes()).into_owned())
+                    .expect(format!("Failed to read header `{}` as a utf-8 string.", header_name).as_str())
+            )
+        })
+}
+
+fn is_form_url_encoded(mime: &Mime) -> bool {
+    *mime == mime::APPLICATION_WWW_FORM_URLENCODED
+}
+
+fn is_json(mime: &Mime) -> bool {
+    // shamelessly taken from axum::json because their function is private
+    let is_json_content_type = mime.type_() == "application"
+        && (mime.subtype() == "json" || mime.suffix().map_or(false, |name| name == "json"));
+
+    is_json_content_type
 }
