@@ -1,0 +1,67 @@
+# List of things to do:
+
+- [ ] **Generation of controllers:**
+    - [ ] **through `#[Controller]` annotation for `mod`**
+        - [x] bootstrapping router and openapi spec
+        - [x] specify state type for `State` extractor as an optional argument
+        - [ ] **specify base path**
+    - [ ] **Routing setup for handlers through `#[Route]` annotation.**
+        - [x] generation and bootstrapping
+        - [ ] **allow multiple http methods for one handler**
+- [ ] **Requests**:
+    - [ ] **Request body generation through `#[RequestBody]` annotation**
+        - [x] for named `struct` - as a self-contained DTO
+        - [x] for unnamed `struct` with one element - as a wrapper around `#[DTO]`
+        - [ ] **request content type negotiation based on `Content-Type` header:**
+            - [x] application/json
+            - [x] application/x-www-url-encoded
+            - [ ] **multipart/form-data**
+            - [x] application/octet-stream
+                - [x] macro to generate newtype for `Bytes` with custom content-type
+            - [ ] **text/plain**
+            - [ ] **text/xml, application/xml**
+            - [ ] **application/bson**
+            - [ ] **application/cbor**
+    - [ ] **thin wrappers around axum standard extractors:**
+        - [x] Query
+        - [x] Path
+        - [x] HeaderMap
+        - [x] Request
+        - [ ] **Method**
+        - [x] Extension
+        - [x] State
+- [ ] **Responses**:
+    - [ ] **Response variants generation**:
+        - [x] for `enum`
+        - [ ] **for `struct` and standard types**
+        - [ ] **support Result<S, E> where S and E are properly configured response variants**
+    - [ ] **Response content type negotiation based on `Accept` header**
+        - [x] application/json
+        - [x] text/plain
+        - [x] text/html through custom trait
+            - [x] macro to define html template for specific type
+        - [ ] **application/octet-stream**
+        - [ ] **text/xml, application/xml**
+        - [ ] **application/bson**
+        - [ ] **application/cbor**
+    - [ ] **Reject request before running the handler if handler cannot return an appropriate content type**
+- [x] DTO (Data transfer objects):
+    - [x] macro to generate DTOs for requests and responses through `serde`:
+- [ ] **OpenAPI spec generation through `utoipa`**
+    - [x] generate schemas for `#[DTO]`
+    - [x] generate schemas for `#[RequestBody]`
+    - [x] generate schemas for `#[Response]`
+    - [x] generate schemas for handlers
+        - [x] support content negotiation options for requests and responses
+    - [ ] **extract schemas into Components instead of inlining them**
+    - [ ] **as a separate feature**
+    - [ ] **integrated swagger-ui and alike - as separate features**
+- [ ] **Security schemas**
+- [ ] **Websockets**
+- [ ] **SSE**
+- [ ] **Overall design**:
+    - [ ] better organize macro generation code - quite messy at the moment
+    - [ ] better tests
+    - [ ] examples
+    - [ ] documentation with cookbook
+    - [ ] website

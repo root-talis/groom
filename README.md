@@ -8,9 +8,12 @@ Groom is heavily inspired by [poem-openapi](https://github.com/poem-web/poem/blo
   - leverage rust's type system to describe and enforce API contracts;
   - abstract out content-type negotiations and serialization/deserialization and allow developer to work with raw data;
   - allow code-first OpenAPI spec generation;
-  - be a supplement to actix, not a replacement.
+  - be a supplement to actix, not a replacement;
+  - check everything at compile-time with developer-friendly error messages - wherever possible.
 
 # ❗ groom is WIP - do not use in production!
+
+[List of things to do](TODO.md).
 
 ## Licensing:
 [MIT](LICENSE-MIT) or [Apache 2.0](LICENSE-APACHE).
