@@ -5,3 +5,4 @@ members = [
     "groom_macros",
     "groom_tests"
 ]
+license = "MIT OR Apache-2.0"

@@ -11,3 +11,6 @@ Groom is heavily inspired by [poem-openapi](https://github.com/poem-web/poem/blo
   - be a supplement to actix, not a replacement.
 
 # ❗ groom is WIP - do not use in production!
+
+## Licensing:
+[MIT](LICENSE-MIT) or [Apache 2.0](LICENSE-APACHE).
