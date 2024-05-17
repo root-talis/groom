@@ -1,5 +1,5 @@
-use std::collections::HashMap;
-use std::collections::hash_map::Entry;
+use std::collections::BTreeMap;
+use std::collections::btree_map::Entry;
 use darling::FromMeta;
 use mime::Mime;
 use syn::{Attribute, Error, Item};
@@ -74,8 +74,11 @@ fn generate_impl_for_enum(resp_args_t: TokenStream, resp_args: ResponseArgs, enu
     let mut match_enum_for_application_json: Vec<TokenStream> = Vec::new();
 
     // List of available content-types that can be produced from this Response (generated as a constant array):
+    //
+    // `supported_mimes` is a BTreeMap for deduplication of entries and to maintain a deterministic
+    // order of elements so that macro expansion tests don't fail because of HashMap's shuffling.
     let supported_mimes_ident = format_ident!("__GROOM_RESPONSE_SUPPORTED_MIMES_{}", ident);
-    let mut supported_mimes: HashMap<Mime, TokenStream> = HashMap::new(); // hashmap for deduplication
+    let mut supported_mimes: BTreeMap<Mime, TokenStream> = BTreeMap::new();
 
     // compile-time checks of trait implementation (for better error messages):
     let mut type_assertions: Vec<TokenStream> = Vec::new();
