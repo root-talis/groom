@@ -5,9 +5,10 @@ use proc_macro2::TokenStream;
 use syn::parse2;
 use quote::{quote};
 
-// region: DTO args --------------------------------------------------------------------------------
+// region: Annotation args -------------------------------------------------------------------------
 //
 
+/// Arguments of `#[DTO(...)]` annotation.
 #[derive(FromMeta)]
 pub(crate) struct DtoArgs {
     #[darling(default)]
@@ -18,11 +19,12 @@ pub(crate) struct DtoArgs {
 }
 
 //
-// endregion: DTO args -----------------------------------------------------------------------------
+// endregion: Annotation args  ---------------------------------------------------------------------
 
 // region: AST parsing and generation --------------------------------------------------------------
 //
 
+/// Entrypoint for `#[DTO(...)]` macro.
 pub(crate) fn generate(args_t: TokenStream, args: DtoArgs, input: TokenStream) -> TokenStream {
     match parse2::<Item>(input) {
         Err(error) =>
@@ -38,6 +40,7 @@ pub(crate) fn generate(args_t: TokenStream, args: DtoArgs, input: TokenStream) -
     }
 }
 
+/// Generates `#[DTO]` from a struct.
 fn generate_impl_for_struct(_args_t: TokenStream, args: DtoArgs, item_struct: ItemStruct) -> TokenStream {
     let ident = &item_struct.ident;
 
@@ -61,16 +64,25 @@ fn generate_impl_for_struct(_args_t: TokenStream, args: DtoArgs, item_struct: It
             (serialize_derive, response_impl)
         };
 
+    let openapi_derive = derive_openapi_schema_generation();
+
     quote! {
         #deserialize_derive
         #serialize_derive
-        #[derive(::utoipa::ToSchema)]
+        #openapi_derive
         #item_struct
 
         impl ::groom::DTO for #ident {}
 
         #dto_request_impl
         #dto_response_impl
+    }
+}
+
+/// Returns TokenStream for invocation of `#[derive(::utoipa::ToSchema)]`.
+fn derive_openapi_schema_generation() -> TokenStream {
+    quote! {
+        #[derive(::utoipa::ToSchema)]
     }
 }
 

@@ -57,7 +57,7 @@ mod struct_impl {
     use quote::{format_ident, quote, ToTokens};
     use syn::{Fields, ItemStruct};
     use crate::request_body::RequestBodyArgs;
-    use crate::utils::get_description;
+    use crate::comments::get_docblock;
 
     /// All AST fragments for implementation generation
     struct AllFragments {
@@ -104,7 +104,7 @@ mod struct_impl {
 
         let mut context = AllFragments {
             rejection_ident: format_ident!("{ident}Rejection"),
-            description_tk: match get_description(&item_struct.attrs).unwrap_or_default() {
+            description_tk: match get_docblock(&item_struct.attrs).unwrap_or_default() {
                 Some(s) => quote! { .description(Some(#s)) },
                 None => quote! {  },
             },

@@ -7,15 +7,16 @@ use proc_macro::TokenStream;
 use proc_macro_error::proc_macro_error;
 use darling::FromMeta;
 
-mod attrs;
+mod annotation_attrs;
+mod comments;
 mod controller;
 mod dto;
 mod http;
 mod request_body;
 mod response;
-mod utils;
 
-
+/// Macro to parse arguments of proc macros into structs
+/// (like `default_format` part of `#[Response(default_format = "json")]`).
 macro_rules! parse_nested_meta {
     ($ty:ty, $args:expr) => {{
         let meta = match darling::ast::NestedMeta::parse_meta_list(proc_macro2::TokenStream::from(
@@ -34,6 +35,9 @@ macro_rules! parse_nested_meta {
     }};
 }
 
+/// Macro to generate `#[Controller]` implementations.
+///
+/// For arguments, see `controller::ControllerArgs`.
 #[proc_macro_error]
 #[proc_macro_attribute]
 #[allow(non_snake_case)]
@@ -44,7 +48,9 @@ pub fn Controller(args: TokenStream, input: TokenStream) -> TokenStream {
     controller::generate(args, controller_args, input.into()).into()
 }
 
-
+/// Macro to generate `#[RequestBody]` implementations.
+///
+/// For arguments, see `request_body::RequestBodyArgs`.
 #[proc_macro_error]
 #[proc_macro_attribute]
 #[allow(non_snake_case)]
@@ -55,7 +61,9 @@ pub fn RequestBody(args: TokenStream, input: TokenStream) -> TokenStream {
     request_body::generate(args, request_body_args, input.into()).into()
 }
 
-
+/// Macro to generate `#[Response]` implementations.
+///
+/// For arguments, see `response::ResponseArgs`.
 #[proc_macro_error]
 #[proc_macro_attribute]
 #[allow(non_snake_case)]
@@ -66,13 +74,16 @@ pub fn Response(args: TokenStream, input: TokenStream) -> TokenStream {
     response::generate(args, response_args, input.into()).into()
 }
 
+/// Macro to generate `#[DTO]` implementations.
+///
+/// For arguments, see `dto::DtoArgs`.
 #[proc_macro_error]
 #[proc_macro_attribute]
 #[allow(non_snake_case)]
 pub fn DTO(args: TokenStream, input: TokenStream) -> TokenStream {
     let args: proc_macro2::TokenStream = args.into();
     if args.is_empty() {
-        abort!(args, "specify `request`, `response` or both as DTO arguments (e.g. `#[DTO(request, response(json))`])")
+        abort!(args, "error in `#[DTO]` annotation: specify `request`, `response`, or both as DTO arguments (e.g. `#[DTO(request, response)`])")
     }
 
     let dto_args = parse_nested_meta!(dto::DtoArgs, args.clone());
