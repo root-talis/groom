@@ -28,22 +28,37 @@ pub(crate) fn get_docblock(attrs: &[Attribute]) -> Result<Option<String>> {
     }
 }
 
+#[derive(Default)]
+pub(crate) struct DocblockParts {
+    pub(crate) summary: Option<String>,
+    pub(crate) description: Option<String>,
+}
+
 /// Utility function to acquire docblock of any element and split it into two parts:
 ///   - 0: summary (first paragraph);
 ///   - 1: description (the rest of it).
-pub(crate) fn get_docblock_parts(attrs: &[Attribute]) -> Result<(Option<String>, Option<String>)> {
+pub(crate) fn get_docblock_parts(attrs: &[Attribute]) -> Result<DocblockParts> {
     let doc = get_docblock(attrs)?;
 
     match doc {
         Some(doc) => match doc.split_once("\n\n") {
             Some((summary, description)) =>
-                Ok((Some(summary.to_string()), Some(description.to_string()))),
+                Ok(DocblockParts{
+                    summary: Some(summary.to_string()),
+                    description: Some(description.to_string()),
+                }),
 
             None =>
-                Ok((Some(doc), None)),
+                Ok(DocblockParts{
+                   summary: Some(doc),
+                   description: None,
+                }),
         },
         None =>
-            Ok((None, None)),
+            Ok(DocblockParts{
+                summary: None,
+                description: None,
+            }),
     }
 }
 

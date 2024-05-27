@@ -144,7 +144,7 @@ impl NewAstFragments {
             item_ident: ident.clone(),
 
             supported_mimes: Default::default(),
-            supported_mimes_ident: format_ident!("__GROOM_RESPONSE_SUPPORTED_MIMES_{}", ident),
+            supported_mimes_ident: format_ident!("__GROOM_RESPONSE_SUPPORTED_MIMES_{ident}"),
 
             formatter_functions: Default::default(),
 
