@@ -36,8 +36,9 @@
 - [ ] **Responses**:
     - [ ] **Response variants generation**:
         - [x] for `enum`
-        - [ ] **for `struct` and standard types**
-        - [ ] **support Result<S, E> where S and E are properly configured response variants**
+        - [x] for `struct`
+        - [x] support Result<T, E> where T and E are types annotated with `#[Response]`
+        - [ ] **detect collisions in http response codes for composite `#[Response]` types like Result<> IN COMPILE TIME**
     - [ ] **Response content type negotiation based on `Accept` header**
         - [x] application/json
         - [x] text/plain

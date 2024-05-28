@@ -1,8 +1,8 @@
 {
     "rust-analyzer.linkedProjects": [
         "./Cargo.toml",
-        "./Cargo.toml",
-        "./groom-tests/Cargo.toml",
+        "./groom_macros/Cargo.toml",
+        "./groom_tests/Cargo.toml",
         "./groom/Cargo.toml"
     ]
 }

@@ -133,3 +133,37 @@ mod unit_struct_response {
     #[Response()]
     pub struct Unit;
 }
+
+#[Controller]
+mod result_struct_struct {
+    #[Response()]
+    pub struct Success;
+
+    #[Response(code = 404)]
+    pub struct Error;
+
+    #[Route(method = "get", path = "/")]
+    async fn foo() -> Result<Success, Error> {
+        Ok(Success)
+    }
+}
+
+#[Controller]
+mod result_struct_enum {
+    #[Response()]
+    pub struct Success;
+
+    #[Response(format(plain_text))]
+    pub enum Error {
+        #[Response(code = 404)]
+        NotFound,
+
+        #[Response(code = 400)]
+        NoAccess(String),
+    }
+
+    #[Route(method = "get", path = "/")]
+    async fn foo() -> Result<Success, Error> {
+        Err(Error::NoAccess("ip blocked".into()))
+    }
+}

@@ -153,7 +153,7 @@ struct NewAstFragments {
     type_assertions: Vec<TokenStream>,
 
     openapi_impls: Vec<TokenStream>,
-    new_item_code: TokenStream,
+    new_item_ast: TokenStream,
 
     response_args: ResponseArgsBase,
     response_args_t: TokenStream,
@@ -177,7 +177,7 @@ impl NewAstFragments {
 
             type_assertions: Default::default(),
             openapi_impls: Default::default(),
-            new_item_code: Default::default(),
+            new_item_ast: Default::default(),
 
             response_args,
             response_args_t,
@@ -343,7 +343,7 @@ fn make_new_ast(fragments: NewAstFragments)
     let formatter_functions = &fragments.formatter_functions;
     let type_assertions = &fragments.type_assertions;
     let openapi_impls = &fragments.openapi_impls;
-    let new_item_code = &fragments.new_item_code;
+    let new_item_code = &fragments.new_item_ast;
     let item_ident = &fragments.item_ident;
 
     Ok(
@@ -592,7 +592,7 @@ mod enum_impl {
         make_formatter_functions(&matchers, &mut fragments);
 
         let vis = &enum_impl.vis;
-        fragments.new_item_code = quote! {
+        fragments.new_item_ast = quote! {
             #vis enum #ident {
                 #(#variants_ts)*
             }
@@ -838,7 +838,7 @@ mod struct_impl {
         let resp_args = parse_nested_meta!(response::ResponseArgsStruct, &args)?;
         let mut fragments = NewAstFragments::new(&struct_impl.ident, resp_args.base_args.clone(), args);
 
-        fragments.new_item_code = quote! {
+        fragments.new_item_ast = quote! {
             #[DTO(response)]
             #struct_impl
         };

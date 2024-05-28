@@ -861,3 +861,360 @@ mod unit_struct_response {
         }
     }
 }
+mod result_struct_struct {
+    use ::static_assertions::{assert_impl_all, assert_impl_any};
+    pub struct Success;
+    #[doc(hidden)]
+    #[allow(non_upper_case_globals, unused_attributes, unused_qualifications)]
+    const _: () = {
+        #[allow(unused_extern_crates, clippy::useless_attribute)]
+        extern crate serde as _serde;
+        #[automatically_derived]
+        impl _serde::Serialize for Success {
+            fn serialize<__S>(
+                &self,
+                __serializer: __S,
+            ) -> _serde::__private::Result<__S::Ok, __S::Error>
+            where
+                __S: _serde::Serializer,
+            {
+                _serde::Serializer::serialize_unit_struct(__serializer, "Success")
+            }
+        }
+    };
+    impl ::groom::DTO for Success {}
+    impl ::groom::DTO_Response for Success {}
+    #[allow(non_upper_case_globals)]
+    const __GROOM_RESPONSE_SUPPORTED_MIMES_Success: &[::mime::Mime] = &[];
+    impl Success {
+        fn into_response_any_content_type(self) -> ::axum::response::Response {
+            (::axum::http::StatusCode::from_u16(200u16).unwrap()).into_response()
+        }
+    }
+    impl ::groom::response::Response for Success {
+        fn __groom_into_response(
+            self,
+            accept: Option<::accept_header::Accept>,
+        ) -> ::axum::response::Response {
+            self.into_response_any_content_type()
+        }
+        fn __openapi_modify_operation(
+            op: ::utoipa::openapi::path::OperationBuilder,
+        ) -> ::utoipa::openapi::path::OperationBuilder {
+            let op = op
+                .response(
+                    "200",
+                    ::utoipa::openapi::ResponseBuilder::new().description("").build(),
+                );
+            op
+        }
+    }
+    pub struct Error;
+    #[doc(hidden)]
+    #[allow(non_upper_case_globals, unused_attributes, unused_qualifications)]
+    const _: () = {
+        #[allow(unused_extern_crates, clippy::useless_attribute)]
+        extern crate serde as _serde;
+        #[automatically_derived]
+        impl _serde::Serialize for Error {
+            fn serialize<__S>(
+                &self,
+                __serializer: __S,
+            ) -> _serde::__private::Result<__S::Ok, __S::Error>
+            where
+                __S: _serde::Serializer,
+            {
+                _serde::Serializer::serialize_unit_struct(__serializer, "Error")
+            }
+        }
+    };
+    impl ::groom::DTO for Error {}
+    impl ::groom::DTO_Response for Error {}
+    #[allow(non_upper_case_globals)]
+    const __GROOM_RESPONSE_SUPPORTED_MIMES_Error: &[::mime::Mime] = &[];
+    impl Error {
+        fn into_response_any_content_type(self) -> ::axum::response::Response {
+            (::axum::http::StatusCode::from_u16(404u16).unwrap()).into_response()
+        }
+    }
+    impl ::groom::response::Response for Error {
+        fn __groom_into_response(
+            self,
+            accept: Option<::accept_header::Accept>,
+        ) -> ::axum::response::Response {
+            self.into_response_any_content_type()
+        }
+        fn __openapi_modify_operation(
+            op: ::utoipa::openapi::path::OperationBuilder,
+        ) -> ::utoipa::openapi::path::OperationBuilder {
+            let op = op
+                .response(
+                    "404",
+                    ::utoipa::openapi::ResponseBuilder::new().description("").build(),
+                );
+            op
+        }
+    }
+    /// HTTP handler: GET /
+    async fn foo() -> Result<Success, Error> {
+        Ok(Success)
+    }
+    async fn __groom_wrapper_foo(
+        headers: ::axum::http::header::HeaderMap,
+    ) -> impl ::axum::response::IntoResponse {
+        let accept = ::groom::content_negotiation::parse_accept_header(&headers);
+        let result = foo().await;
+        result.__groom_into_response(accept)
+    }
+    pub fn merge_into_router(other: ::axum::Router<()>) -> ::axum::Router<()> {
+        let this_router = ::axum::Router::new()
+            .route("/", ::axum::routing::get(__groom_wrapper_foo));
+        other.merge(this_router)
+    }
+    pub fn merge_into_openapi_builder(
+        other: ::utoipa::openapi::OpenApiBuilder,
+    ) -> ::utoipa::openapi::OpenApiBuilder {
+        let mut paths = ::utoipa::openapi::path::PathsBuilder::new();
+        paths = paths
+            .path(
+                "/",
+                {
+                    let mut op_builder = ::utoipa::openapi::path::OperationBuilder::new()
+                        .summary(None as Option<String>)
+                        .description(None as Option<String>);
+                    op_builder = <Result<
+                        Success,
+                        Error,
+                    >>::__openapi_modify_operation(op_builder);
+                    ::utoipa::openapi::path::PathItemBuilder::new()
+                        .operation(
+                            ::utoipa::openapi::PathItemType::Get,
+                            op_builder.build(),
+                        )
+                        .build()
+                },
+            );
+        other.paths(paths)
+    }
+    const _: fn() = || {
+        fn assert_impl_all<T: ?Sized + ::groom::response::Response>() {}
+        assert_impl_all::<Result<Success, Error>>();
+    };
+}
+mod result_struct_enum {
+    use ::static_assertions::{assert_impl_all, assert_impl_any};
+    pub struct Success;
+    #[doc(hidden)]
+    #[allow(non_upper_case_globals, unused_attributes, unused_qualifications)]
+    const _: () = {
+        #[allow(unused_extern_crates, clippy::useless_attribute)]
+        extern crate serde as _serde;
+        #[automatically_derived]
+        impl _serde::Serialize for Success {
+            fn serialize<__S>(
+                &self,
+                __serializer: __S,
+            ) -> _serde::__private::Result<__S::Ok, __S::Error>
+            where
+                __S: _serde::Serializer,
+            {
+                _serde::Serializer::serialize_unit_struct(__serializer, "Success")
+            }
+        }
+    };
+    impl ::groom::DTO for Success {}
+    impl ::groom::DTO_Response for Success {}
+    #[allow(non_upper_case_globals)]
+    const __GROOM_RESPONSE_SUPPORTED_MIMES_Success: &[::mime::Mime] = &[];
+    impl Success {
+        fn into_response_any_content_type(self) -> ::axum::response::Response {
+            (::axum::http::StatusCode::from_u16(200u16).unwrap()).into_response()
+        }
+    }
+    impl ::groom::response::Response for Success {
+        fn __groom_into_response(
+            self,
+            accept: Option<::accept_header::Accept>,
+        ) -> ::axum::response::Response {
+            self.into_response_any_content_type()
+        }
+        fn __openapi_modify_operation(
+            op: ::utoipa::openapi::path::OperationBuilder,
+        ) -> ::utoipa::openapi::path::OperationBuilder {
+            let op = op
+                .response(
+                    "200",
+                    ::utoipa::openapi::ResponseBuilder::new().description("").build(),
+                );
+            op
+        }
+    }
+    pub enum Error {
+        NotFound,
+        NoAccess(String),
+    }
+    #[allow(non_upper_case_globals)]
+    const __GROOM_RESPONSE_SUPPORTED_MIMES_Error: &[::mime::Mime] = &[
+        ::mime::TEXT_PLAIN,
+    ];
+    impl Error {
+        fn into_response_text_plain(self) -> ::axum::response::Response {
+            match self {
+                Self::NotFound => {
+                    (::axum::http::StatusCode::from_u16(404u16).unwrap()).into_response()
+                }
+                Self::NoAccess(body) => {
+                    (
+                        ::axum::http::StatusCode::from_u16(400u16).unwrap(),
+                        Into::<String>::into(body),
+                    )
+                        .into_response()
+                }
+            }
+        }
+    }
+    impl ::groom::response::Response for Error {
+        fn __groom_into_response(
+            self,
+            accept: Option<::accept_header::Accept>,
+        ) -> ::axum::response::Response {
+            match accept {
+                None => self.into_response_text_plain(),
+                Some(accept) => {
+                    match accept.negotiate(&__GROOM_RESPONSE_SUPPORTED_MIMES_Error) {
+                        Err(_) => {
+                            (
+                                ::axum::http::StatusCode::BAD_REQUEST,
+                                "Requested Content-Type is not supported.",
+                            )
+                                .into_response()
+                        }
+                        Ok(negotiated) => {
+                            match (negotiated.type_(), negotiated.subtype()) {
+                                (::mime::TEXT, mime::PLAIN) => {
+                                    self.into_response_text_plain()
+                                }
+                                _ => {
+                                    (
+                                        ::axum::http::StatusCode::BAD_REQUEST,
+                                        "Content-Type negotiation produced an unexpected type/subtype pair.",
+                                    )
+                                        .into_response()
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        fn __openapi_modify_operation(
+            op: ::utoipa::openapi::path::OperationBuilder,
+        ) -> ::utoipa::openapi::path::OperationBuilder {
+            let op = op
+                .response(
+                    "404",
+                    ::utoipa::openapi::ResponseBuilder::new().description("").build(),
+                );
+            let op = op
+                .response(
+                    "400",
+                    ::utoipa::openapi::ResponseBuilder::new()
+                        .description("")
+                        .content(
+                            ::mime::TEXT_PLAIN_UTF_8.as_ref(),
+                            ::utoipa::openapi::ContentBuilder::new()
+                                .schema(<String as utoipa::PartialSchema>::schema())
+                                .build(),
+                        )
+                        .build(),
+                );
+            op
+        }
+    }
+    const _: fn() = || {
+        use ::static_assertions::_core::marker::PhantomData;
+        use ::static_assertions::_core::ops::Deref;
+        let previous = AssertImplAnyFallback;
+        struct AssertImplAnyFallback;
+        struct ActualAssertImplAnyToken;
+        trait AssertImplAnyToken {}
+        impl AssertImplAnyToken for ActualAssertImplAnyToken {}
+        fn assert_impl_any_token<T: AssertImplAnyToken>(_: T) {}
+        let previous = {
+            struct Wrapper<T, N>(PhantomData<T>, N);
+            impl<T, N> Deref for Wrapper<T, N> {
+                type Target = N;
+                fn deref(&self) -> &Self::Target {
+                    &self.1
+                }
+            }
+            impl<T: ::utoipa::PartialSchema, N> Wrapper<T, N> {
+                fn _static_assertions_impl_any(&self) -> ActualAssertImplAnyToken {
+                    ActualAssertImplAnyToken
+                }
+            }
+            Wrapper::<String, _>(PhantomData, previous)
+        };
+        let previous = {
+            struct Wrapper<T, N>(PhantomData<T>, N);
+            impl<T, N> Deref for Wrapper<T, N> {
+                type Target = N;
+                fn deref(&self) -> &Self::Target {
+                    &self.1
+                }
+            }
+            impl<T: ::groom::DTO_Response, N> Wrapper<T, N> {
+                fn _static_assertions_impl_any(&self) -> ActualAssertImplAnyToken {
+                    ActualAssertImplAnyToken
+                }
+            }
+            Wrapper::<String, _>(PhantomData, previous)
+        };
+        assert_impl_any_token(previous._static_assertions_impl_any());
+    };
+    /// HTTP handler: GET /
+    async fn foo() -> Result<Success, Error> {
+        Err(Error::NoAccess("ip blocked".into()))
+    }
+    async fn __groom_wrapper_foo(
+        headers: ::axum::http::header::HeaderMap,
+    ) -> impl ::axum::response::IntoResponse {
+        let accept = ::groom::content_negotiation::parse_accept_header(&headers);
+        let result = foo().await;
+        result.__groom_into_response(accept)
+    }
+    pub fn merge_into_router(other: ::axum::Router<()>) -> ::axum::Router<()> {
+        let this_router = ::axum::Router::new()
+            .route("/", ::axum::routing::get(__groom_wrapper_foo));
+        other.merge(this_router)
+    }
+    pub fn merge_into_openapi_builder(
+        other: ::utoipa::openapi::OpenApiBuilder,
+    ) -> ::utoipa::openapi::OpenApiBuilder {
+        let mut paths = ::utoipa::openapi::path::PathsBuilder::new();
+        paths = paths
+            .path(
+                "/",
+                {
+                    let mut op_builder = ::utoipa::openapi::path::OperationBuilder::new()
+                        .summary(None as Option<String>)
+                        .description(None as Option<String>);
+                    op_builder = <Result<
+                        Success,
+                        Error,
+                    >>::__openapi_modify_operation(op_builder);
+                    ::utoipa::openapi::path::PathItemBuilder::new()
+                        .operation(
+                            ::utoipa::openapi::PathItemType::Get,
+                            op_builder.build(),
+                        )
+                        .build()
+                },
+            );
+        other.paths(paths)
+    }
+    const _: fn() = || {
+        fn assert_impl_all<T: ?Sized + ::groom::response::Response>() {}
+        assert_impl_all::<Result<Success, Error>>();
+    };
+}

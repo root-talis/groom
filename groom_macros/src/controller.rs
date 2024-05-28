@@ -272,7 +272,7 @@ fn generate_openapi_modify_op_ast(handler: &mut ItemFn, mod_fragments: &mut Modu
                 assert_impl_all!(#ty: ::groom::response::Response);
             });
 
-            quote! {op_builder = #ty::__openapi_modify_operation(op_builder);}
+            quote! {op_builder = <#ty>::__openapi_modify_operation(op_builder);}
         },
     })
 }
@@ -429,6 +429,8 @@ fn generate_new_mod_ast(
             use ::static_assertions::{assert_impl_all, assert_impl_any};
 
             #(#module_items)*
+
+            // todo: validate return codes of types in runtime?
 
             pub fn merge_into_router(other: ::axum::Router<#state_ty>) -> ::axum::Router<#state_ty> {
                 let this_router = ::axum::Router::new()

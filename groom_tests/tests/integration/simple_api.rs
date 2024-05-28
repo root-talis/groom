@@ -505,9 +505,7 @@ mod my_api {
         NamedStructResult { is_alive: true }
     }
 
-    //
-    //
-    //
+    // --
 
     /// Named struct as a plaintext-only response
     #[Response(format(plain_text), code=418)]
@@ -526,9 +524,7 @@ mod my_api {
         NamedStructOnlyPlaintextResult{ v: "hello, world".into() }
     }
 
-    //
-    //
-    //
+    // --
 
     /// Unnamed struct as a response
     #[Response(format(plain_text, html, json), default_format="plain_text", code=418)]
@@ -543,9 +539,7 @@ mod my_api {
         UnnamedStructResult("hello, world".into())
     }
 
-    //
-    //
-    //
+    // --
 
     /// Unnamed struct as a plaintext-only response
     #[Response(format(plain_text), code=418)]
@@ -556,9 +550,7 @@ mod my_api {
         UnnamedStructOnlyPlaintextResult("hello, world".into())
     }
 
-    //
-    //
-    //
+    // --
 
     /// Unnamed struct DTO
     #[DTO(response)]
@@ -575,9 +567,7 @@ mod my_api {
         UnnamedStructDtoResult(UnnamedStructDto{ v: "hello, world".into() })
     }
 
-    //
-    //
-    //
+    // --
 
     /// Unit struct
     #[Response(code=418)]
@@ -586,6 +576,36 @@ mod my_api {
     #[Route(method = "get", path = "/unit-struct")]
     async fn resp_unit_struct() -> UnitStruct {
         UnitStruct
+    }
+
+    // --
+    #[Response(code = 202)]
+    pub struct ResultSuccessResponseStruct;
+
+    #[Response(code = 404)]
+    pub struct ResultErrorResponseStruct;
+
+    #[Response(format(plain_text))]
+    pub enum ResultErrorResponseEnum {
+        #[Response(code = 404)]
+        #[allow(dead_code)]
+        NotFound,
+
+        #[Response(code = 400)]
+        NoAccess(String),
+    }
+
+    #[Route(method = "get", path = "/result-struct-struct")]
+    async fn resp_result_struct_struct() -> Result<ResultSuccessResponseStruct, ResultErrorResponseStruct> {
+        Ok(ResultSuccessResponseStruct)
+    }
+
+    #[Route(method = "get", path = "/result-struct-enum")]
+    async fn resp_result_struct_enum() -> Result<ResultSuccessResponseStruct, ResultErrorResponseEnum> {
+        // todo: ResultSuccessResponseStruct and ResultErrorResponseEnum may have overlapping response codes.
+        //       these should be somehow deduplicated in compile time.
+
+        Err(ResultErrorResponseEnum::NoAccess("ip blocked".into()))
     }
 
     //
@@ -993,6 +1013,40 @@ fn api_doc() {
                         "responses": {
                             "418": {
                                 "description": "Unit struct"
+                            }
+                        }
+                    }
+                },
+                "/result-struct-enum": {
+                    "get": {
+                        "responses": {
+                            "202": {
+                                "description": ""
+                            },
+                            "400": {
+                                "content": {
+                                    "text/plain; charset=utf-8": {
+                                        "schema": {
+                                            "type": "string"
+                                        }
+                                    }
+                                },
+                                "description": ""
+                            },
+                            "404": {
+                                "description": ""
+                            }
+                        }
+                    }
+                },
+                "/result-struct-struct": {
+                    "get": {
+                        "responses": {
+                            "202": {
+                                "description": ""
+                            },
+                            "404": {
+                                "description": ""
                             }
                         }
                     }

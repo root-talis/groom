@@ -11,3 +11,5 @@ pub trait Response {
 
 pub mod html_response;
 pub use html_response::{HtmlFormat, html_format};
+
+pub mod result;
