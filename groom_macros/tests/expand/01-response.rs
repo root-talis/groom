@@ -96,3 +96,40 @@ mod multiple_content_types {
         NotFound,
     }
 }
+
+
+mod named_struct_response {
+    use groom::response::html_format;
+    use groom::response::HtmlFormat;
+
+    #[Response(format(json, html), default_format="json")]
+    pub struct Named {
+        success: bool
+    }
+
+    html_format!(Named, self {
+        if self.success {
+            "<span style=\"color: #a3be8c;\">success</span>"
+        } else {
+            "<span style=\"color: #bf616a;\">error</span>"
+        }
+    });
+}
+
+
+mod unnamed_struct_response {
+    use groom::response::html_format;
+    use groom::response::HtmlFormat;
+
+    #[Response(format(json, html), default_format="json")]
+    pub struct Unnamed(String);
+
+    html_format!(Unnamed, self {
+        format!("<span style=\"color: #a3be8c;\">{}</span>", self.0)
+    });
+}
+
+mod unit_struct_response {
+    #[Response()]
+    pub struct Unit;
+}

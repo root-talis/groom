@@ -3,12 +3,13 @@
 ///
 /// Nothing important here, really. This is a mess and it should be so.
 
-use utoipa::{OpenApi, openapi, ToSchema};
+use utoipa::{OpenApi, openapi, PartialSchema, ToSchema};
 use utoipa::openapi::{ComponentsBuilder, ContentBuilder, OpenApiBuilder, PathsBuilder};
 use utoipa::openapi::path::{OperationBuilder, ParameterBuilder, PathItemBuilder};
 use utoipa::openapi::request_body::RequestBodyBuilder;
 use groom_macros::DTO;
 use groom::extract::GroomExtractor;
+use groom::schema::GroomSchema;
 
 #[DTO(request, response)]
 struct SomeDTO {
@@ -89,4 +90,7 @@ async fn api_doc_scratchpad() {
 
     eprintln!("{}", json);
     //assert_eq!(true, false)
+
+    let _schema = SomeDTO::schema().extract_schema();
+    let _schema = String::schema().extract_schema();
 }

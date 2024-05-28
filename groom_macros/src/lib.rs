@@ -19,21 +19,24 @@ mod response;
 /// (like `default_format` part of `#[Response(default_format = "json")]`).
 macro_rules! parse_nested_meta {
     ($ty:ty, $args:expr) => {{
-        let meta = match darling::ast::NestedMeta::parse_meta_list(proc_macro2::TokenStream::from(
-            $args,
+        match darling::ast::NestedMeta::parse_meta_list(proc_macro2::TokenStream::from(
+            $args.clone(),
         )) {
-            Ok(v) => v,
-            Err(e) => {
-                return TokenStream::from(darling::Error::from(e).write_errors());
-            }
-        };
+            Ok(meta) => match <$ty>::from_list(&meta) {
+                Ok(object_args) =>
+                    Ok(object_args),
 
-        match <$ty>::from_list(&meta) {
-            Ok(object_args) => object_args,
-            Err(err) => return TokenStream::from(err.write_errors()),
+                Err(err) =>
+                    Err(TokenStream::from(err.write_errors())),
+            }
+
+            Err(e) =>
+                Err(TokenStream::from(darling::Error::from(e).write_errors()))
         }
     }};
 }
+pub(crate) use parse_nested_meta;
+
 
 /// Macro to generate `#[Controller]` implementations.
 ///
@@ -43,7 +46,10 @@ macro_rules! parse_nested_meta {
 #[allow(non_snake_case)]
 pub fn Controller(args: TokenStream, input: TokenStream) -> TokenStream {
     let args: proc_macro2::TokenStream = args.into();
-    let controller_args = parse_nested_meta!(controller::ControllerArgs, args.clone());
+    let controller_args = match parse_nested_meta!(controller::ControllerArgs, &args) {
+        Ok(a) => a,
+        Err(e) => return e,
+    };
 
     controller::generate(args, controller_args, input.into()).into()
 }
@@ -56,7 +62,10 @@ pub fn Controller(args: TokenStream, input: TokenStream) -> TokenStream {
 #[allow(non_snake_case)]
 pub fn RequestBody(args: TokenStream, input: TokenStream) -> TokenStream {
     let args: proc_macro2::TokenStream = args.into();
-    let request_body_args = parse_nested_meta!(request_body::RequestBodyArgs, args.clone());
+    let request_body_args = match parse_nested_meta!(request_body::RequestBodyArgs, &args) {
+        Ok(a) => a,
+        Err(e) => return e,
+    };
 
     request_body::generate(args, request_body_args, input.into()).into()
 }
@@ -68,10 +77,7 @@ pub fn RequestBody(args: TokenStream, input: TokenStream) -> TokenStream {
 #[proc_macro_attribute]
 #[allow(non_snake_case)]
 pub fn Response(args: TokenStream, input: TokenStream) -> TokenStream {
-    let args: proc_macro2::TokenStream = args.into();
-    let response_args = parse_nested_meta!(response::ResponseArgs, args.clone());
-
-    response::generate(args, response_args, input.into()).into()
+    response::generate(args.into(), input.into()).into()
 }
 
 /// Macro to generate `#[DTO]` implementations.
@@ -86,6 +92,10 @@ pub fn DTO(args: TokenStream, input: TokenStream) -> TokenStream {
         abort!(args, "error in `#[DTO]` annotation: specify `request`, `response`, or both as DTO arguments (e.g. `#[DTO(request, response)`])")
     }
 
-    let dto_args = parse_nested_meta!(dto::DtoArgs, args.clone());
+    let dto_args = match parse_nested_meta!(dto::DtoArgs, &args) {
+        Ok(a) => a,
+        Err(e) => return e,
+    };
+
     dto::generate(args, dto_args, input.into()).into()
 }

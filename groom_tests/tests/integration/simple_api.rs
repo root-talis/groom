@@ -122,11 +122,12 @@ mod my_api {
     use axum::http::HeaderMap;
     use axum::response::IntoResponse;
 
-    use utoipa::ToSchema;
+    use utoipa::{ToSchema, PartialSchema};
 
     use groom::extract::GroomExtractor;
     use groom::response::Response;
     use groom::response::html_format;
+    use groom::schema::GroomSchema;
 
     use crate::groom_macros::{Response, DTO};
     use groom_macros::RequestBody;
@@ -421,16 +422,16 @@ mod my_api {
     
     // --
 
-    #[Route(method = "get", path = "/struct")]
+    #[Route(method = "get", path = "/struct-in-enum")]
     async fn resp_struct_body() -> GetStructBodyResult {
-        GetStructBodyResult::Ok(StructBody {
+        GetStructBodyResult::Ok(StructBodyOfEnum {
             success: true,
             message: None,
         })
     }
 
     #[DTO(response)]
-    pub struct StructBody {
+    pub struct StructBodyOfEnum {
         pub success: bool,
         pub message: Option<String>,
     }
@@ -438,7 +439,7 @@ mod my_api {
     #[Response(format(json))]
     pub enum GetStructBodyResult {
         #[Response()]
-        Ok(StructBody),
+        Ok(StructBodyOfEnum),
     }
 
     // --
@@ -474,6 +475,118 @@ mod my_api {
     //     todo: XML  - as a separate feature
     //     todo: BSON - as a separate feature
     //     todo: CBOR - as a separate feature
+
+    /// Named struct as a response
+    #[Response(format(plain_text, html, json), default_format="plain_text", code=418)]
+    pub struct NamedStructResult {
+        pub is_alive: bool,
+    }
+
+    impl From<NamedStructResult> for String {
+        fn from(value: NamedStructResult) -> Self {
+            format!("alive: {}", if value.is_alive {
+                "true"
+            } else {
+                "false"
+            })
+        }
+    }
+
+    html_format!(NamedStructResult, self {
+        format!("<div>alive: {}</div>", if self.is_alive {
+            "true"
+        } else {
+            "false"
+        })
+    });
+
+    #[Route(method = "get", path = "/named-struct")]
+    async fn resp_named_struct() -> NamedStructResult {
+        NamedStructResult { is_alive: true }
+    }
+
+    //
+    //
+    //
+
+    /// Named struct as a plaintext-only response
+    #[Response(format(plain_text), code=418)]
+    pub struct NamedStructOnlyPlaintextResult{
+        v: String,
+    }
+
+    impl From<NamedStructOnlyPlaintextResult> for String {
+        fn from(value: NamedStructOnlyPlaintextResult) -> Self {
+            format!("v: {}", value.v)
+        }
+    }
+
+    #[Route(method = "get", path = "/named-struct-only-plaintext")]
+    async fn resp_named_struct_only_plaintext() -> NamedStructOnlyPlaintextResult {
+        NamedStructOnlyPlaintextResult{ v: "hello, world".into() }
+    }
+
+    //
+    //
+    //
+
+    /// Unnamed struct as a response
+    #[Response(format(plain_text, html, json), default_format="plain_text", code=418)]
+    pub struct UnnamedStructResult(String);
+
+    html_format!(UnnamedStructResult, self {
+        format!("<div>{}</div>", self.0)
+    });
+
+    #[Route(method = "get", path = "/unnamed-struct")]
+    async fn resp_unnamed_struct() -> UnnamedStructResult {
+        UnnamedStructResult("hello, world".into())
+    }
+
+    //
+    //
+    //
+
+    /// Unnamed struct as a plaintext-only response
+    #[Response(format(plain_text), code=418)]
+    pub struct UnnamedStructOnlyPlaintextResult(String);
+
+    #[Route(method = "get", path = "/unnamed-struct-only-plaintext")]
+    async fn resp_unnamed_struct_only_plaintext() -> UnnamedStructOnlyPlaintextResult {
+        UnnamedStructOnlyPlaintextResult("hello, world".into())
+    }
+
+    //
+    //
+    //
+
+    /// Unnamed struct DTO
+    #[DTO(response)]
+    pub struct UnnamedStructDto {
+        v: String,
+    }
+
+    /// Unnamed struct DTO result
+    #[Response(format(json), code=418)]
+    pub struct UnnamedStructDtoResult(UnnamedStructDto);
+
+    #[Route(method = "get", path = "/unnamed-struct-dto")]
+    async fn resp_unnamed_struct_dto() -> UnnamedStructDtoResult {
+        UnnamedStructDtoResult(UnnamedStructDto{ v: "hello, world".into() })
+    }
+
+    //
+    //
+    //
+
+    /// Unit struct
+    #[Response(code=418)]
+    pub struct UnitStruct;
+
+    #[Route(method = "get", path = "/unit-struct")]
+    async fn resp_unit_struct() -> UnitStruct {
+        UnitStruct
+    }
 
     //
     // endregion: responses ---------------------------------------------
@@ -642,7 +755,7 @@ fn api_doc() {
                         }
                     }
                 },
-                "/struct": {
+                "/struct-in-enum": {
                     "get": {
                         "responses": {
                             "200": {
@@ -759,7 +872,130 @@ fn api_doc() {
                                 }
                             },
                         }
-                    },
+                    }
+                },
+                "/named-struct": {
+                    "get": {
+                        "responses": {
+                            "418": {
+                                "content": {
+                                    "application/json": {
+                                        "schema": {
+                                            "description": "Named struct as a response",
+                                            "properties": {
+                                                "is_alive": {
+                                                    "type": "boolean"
+                                                }
+                                            },
+                                            "required": ["is_alive"],
+                                            "type": "object"
+                                        }
+                                    },
+                                    "text/html; charset=utf-8": {
+                                        "schema": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "text/plain; charset=utf-8": {
+                                        "schema": {
+                                            "type": "string"
+                                        }
+                                    }
+                                },
+                                "description": "Named struct as a response"
+                            }
+                        }
+                    }
+                },
+                "/named-struct-only-plaintext": {
+                    "get": {
+                        "responses": {
+                            "418": {
+                                "content": {
+                                    "text/plain; charset=utf-8": {
+                                        "schema": {
+                                            "type": "string"
+                                        }
+                                    }
+                                },
+                                "description": "Named struct as a plaintext-only response"
+                            }
+                        }
+                    }
+                },
+                "/unnamed-struct": {
+                    "get": {
+                        "responses": {
+                            "418": {
+                                "content": {
+                                    "application/json": {
+                                        "schema": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "text/html; charset=utf-8": {
+                                        "schema": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "text/plain; charset=utf-8": {
+                                        "schema": {
+                                            "type": "string"
+                                        }
+                                    },
+                                },
+                                "description": "Unnamed struct as a response"
+                            }
+                        }
+                    }
+                },
+                "/unnamed-struct-dto": {
+                    "get": {
+                        "responses": {
+                            "418": {
+                                "content": {
+                                    "application/json": {
+                                        "schema": {
+                                            "description": "Unnamed struct DTO",
+                                            "properties": {
+                                                "v": {
+                                                    "type": "string"
+                                                }
+                                            },
+                                            "required": ["v"],
+                                            "type": "object"
+                                        }
+                                    }
+                                },
+                                "description": "Unnamed struct DTO result"
+                            }
+                        }
+                    }
+                },
+                "/unnamed-struct-only-plaintext": {
+                    "get": {
+                        "responses": {
+                            "418": {
+                                "content": {
+                                    "text/plain; charset=utf-8": {
+                                        "schema": {
+                                            "type": "string"
+                                        }
+                                    },
+                                },
+                                "description": "Unnamed struct as a plaintext-only response"
+                            }
+                        }
+                    }
+                },
+                "/unit-struct": {
+                    "get": {
+                        "responses": {
+                            "418": {
+                                "description": "Unit struct"
+                            }
+                        }
+                    }
                 },
                 "/string_body": {
                     "post": {
@@ -1147,7 +1383,7 @@ pub async fn test_path() {
 /// In this test we check how JSON body is returned.
 #[tokio::test]
 pub async fn test_struct_body() {
-    let (status, headers, body) = get("/struct", Some("application/json")).await;
+    let (status, headers, body) = get("/struct-in-enum", Some("application/json")).await;
     assert_eq!(body, "{\"success\":true,\"message\":null}");
     assert_content_type(&headers, "application/json");
     assert_eq!(status, StatusCode::OK);
@@ -1246,6 +1482,132 @@ pub async fn test_html_or_json() {
     assert_eq!(body, "{\"status\":\"open\",\"status_timestamp\":1234567890}");
     assert_eq!(status, StatusCode::OK);
 }
+
+
+/// Testing responses that are defined as a named struct
+#[tokio::test]
+pub async fn test_get_named_struct() {
+    let (status, headers, body) = get("/named-struct", None).await;
+    assert_content_type(&headers, "text/plain; charset=utf-8");
+    assert_eq!(body, "alive: true");
+    assert_eq!(status, StatusCode::IM_A_TEAPOT);
+
+    let (status, headers, body) = get("/named-struct", Some("text/plain")).await;
+    assert_content_type(&headers, "text/plain; charset=utf-8");
+    assert_eq!(body, "alive: true");
+    assert_eq!(status, StatusCode::IM_A_TEAPOT);
+
+    let (status, headers, body) = get("/named-struct", Some("text/html")).await;
+    assert_content_type(&headers, "text/html; charset=utf-8");
+    assert_eq!(body, "<div>alive: true</div>");
+    assert_eq!(status, StatusCode::IM_A_TEAPOT);
+
+    let (status, headers, body) = get("/named-struct", Some("application/json")).await;
+    assert_content_type(&headers, "application/json");
+    assert_eq!(body, "{\"is_alive\":true}");
+    assert_eq!(status, StatusCode::IM_A_TEAPOT);
+}
+
+/// Testing responses that are defined as an unnamed struct with single content type
+#[tokio::test]
+pub async fn test_get_named_struct_single_content_type() {
+    let (status, headers, body) = get("/named-struct-only-plaintext", None).await;
+    assert_content_type(&headers, "text/plain; charset=utf-8");
+    assert_eq!(body, "v: hello, world");
+    assert_eq!(status, StatusCode::IM_A_TEAPOT);
+
+    let (status, headers, body) = get("/named-struct-only-plaintext", Some("text/plain")).await;
+    assert_content_type(&headers, "text/plain; charset=utf-8");
+    assert_eq!(body, "v: hello, world");
+    assert_eq!(status, StatusCode::IM_A_TEAPOT);
+
+    let (status, _, _) = get("/named-struct-only-plaintext", Some("text/html")).await;
+    assert_eq!(status, StatusCode::BAD_REQUEST);
+
+    let (status, _, _) = get("/named-struct-only-plaintext", Some("application/json")).await;
+    assert_eq!(status, StatusCode::BAD_REQUEST);
+}
+
+/// Testing responses that are defined as an unnamed struct
+#[tokio::test]
+pub async fn test_get_unnamed_struct() {
+    let (status, headers, body) = get("/unnamed-struct", None).await;
+    assert_content_type(&headers, "text/plain; charset=utf-8");
+    assert_eq!(body, "hello, world");
+    assert_eq!(status, StatusCode::IM_A_TEAPOT);
+
+    let (status, headers, body) = get("/unnamed-struct", Some("text/plain")).await;
+    assert_content_type(&headers, "text/plain; charset=utf-8");
+    assert_eq!(body, "hello, world");
+    assert_eq!(status, StatusCode::IM_A_TEAPOT);
+
+    let (status, headers, body) = get("/unnamed-struct", Some("text/html")).await;
+    assert_content_type(&headers, "text/html; charset=utf-8");
+    assert_eq!(body, "<div>hello, world</div>");
+    assert_eq!(status, StatusCode::IM_A_TEAPOT);
+
+    let (status, headers, body) = get("/unnamed-struct", Some("application/json")).await;
+    assert_content_type(&headers, "application/json");
+    assert_eq!(body, "\"hello, world\"");
+    assert_eq!(status, StatusCode::IM_A_TEAPOT);
+}
+
+/// Testing responses that are defined as an unnamed struct with single content type
+#[tokio::test]
+pub async fn test_get_unnamed_struct_single_content_type() {
+    let (status, headers, body) = get("/unnamed-struct-only-plaintext", None).await;
+    assert_content_type(&headers, "text/plain; charset=utf-8");
+    assert_eq!(body, "hello, world");
+    assert_eq!(status, StatusCode::IM_A_TEAPOT);
+
+    let (status, headers, body) = get("/unnamed-struct-only-plaintext", Some("text/plain")).await;
+    assert_content_type(&headers, "text/plain; charset=utf-8");
+    assert_eq!(body, "hello, world");
+    assert_eq!(status, StatusCode::IM_A_TEAPOT);
+
+    let (status, _, _) = get("/unnamed-struct-only-plaintext", Some("text/html")).await;
+    assert_eq!(status, StatusCode::BAD_REQUEST);
+
+    let (status, _, _) = get("/unnamed-struct-only-plaintext", Some("application/json")).await;
+    assert_eq!(status, StatusCode::BAD_REQUEST);
+}
+
+/// Testing responses that are defined as an unnamed struct with DTO body
+#[tokio::test]
+pub async fn test_get_unnamed_struct_dto() {
+    let (status, headers, body) = get("/unnamed-struct-dto", None).await;
+    assert_content_type(&headers, "application/json");
+    assert_eq!(body, "{\"v\":\"hello, world\"}");
+    assert_eq!(status, StatusCode::IM_A_TEAPOT);
+
+    let (status, headers, body) = get("/unnamed-struct-dto", Some("application/json")).await;
+    assert_content_type(&headers, "application/json");
+    assert_eq!(body, "{\"v\":\"hello, world\"}");
+    assert_eq!(status, StatusCode::IM_A_TEAPOT);
+
+    let (status, _, _) = get("/unnamed-struct-dto", Some("text/html")).await;
+    assert_eq!(status, StatusCode::BAD_REQUEST);
+
+    let (status, _, _) = get("/unnamed-struct-dto", Some("text/plain")).await;
+    assert_eq!(status, StatusCode::BAD_REQUEST);
+}
+
+/// Testing responses that are defined as a unit struct
+#[tokio::test]
+pub async fn test_get_unit_struct() {
+    let (status, _, _) = get("/unit-struct", None).await;
+    assert_eq!(status, StatusCode::IM_A_TEAPOT);
+
+    let (status, _, _) = get("/unit-struct", Some("text/plain")).await;
+    assert_eq!(status, StatusCode::IM_A_TEAPOT);
+
+    let (status, _, _) = get("/unit-struct", Some("text/html")).await;
+    assert_eq!(status, StatusCode::IM_A_TEAPOT);
+
+    let (status, _, _) = get("/unit-struct", Some("application/json")).await;
+    assert_eq!(status, StatusCode::IM_A_TEAPOT);
+}
+
 
 #[tokio::test]
 pub async fn test_post_string() {

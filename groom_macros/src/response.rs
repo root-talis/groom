@@ -1,3 +1,4 @@
+use axum::http::StatusCode;
 use darling::FromMeta;
 use syn::{Attribute, Error, Item};
 use syn::parse2;
@@ -5,7 +6,7 @@ use strum_macros::Display;
 use derive_more::{Deref, DerefMut};
 
 use proc_macro2::{Ident, TokenStream};
-use quote::{format_ident, quote};
+use quote::{format_ident, quote, ToTokens};
 
 use crate::{annotation_attrs::{parse_attr, remove_attrs}, http::HTTPStatusCode};
 
@@ -13,13 +14,30 @@ use crate::{annotation_attrs::{parse_attr, remove_attrs}, http::HTTPStatusCode};
 //
 
 /// `#[Response(...)]` annotation args
-#[derive(FromMeta)]
-pub(crate) struct ResponseArgs {
+#[derive(FromMeta, Default, Clone)]
+pub(crate) struct ResponseArgsBase {
     #[darling(default)]
     pub(crate) format: ResponseFormatsList,
 
     #[darling(default)]
     pub(crate) default_format: Option<ResponseFormat>,
+}
+
+/// `#[Response(...)]` annotation args for `enum`
+#[derive(FromMeta)]
+pub(crate) struct ResponseArgsEnum {
+    #[darling(default, flatten)]
+    pub(crate) base_args: ResponseArgsBase,
+}
+
+/// `#[Response(...)]` annotation args for `struct`
+#[derive(FromMeta)]
+pub(crate) struct ResponseArgsStruct {
+    #[darling(default, flatten)]
+    pub(crate) base_args: ResponseArgsBase,
+
+    #[darling(default)]
+    pub(crate) code: HTTPStatusCode,
 }
 
 /// `default_format` part from `#[Response(default_format="...")]`
@@ -33,7 +51,7 @@ pub(crate) enum ResponseFormat {
 }
 
 /// `format` part from `#[Response(format(...))]`
-#[derive(FromMeta, Default)]
+#[derive(FromMeta, Default, Clone)]
 pub(crate) struct ResponseFormatsList {
     #[darling(default)]
     pub(crate) plain_text: bool,
@@ -136,10 +154,13 @@ struct NewAstFragments {
 
     openapi_impls: Vec<TokenStream>,
     new_item_code: TokenStream,
+
+    response_args: ResponseArgsBase,
+    response_args_t: TokenStream,
 }
 
 impl NewAstFragments {
-    fn new(ident: &Ident) -> Self {
+    fn new(ident: &Ident, response_args: ResponseArgsBase, response_args_t: TokenStream) -> Self {
         Self {
             item_ident: ident.clone(),
 
@@ -157,6 +178,9 @@ impl NewAstFragments {
             type_assertions: Default::default(),
             openapi_impls: Default::default(),
             new_item_code: Default::default(),
+
+            response_args,
+            response_args_t,
         }
     }
 }
@@ -176,12 +200,12 @@ struct SupportedMimesTokenStreams(Vec<TokenStream>);
 //
 
 /// Entry point for `#[Response]` macro.
-pub(crate) fn generate(args_t: TokenStream, args: ResponseArgs, input: TokenStream) -> TokenStream {
-    generate_implementation(args_t, args, input).unwrap_or_else(|t| t)
+pub(crate) fn generate(args_t: TokenStream, input: TokenStream) -> TokenStream {
+    generate_implementation(args_t, input).unwrap_or_else(|t| t)
 }
 
 /// Generates appropriate implementation (based on input type).
-fn generate_implementation(args_t: TokenStream, args: ResponseArgs, input: TokenStream)
+fn generate_implementation(args_t: TokenStream, input: TokenStream)
     -> Result<TokenStream, TokenStream>
 {
     let item = parse2::<Item>(input).map_err(
@@ -190,19 +214,122 @@ fn generate_implementation(args_t: TokenStream, args: ResponseArgs, input: Token
 
     let fragments = match item {
         Item::Enum(item_enum) =>
-            enum_impl::make_fragments_for_enum(item_enum, &args),
+            enum_impl::make_fragments_for_enum(item_enum, args_t),
+
+        Item::Struct(struct_enum) =>
+            struct_impl::make_fragments_for_struct(struct_enum, args_t),
 
         _ =>
-            Err(Error::new_spanned(item, "Response should be an enum.").to_compile_error()),
+            Err(Error::new_spanned(item, "Response should be an enum or a struct.").to_compile_error()),
     }?;
 
-    make_new_ast(fragments, args, args_t)
+    make_new_ast(fragments)
+}
+
+/// Populates supported mimes for specified content types.
+fn populate_supported_mimes(
+    content_types: &ResponseFormatsList,
+    supported_mimes: &mut SupportedMimesTokenStreams,
+)
+{
+    if content_types.plain_text {
+        supported_mimes.push(quote! {
+            ::mime::TEXT_PLAIN,
+        });
+    }
+
+    if content_types.html {
+        supported_mimes.push(quote! {
+            ::mime::TEXT_HTML,
+        });
+    }
+
+    if content_types.json {
+        supported_mimes.push(quote! {
+            ::mime::APPLICATION_JSON,
+        });
+    }
+}
+
+/// Extracts response HTTP code from `#[Response(code = ...)]` annotation.
+fn extract_response_code<T: ToTokens>(response_code: HTTPStatusCode, span: T) -> Result<(u16, TokenStream), TokenStream> {
+    let response_code_u16 = response_code.0;
+    let response_code_ts = match StatusCode::from_u16(response_code_u16) {
+        Ok(code) => {
+            let code = code.as_u16();
+            quote! {
+                    ::axum::http::StatusCode::from_u16(#code).unwrap()
+                }
+        },
+        Err(e) => {
+            return Err(
+                syn::Error::new_spanned(
+                    &span,
+                    format!("error in `#[Response]` annotation: cannot parse response code `{}`: {e}", response_code_u16)
+                ).to_compile_error()
+            )
+        },
+    };
+
+    Ok((response_code_u16, response_code_ts))
+}
+
+
+fn make_openapi_fragments_for_type(ty: TokenStream, description_tk: TokenStream, response_code_str: String, fragments: &mut NewAstFragments) {
+    let mut response_impls: Vec<TokenStream> = Vec::new();
+    let content_types = &fragments.response_args.format;
+
+    if content_types.plain_text {
+        response_impls.push(quote! {
+            .content(
+                ::mime::TEXT_PLAIN_UTF_8.as_ref(),
+                ::utoipa::openapi::ContentBuilder::new()
+                    .schema(<String as utoipa::PartialSchema>::schema())
+                    //.example(Some("Hello, world!".into()))
+                    .build()
+            )
+        });
+    }
+    if content_types.html {
+        response_impls.push(quote! {
+            .content(
+                ::mime::TEXT_HTML_UTF_8.as_ref(),
+                ::utoipa::openapi::ContentBuilder::new()
+                    .schema(<String as utoipa::PartialSchema>::schema())
+                    //.example(Some("<h1>Hello, world!</h1>".into()))
+                    .build()
+            )
+        });
+    }
+    if content_types.json {
+        response_impls.push(quote! {
+            .content(
+                ::mime::APPLICATION_JSON.as_ref(),
+                ::utoipa::openapi::ContentBuilder::new()
+                    .schema(#ty::schema().extract_schema())
+                    .build()
+            )
+        });
+    }
+
+    fragments.openapi_impls.push(quote! {
+        let op = op.response(
+            #response_code_str,
+            ::utoipa::openapi::ResponseBuilder::new()
+                .description(#description_tk)
+                #(#response_impls)*
+                .build()
+        );
+    })
 }
 
 /// Assembles final AST
-fn make_new_ast(fragments: NewAstFragments, resp_args: ResponseArgs, resp_args_span: TokenStream)
+fn make_new_ast(fragments: NewAstFragments)
     -> Result<TokenStream, TokenStream>
 {
+    let resp_args = &fragments.response_args;
+    let resp_args_span = &fragments.response_args_t;
+
     let supported_mimes_ident = &fragments.supported_mimes_ident;
     let supported_mimes = &fragments.supported_mimes;
 
@@ -254,7 +381,7 @@ fn make_new_ast(fragments: NewAstFragments, resp_args: ResponseArgs, resp_args_s
 /// content negotiation and converts this response's data into appropriate response headers & body.
 fn make_groom_into_response_function(
     fragments: &NewAstFragments,
-    resp_args: &ResponseArgs,
+    resp_args: &ResponseArgsBase,
     resp_args_span: &TokenStream
 ) -> Result<TokenStream, TokenStream>
 {
@@ -336,7 +463,7 @@ fn make_groom_into_response_function(
 /// Attempts to infer `default_format` value of `#[Response]` annotation if it is applicable.
 fn detect_default_format(
     ident: &Ident,
-    resp_args: &ResponseArgs,
+    resp_args: &ResponseArgsBase,
     resp_args_span: &TokenStream
 ) -> Result<Option<ResponseFormat>, TokenStream> {
     Ok(
@@ -367,7 +494,7 @@ fn detect_default_format(
 
 /// Makes fragments of MIME type matching for calling appropriate `into_response_*` functions.
 fn make_mime_types_matches_for_content_negotiation(
-    resp_args: &ResponseArgs,
+    resp_args: &ResponseArgsBase,
     fragments: &NewAstFragments
 ) -> Vec<TokenStream>
 {
@@ -399,13 +526,15 @@ fn make_mime_types_matches_for_content_negotiation(
 
 /// `#[Response]` generation for `enum`.
 mod enum_impl {
-    use axum::http::StatusCode;
+    use darling::FromMeta;
     use proc_macro2::{Ident, TokenStream};
     use syn::{Attribute, Field, ItemEnum, Variant};
     use quote::{quote, ToTokens};
 
     use crate::comments::get_docblock;
-    use crate::response::{NewAstFragments, ResponseArgs, ResponseFormatsList, ResponseVariantAnnotation, SupportedMimesTokenStreams};
+    use crate::parse_nested_meta;
+    use crate::response;
+    use crate::response::{extract_response_code, make_openapi_fragments_for_type, NewAstFragments, populate_supported_mimes, ResponseFormatsList, ResponseVariantAnnotation};
 
     /// Each enum variant produces a list of matchers for each supported content type.
     /// Each matcher calls an appropriate `into_response_*` function
@@ -419,16 +548,18 @@ mod enum_impl {
     }
 
     /// Entry point for generation of `#[Response]` code for `enum`.
-    pub(crate) fn make_fragments_for_enum(enum_impl: ItemEnum, resp_args: &ResponseArgs) -> Result<NewAstFragments, TokenStream> {
+    pub(crate) fn make_fragments_for_enum(enum_impl: ItemEnum, args: TokenStream) -> Result<NewAstFragments, TokenStream> {
+        let resp_args = parse_nested_meta!(response::ResponseArgsEnum, &args)?;
+
         let ident = &enum_impl.ident;
 
         let mut variants_ts: Vec<TokenStream> = Vec::new();   // variants of output enum
 
-        let mut fragments = NewAstFragments::new(ident);
+        let mut fragments = NewAstFragments::new(ident, resp_args.base_args, args);
         let mut matchers = EnumMatchers::default();
 
         populate_supported_mimes(
-            &resp_args.format,
+            &fragments.response_args.format,
             &mut fragments.supported_mimes,
         );
 
@@ -436,7 +567,7 @@ mod enum_impl {
             let variant_annotation = extract_variant_annotation(&mut variant)?;
 
             let (response_code_u16, response_code_ts) =
-                extract_response_code(&variant_annotation, &variant)?;
+                extract_response_code(variant_annotation.code, &variant)?;
 
             let response_body_field = extract_response_body_field(&variant)?;
 
@@ -444,7 +575,7 @@ mod enum_impl {
                 &variant.ident,
                 &response_body_field,
                 &response_code_ts,
-                &resp_args.format,
+                &fragments.response_args.format,
                 &mut matchers,
             )?;
 
@@ -452,14 +583,13 @@ mod enum_impl {
                 &response_body_field,
                 response_code_u16,
                 &variant.attrs,
-                &resp_args.format,
                 &mut fragments,
             );
 
             variants_ts.push(quote! { #variant, });
         }
 
-        make_formatter_functions(resp_args, &matchers, &mut fragments);
+        make_formatter_functions(&matchers, &mut fragments);
 
         let vis = &enum_impl.vis;
         fragments.new_item_code = quote! {
@@ -486,29 +616,6 @@ mod enum_impl {
 
             Err(error) => Err(error.write_errors()),
         }
-    }
-
-    /// Extracts response HTTP code from enum variant's `#[Response(code = ...)]` annotation.
-    fn extract_response_code(annotation: &ResponseVariantAnnotation, span: &Variant) -> Result<(u16, TokenStream), TokenStream> {
-        let response_code_u16 = annotation.code.0;
-        let response_code_ts = match StatusCode::from_u16(response_code_u16) {
-            Ok(code) => {
-                let code = code.as_u16();
-                quote! {
-                    ::axum::http::StatusCode::from_u16(#code).unwrap()
-                }
-            },
-            Err(e) => {
-                return Err(
-                    syn::Error::new_spanned(
-                        &span,
-                        format!("error in `#[Response]` annotation: cannot parse response code `{}`: {e}", response_code_u16)
-                    ).to_compile_error()
-                )
-            },
-        };
-
-        Ok((response_code_u16, response_code_ts))
     }
 
     /// If `variant` has a field that can be used as a response body, extracts this field AST.
@@ -622,37 +729,11 @@ mod enum_impl {
         Ok(())
     }
 
-    /// Populates supported mimes for specified content types.
-    fn populate_supported_mimes(
-        content_types: &ResponseFormatsList,
-        supported_mimes: &mut SupportedMimesTokenStreams,
-    )
-    {
-        if content_types.plain_text {
-            supported_mimes.push(quote! {
-                ::mime::TEXT_PLAIN,
-            });
-        }
-
-        if content_types.html {
-            supported_mimes.push(quote! {
-                ::mime::TEXT_HTML,
-            });
-        }
-
-        if content_types.json {
-            supported_mimes.push(quote! {
-                ::mime::APPLICATION_JSON,
-            });
-        }
-    }
-
     /// Makes code to set up OpenAPI spec generation for this enum field.
     fn populate_openapi_impls(
         response_body_field: &Option<&Field>,
         response_code_u16: u16,
         variant_attributes: &Vec<Attribute>,
-        content_types: &ResponseFormatsList,
         fragments: &mut NewAstFragments,
     )
     {
@@ -679,60 +760,19 @@ mod enum_impl {
                 let ty = &single_field.ty;
 
                 fragments.type_assertions.push(quote! {
-                        assert_impl_any!(#ty: ::utoipa::PartialSchema, ::groom::DTO_Response);
-                    });
+                    assert_impl_any!(#ty: ::utoipa::PartialSchema, ::groom::DTO_Response);
+                });
 
-                let mut response_impls: Vec<TokenStream> = Vec::new();
-
-                if content_types.plain_text {
-                    response_impls.push(quote! {
-                            .content(
-                                ::mime::TEXT_PLAIN_UTF_8.as_ref(),
-                                ::utoipa::openapi::ContentBuilder::new()
-                                    .schema(<String as utoipa::PartialSchema>::schema())
-                                    //.example(Some("Hello, world!".into()))
-                                    .build()
-                            )
-                        });
-                }
-                if content_types.html {
-                    response_impls.push(quote! {
-                            .content(
-                                ::mime::TEXT_HTML_UTF_8.as_ref(),
-                                ::utoipa::openapi::ContentBuilder::new()
-                                    .schema(<String as utoipa::PartialSchema>::schema())
-                                    //.example(Some("<h1>Hello, world!</h1>".into()))
-                                    .build()
-                            )
-                        });
-                }
-                if content_types.json {
-                    response_impls.push(quote! {
-                            .content(
-                                ::mime::APPLICATION_JSON.as_ref(),
-                                ::utoipa::openapi::ContentBuilder::new()
-                                    .schema(#ty::schema().1)
-                                    .build()
-                            )
-                        });
-                }
-
-                fragments.openapi_impls.push(quote! {
-                    let op = op.response(
-                        #response_code_str,
-                        ::utoipa::openapi::ResponseBuilder::new()
-                            .description(#description_tk)
-                            #(#response_impls)*
-                            .build()
-                    );
-                })
+                make_openapi_fragments_for_type(quote!{#ty}, description_tk, response_code_str, fragments);
             },
         };
     }
 
 
     /// Makes implementations of `into_response_*` formatters for all required content-types.
-    fn make_formatter_functions(resp_args: &ResponseArgs, matchers: &EnumMatchers, fragments: &mut NewAstFragments) {
+    fn make_formatter_functions(matchers: &EnumMatchers, fragments: &mut NewAstFragments) {
+        let resp_args = &fragments.response_args;
+
         if !resp_args.format.is_any() {
             let formatter = &fragments.into_response_any_content_type_ident;
             let matcher = &matchers.match_enum_when_no_accept_header_found;
@@ -779,6 +819,209 @@ mod enum_impl {
                     }
                 }
             });
+        }
+    }
+}
+
+
+/// `#[Response]` generation for `struct`.
+mod struct_impl {
+    use darling::FromMeta;
+    use proc_macro2::TokenStream;
+    use quote::quote;
+    use syn::{Fields, ItemStruct};
+    use crate::{parse_nested_meta, response};
+    use crate::comments::get_docblock;
+    use crate::response::{extract_response_code, make_openapi_fragments_for_type, NewAstFragments, populate_supported_mimes, ResponseArgsStruct};
+
+    pub(crate) fn make_fragments_for_struct(struct_impl: ItemStruct, args: TokenStream) -> Result<NewAstFragments, TokenStream> {
+        let resp_args = parse_nested_meta!(response::ResponseArgsStruct, &args)?;
+        let mut fragments = NewAstFragments::new(&struct_impl.ident, resp_args.base_args.clone(), args);
+
+        fragments.new_item_code = quote! {
+            #[DTO(response)]
+            #struct_impl
+        };
+
+        populate_supported_mimes(
+            &resp_args.base_args.format,
+            &mut fragments.supported_mimes,
+        );
+
+        make_formatter_functions(&resp_args, &struct_impl, &mut fragments)?;
+
+        populate_openapi_impls(
+            &struct_impl,
+            resp_args.code.0,
+            &mut fragments
+        );
+
+        Ok(fragments)
+    }
+
+    fn make_formatter_functions(resp_args: &ResponseArgsStruct, struct_impl: &ItemStruct, fragments: &mut NewAstFragments) -> Result<(), TokenStream> {
+        let (_, response_code_ts) = extract_response_code(resp_args.code, &struct_impl)?;
+
+        let ident = &struct_impl.ident;
+        let base_args = &resp_args.base_args;
+
+        if let Fields::Unit = struct_impl.fields {
+            if base_args.format.is_any() {
+                return Err(
+                    syn::Error::new_spanned(
+                        struct_impl,
+                        format!("error in `#[Response]` annotation: no response formats are allowed for struct `{ident}` because it has no fields to output in any format; remove format definition (e.g. #[Response(code = 418)])")
+                    ).into_compile_error()
+                );
+            }
+        }
+
+        if !base_args.format.is_any() {
+            let formatter = &fragments.into_response_any_content_type_ident;
+
+            let resp = match struct_impl.fields {
+                Fields::Named(_) | Fields::Unnamed(_) => {
+                    return Err(
+                        syn::Error::new_spanned(
+                            struct_impl,
+                            format!("error in `#[Response]` annotation: specify at least one response format for struct `{ident}` to be able to return data through it (e.g. #[Response(format(json))])")
+                        ).into_compile_error()
+                    );
+                }
+                Fields::Unit => {
+                    quote! {(#response_code_ts).into_response()}
+                }
+            };
+
+            fragments.formatter_functions.push(quote! {
+                fn #formatter(self) -> ::axum::response::Response {
+                    #resp
+                }
+            });
+        };
+
+        if base_args.format.plain_text {
+            let formatter = &fragments.into_response_text_plain_ident;
+
+            let resp = match &struct_impl.fields {
+                Fields::Named(_) => {
+                    quote!{
+                        (
+                            #response_code_ts,
+                            Into::<String>::into(self)
+                        ).into_response()
+                    }
+                },
+                Fields::Unnamed(f) => {
+                    if f.unnamed.is_empty() {
+                        return Err(
+                            syn::Error::new_spanned(
+                                struct_impl,
+                                format!("error in `#[Response]` annotation: no fields are specified for struct `{ident}`. Please remove the parentheses (e.g. `struct {ident};`)")
+                            ).into_compile_error()
+                        );
+                    }
+
+                    if f.unnamed.len() > 1 {
+                        return Err(
+                            syn::Error::new_spanned(
+                                struct_impl,
+                                format!("error in `#[Response]` annotation: more then one unnamed field is specified for struct `{ident}`. Please remove the extra fields or give them names (e.g. `struct {ident} {{ field_0: String, ... }};`)")
+                            ).into_compile_error()
+                        );
+                    }
+
+                    quote! {
+                        (
+                            #response_code_ts,
+                            Into::<String>::into(self.0)
+                        ).into_response()
+                    }
+                },
+                Fields::Unit => {
+                    quote! {(#response_code_ts).into_response()}
+                }
+            };
+
+            fragments.formatter_functions.push(quote! {
+                fn #formatter(self) -> ::axum::response::Response {
+                    #resp
+                }
+            });
+        }
+
+        if base_args.format.html {
+            let formatter = &fragments.into_response_text_html_ident;
+            fragments.formatter_functions.push(quote! {
+                fn #formatter(self) -> ::axum::response::Response {
+                    (
+                        #response_code_ts,
+                        <#ident as ::groom::response::HtmlFormat>::render(self)
+                    ).into_response()
+                }
+            });
+        }
+
+        if base_args.format.json {
+            let formatter = &fragments.into_response_application_json_ident;
+            fragments.formatter_functions.push(quote! {
+                fn #formatter(self) -> ::axum::response::Response {
+                    (
+                        #response_code_ts,
+                        ::axum::Json(self)
+                    ).into_response()
+                }
+            });
+        }
+
+        Ok(())
+    }
+
+    /// Makes code to set up OpenAPI spec generation for this struct.
+    fn populate_openapi_impls(
+        struct_impl: &ItemStruct,
+        response_code_u16: u16,
+        fragments: &mut NewAstFragments,
+    )
+    {
+        let description_tk = match get_docblock(&struct_impl.attrs).unwrap_or_default() {
+            Some(s) => quote! { #s },
+            None => quote! { "" },
+        };
+
+        let response_code_str = format!("{response_code_u16}");
+
+        match &struct_impl.fields {
+            Fields::Unit => {
+                fragments.openapi_impls.push(quote! {
+                    let op = op.response(
+                        #response_code_str,
+                        ::utoipa::openapi::ResponseBuilder::new()
+                            .description(#description_tk)
+                            .build()
+                    );
+                });
+            }
+
+            Fields::Unnamed(f) => {
+                let single_field = f.unnamed.first().expect("fields count is checked in make_formatter_functions()");
+
+                let ty = &single_field.ty;
+                fragments.type_assertions.push(quote! {
+                    assert_impl_any!(#ty: ::utoipa::PartialSchema, ::groom::DTO_Response);
+                });
+
+                make_openapi_fragments_for_type(quote!{#ty}, description_tk, response_code_str, fragments);
+            }
+
+            Fields::Named(_) => {
+                let ty = &struct_impl.ident;
+                fragments.type_assertions.push(quote! {
+                    assert_impl_any!(#ty: ::utoipa::PartialSchema, ::groom::DTO_Response);
+                });
+
+                make_openapi_fragments_for_type(quote!{#ty}, description_tk, response_code_str, fragments);
+            }
         }
     }
 }
