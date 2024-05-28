@@ -194,6 +194,47 @@ pub mod api_root {
                 );
             op
         }
+        fn __groom_check_response_codes(
+            context: &String,
+            codes: &mut ::groom::runtime_checks::HTTPCodeSet,
+        ) {
+            let context = {
+                let res = ::alloc::fmt::format(
+                    format_args!("{0} / enum `GetRootResponse`", context),
+                );
+                res
+            };
+            codes
+                .ensure_distinct(
+                    {
+                        let res = ::alloc::fmt::format(
+                            format_args!("{0} / variant `Ok`", context),
+                        );
+                        res
+                    },
+                    200u16,
+                );
+            codes
+                .ensure_distinct(
+                    {
+                        let res = ::alloc::fmt::format(
+                            format_args!("{0} / variant `BadRequest`", context),
+                        );
+                        res
+                    },
+                    400u16,
+                );
+            codes
+                .ensure_distinct(
+                    {
+                        let res = ::alloc::fmt::format(
+                            format_args!("{0} / variant `Forbidden`", context),
+                        );
+                        res
+                    },
+                    401u16,
+                );
+        }
     }
     const _: fn() = || {
         use ::static_assertions::_core::marker::PhantomData;
@@ -555,6 +596,37 @@ pub mod api_root {
                         .build(),
                 );
             op
+        }
+        fn __groom_check_response_codes(
+            context: &String,
+            codes: &mut ::groom::runtime_checks::HTTPCodeSet,
+        ) {
+            let context = {
+                let res = ::alloc::fmt::format(
+                    format_args!("{0} / enum `RqConsQueryResponse`", context),
+                );
+                res
+            };
+            codes
+                .ensure_distinct(
+                    {
+                        let res = ::alloc::fmt::format(
+                            format_args!("{0} / variant `Ok`", context),
+                        );
+                        res
+                    },
+                    200u16,
+                );
+            codes
+                .ensure_distinct(
+                    {
+                        let res = ::alloc::fmt::format(
+                            format_args!("{0} / variant `BadRequest`", context),
+                        );
+                        res
+                    },
+                    400u16,
+                );
         }
     }
     const _: fn() = || {
@@ -938,6 +1010,27 @@ pub mod api_root {
                 );
             op
         }
+        fn __groom_check_response_codes(
+            context: &String,
+            codes: &mut ::groom::runtime_checks::HTTPCodeSet,
+        ) {
+            let context = {
+                let res = ::alloc::fmt::format(
+                    format_args!("{0} / enum `RqConsPathResponse`", context),
+                );
+                res
+            };
+            codes
+                .ensure_distinct(
+                    {
+                        let res = ::alloc::fmt::format(
+                            format_args!("{0} / variant `Ok`", context),
+                        );
+                        res
+                    },
+                    200u16,
+                );
+        }
     }
     const _: fn() = || {
         use ::static_assertions::_core::marker::PhantomData;
@@ -1087,6 +1180,27 @@ pub mod api_root {
                 );
             op
         }
+        fn __groom_check_response_codes(
+            context: &String,
+            codes: &mut ::groom::runtime_checks::HTTPCodeSet,
+        ) {
+            let context = {
+                let res = ::alloc::fmt::format(
+                    format_args!("{0} / enum `RespJsonResponse`", context),
+                );
+                res
+            };
+            codes
+                .ensure_distinct(
+                    {
+                        let res = ::alloc::fmt::format(
+                            format_args!("{0} / variant `Ok`", context),
+                        );
+                        res
+                    },
+                    200u16,
+                );
+        }
     }
     const _: fn() = || {
         use ::static_assertions::_core::marker::PhantomData;
@@ -1129,7 +1243,61 @@ pub mod api_root {
         };
         assert_impl_any_token(previous._static_assertions_impl_any());
     };
+    fn __groom_runtime_checks() {
+        let context = "Groom runtime check of mod `api_root`".to_string();
+        let mut codes = ::groom::runtime_checks::HTTPCodeSet::new();
+        <GetRootResponse>::__groom_check_response_codes(
+            &{
+                let res = ::alloc::fmt::format(
+                    format_args!("{0}: handler `get_root`", context),
+                );
+                res
+            },
+            &mut codes,
+        );
+        let mut codes = ::groom::runtime_checks::HTTPCodeSet::new();
+        <GetRootResponse>::__groom_check_response_codes(
+            &{
+                let res = ::alloc::fmt::format(
+                    format_args!("{0}: handler `post_root`", context),
+                );
+                res
+            },
+            &mut codes,
+        );
+        let mut codes = ::groom::runtime_checks::HTTPCodeSet::new();
+        <RqConsQueryResponse>::__groom_check_response_codes(
+            &{
+                let res = ::alloc::fmt::format(
+                    format_args!("{0}: handler `rq_cons_query_struct`", context),
+                );
+                res
+            },
+            &mut codes,
+        );
+        let mut codes = ::groom::runtime_checks::HTTPCodeSet::new();
+        <RqConsPathResponse>::__groom_check_response_codes(
+            &{
+                let res = ::alloc::fmt::format(
+                    format_args!("{0}: handler `rq_cons_path_struct`", context),
+                );
+                res
+            },
+            &mut codes,
+        );
+        let mut codes = ::groom::runtime_checks::HTTPCodeSet::new();
+        <RespJsonResponse>::__groom_check_response_codes(
+            &{
+                let res = ::alloc::fmt::format(
+                    format_args!("{0}: handler `resp_json`", context),
+                );
+                res
+            },
+            &mut codes,
+        );
+    }
     pub fn merge_into_router(other: ::axum::Router<()>) -> ::axum::Router<()> {
+        __groom_runtime_checks();
         let this_router = ::axum::Router::new()
             .route("/", ::axum::routing::get(__groom_wrapper_get_root))
             .route("/", ::axum::routing::post(__groom_wrapper_post_root))

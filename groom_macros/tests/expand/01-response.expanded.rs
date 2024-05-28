@@ -43,6 +43,37 @@ mod no_content_type {
                 );
             op
         }
+        fn __groom_check_response_codes(
+            context: &String,
+            codes: &mut ::groom::runtime_checks::HTTPCodeSet,
+        ) {
+            let context = {
+                let res = ::alloc::fmt::format(
+                    format_args!("{0} / enum `RespJsonResponse`", context),
+                );
+                res
+            };
+            codes
+                .ensure_distinct(
+                    {
+                        let res = ::alloc::fmt::format(
+                            format_args!("{0} / variant `Accepted`", context),
+                        );
+                        res
+                    },
+                    202u16,
+                );
+            codes
+                .ensure_distinct(
+                    {
+                        let res = ::alloc::fmt::format(
+                            format_args!("{0} / variant `NotFound`", context),
+                        );
+                        res
+                    },
+                    404u16,
+                );
+        }
     }
 }
 mod plaintext_only {
@@ -130,6 +161,37 @@ mod plaintext_only {
                     ::utoipa::openapi::ResponseBuilder::new().description("").build(),
                 );
             op
+        }
+        fn __groom_check_response_codes(
+            context: &String,
+            codes: &mut ::groom::runtime_checks::HTTPCodeSet,
+        ) {
+            let context = {
+                let res = ::alloc::fmt::format(
+                    format_args!("{0} / enum `RespPlaintextResponse`", context),
+                );
+                res
+            };
+            codes
+                .ensure_distinct(
+                    {
+                        let res = ::alloc::fmt::format(
+                            format_args!("{0} / variant `Ok`", context),
+                        );
+                        res
+                    },
+                    200u16,
+                );
+            codes
+                .ensure_distinct(
+                    {
+                        let res = ::alloc::fmt::format(
+                            format_args!("{0} / variant `NotFound`", context),
+                        );
+                        res
+                    },
+                    404u16,
+                );
         }
     }
 }
@@ -262,6 +324,37 @@ mod html_only {
                 );
             op
         }
+        fn __groom_check_response_codes(
+            context: &String,
+            codes: &mut ::groom::runtime_checks::HTTPCodeSet,
+        ) {
+            let context = {
+                let res = ::alloc::fmt::format(
+                    format_args!("{0} / enum `RespHtmlResponse`", context),
+                );
+                res
+            };
+            codes
+                .ensure_distinct(
+                    {
+                        let res = ::alloc::fmt::format(
+                            format_args!("{0} / variant `Ok`", context),
+                        );
+                        res
+                    },
+                    200u16,
+                );
+            codes
+                .ensure_distinct(
+                    {
+                        let res = ::alloc::fmt::format(
+                            format_args!("{0} / variant `NotFound`", context),
+                        );
+                        res
+                    },
+                    404u16,
+                );
+        }
     }
 }
 mod json_only {
@@ -380,6 +473,37 @@ mod json_only {
                     ::utoipa::openapi::ResponseBuilder::new().description("").build(),
                 );
             op
+        }
+        fn __groom_check_response_codes(
+            context: &String,
+            codes: &mut ::groom::runtime_checks::HTTPCodeSet,
+        ) {
+            let context = {
+                let res = ::alloc::fmt::format(
+                    format_args!("{0} / enum `RespJsonResponse`", context),
+                );
+                res
+            };
+            codes
+                .ensure_distinct(
+                    {
+                        let res = ::alloc::fmt::format(
+                            format_args!("{0} / variant `Ok`", context),
+                        );
+                        res
+                    },
+                    200u16,
+                );
+            codes
+                .ensure_distinct(
+                    {
+                        let res = ::alloc::fmt::format(
+                            format_args!("{0} / variant `NotFound`", context),
+                        );
+                        res
+                    },
+                    404u16,
+                );
         }
     }
 }
@@ -562,6 +686,37 @@ mod multiple_content_types {
                 );
             op
         }
+        fn __groom_check_response_codes(
+            context: &String,
+            codes: &mut ::groom::runtime_checks::HTTPCodeSet,
+        ) {
+            let context = {
+                let res = ::alloc::fmt::format(
+                    format_args!("{0} / enum `RespMultipleTypesResponse`", context),
+                );
+                res
+            };
+            codes
+                .ensure_distinct(
+                    {
+                        let res = ::alloc::fmt::format(
+                            format_args!("{0} / variant `Ok`", context),
+                        );
+                        res
+                    },
+                    200u16,
+                );
+            codes
+                .ensure_distinct(
+                    {
+                        let res = ::alloc::fmt::format(
+                            format_args!("{0} / variant `NotFound`", context),
+                        );
+                        res
+                    },
+                    404u16,
+                );
+        }
     }
 }
 mod named_struct_response {
@@ -676,6 +831,21 @@ mod named_struct_response {
                         .build(),
                 );
             op
+        }
+        fn __groom_check_response_codes(
+            context: &String,
+            codes: &mut ::groom::runtime_checks::HTTPCodeSet,
+        ) {
+            codes
+                .ensure_distinct(
+                    {
+                        let res = ::alloc::fmt::format(
+                            format_args!("{0} / struct `Named`", context),
+                        );
+                        res
+                    },
+                    200u16,
+                )
         }
     }
     impl ::groom::response::HtmlFormat for Named {
@@ -796,6 +966,21 @@ mod unnamed_struct_response {
                 );
             op
         }
+        fn __groom_check_response_codes(
+            context: &String,
+            codes: &mut ::groom::runtime_checks::HTTPCodeSet,
+        ) {
+            codes
+                .ensure_distinct(
+                    {
+                        let res = ::alloc::fmt::format(
+                            format_args!("{0} / struct `Unnamed`", context),
+                        );
+                        res
+                    },
+                    200u16,
+                )
+        }
     }
     impl ::groom::response::HtmlFormat for Unnamed {
         fn render(self) -> ::axum::response::Html<axum::body::Body> {
@@ -859,6 +1044,21 @@ mod unit_struct_response {
                 );
             op
         }
+        fn __groom_check_response_codes(
+            context: &String,
+            codes: &mut ::groom::runtime_checks::HTTPCodeSet,
+        ) {
+            codes
+                .ensure_distinct(
+                    {
+                        let res = ::alloc::fmt::format(
+                            format_args!("{0} / struct `Unit`", context),
+                        );
+                        res
+                    },
+                    200u16,
+                )
+        }
     }
 }
 mod result_struct_struct {
@@ -908,6 +1108,21 @@ mod result_struct_struct {
                 );
             op
         }
+        fn __groom_check_response_codes(
+            context: &String,
+            codes: &mut ::groom::runtime_checks::HTTPCodeSet,
+        ) {
+            codes
+                .ensure_distinct(
+                    {
+                        let res = ::alloc::fmt::format(
+                            format_args!("{0} / struct `Success`", context),
+                        );
+                        res
+                    },
+                    200u16,
+                )
+        }
     }
     pub struct Error;
     #[doc(hidden)]
@@ -954,6 +1169,21 @@ mod result_struct_struct {
                 );
             op
         }
+        fn __groom_check_response_codes(
+            context: &String,
+            codes: &mut ::groom::runtime_checks::HTTPCodeSet,
+        ) {
+            codes
+                .ensure_distinct(
+                    {
+                        let res = ::alloc::fmt::format(
+                            format_args!("{0} / struct `Error`", context),
+                        );
+                        res
+                    },
+                    404u16,
+                )
+        }
     }
     /// HTTP handler: GET /
     async fn foo() -> Result<Success, Error> {
@@ -966,7 +1196,24 @@ mod result_struct_struct {
         let result = foo().await;
         result.__groom_into_response(accept)
     }
+    fn __groom_runtime_checks() {
+        let context = "Groom runtime check of mod `result_struct_struct`".to_string();
+        let mut codes = ::groom::runtime_checks::HTTPCodeSet::new();
+        <Result<
+            Success,
+            Error,
+        >>::__groom_check_response_codes(
+            &{
+                let res = ::alloc::fmt::format(
+                    format_args!("{0}: handler `foo`", context),
+                );
+                res
+            },
+            &mut codes,
+        );
+    }
     pub fn merge_into_router(other: ::axum::Router<()>) -> ::axum::Router<()> {
+        __groom_runtime_checks();
         let this_router = ::axum::Router::new()
             .route("/", ::axum::routing::get(__groom_wrapper_foo));
         other.merge(this_router)
@@ -1047,6 +1294,21 @@ mod result_struct_enum {
                     ::utoipa::openapi::ResponseBuilder::new().description("").build(),
                 );
             op
+        }
+        fn __groom_check_response_codes(
+            context: &String,
+            codes: &mut ::groom::runtime_checks::HTTPCodeSet,
+        ) {
+            codes
+                .ensure_distinct(
+                    {
+                        let res = ::alloc::fmt::format(
+                            format_args!("{0} / struct `Success`", context),
+                        );
+                        res
+                    },
+                    200u16,
+                )
         }
     }
     pub enum Error {
@@ -1130,6 +1392,37 @@ mod result_struct_enum {
                 );
             op
         }
+        fn __groom_check_response_codes(
+            context: &String,
+            codes: &mut ::groom::runtime_checks::HTTPCodeSet,
+        ) {
+            let context = {
+                let res = ::alloc::fmt::format(
+                    format_args!("{0} / enum `Error`", context),
+                );
+                res
+            };
+            codes
+                .ensure_distinct(
+                    {
+                        let res = ::alloc::fmt::format(
+                            format_args!("{0} / variant `NotFound`", context),
+                        );
+                        res
+                    },
+                    404u16,
+                );
+            codes
+                .ensure_distinct(
+                    {
+                        let res = ::alloc::fmt::format(
+                            format_args!("{0} / variant `NoAccess`", context),
+                        );
+                        res
+                    },
+                    400u16,
+                );
+        }
     }
     const _: fn() = || {
         use ::static_assertions::_core::marker::PhantomData;
@@ -1183,7 +1476,24 @@ mod result_struct_enum {
         let result = foo().await;
         result.__groom_into_response(accept)
     }
+    fn __groom_runtime_checks() {
+        let context = "Groom runtime check of mod `result_struct_enum`".to_string();
+        let mut codes = ::groom::runtime_checks::HTTPCodeSet::new();
+        <Result<
+            Success,
+            Error,
+        >>::__groom_check_response_codes(
+            &{
+                let res = ::alloc::fmt::format(
+                    format_args!("{0}: handler `foo`", context),
+                );
+                res
+            },
+            &mut codes,
+        );
+    }
     pub fn merge_into_router(other: ::axum::Router<()>) -> ::axum::Router<()> {
+        __groom_runtime_checks();
         let this_router = ::axum::Router::new()
             .route("/", ::axum::routing::get(__groom_wrapper_foo));
         other.merge(this_router)

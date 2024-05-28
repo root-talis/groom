@@ -152,6 +152,10 @@ struct NewAstFragments {
     /// compile-time checks of trait implementation (for better error messages)
     type_assertions: Vec<TokenStream>,
 
+    /// runtime checks of HTTP response codes
+    /// (to detect response code collisions in composite types like `Result<T, E>`)
+    check_response_codes_fn: TokenStream,
+
     openapi_impls: Vec<TokenStream>,
     new_item_ast: TokenStream,
 
@@ -176,6 +180,8 @@ impl NewAstFragments {
             into_response_application_json_ident: format_ident!("into_response_application_json"),
 
             type_assertions: Default::default(),
+            check_response_codes_fn: Default::default(),
+
             openapi_impls: Default::default(),
             new_item_ast: Default::default(),
 
@@ -345,6 +351,7 @@ fn make_new_ast(fragments: NewAstFragments)
     let openapi_impls = &fragments.openapi_impls;
     let new_item_code = &fragments.new_item_ast;
     let item_ident = &fragments.item_ident;
+    let check_response_codes_fn = &fragments.check_response_codes_fn;
 
     Ok(
         quote! {
@@ -370,6 +377,8 @@ fn make_new_ast(fragments: NewAstFragments)
                 }
 
                 // todo: __groom_content_type_supported
+
+                #check_response_codes_fn
             }
 
             #(#type_assertions)*
@@ -563,6 +572,8 @@ mod enum_impl {
             &mut fragments.supported_mimes,
         );
 
+        let mut response_codes_checks: Vec<TokenStream> = Vec::new();
+
         for mut variant in enum_impl.variants {
             let variant_annotation = extract_variant_annotation(&mut variant)?;
 
@@ -587,6 +598,11 @@ mod enum_impl {
             );
 
             variants_ts.push(quote! { #variant, });
+
+            let new_context_format = format!("{{context}} / variant `{}`", &variant.ident);
+            response_codes_checks.push(quote!{
+                codes.ensure_distinct(format!(#new_context_format), #response_code_u16);
+            });
         }
 
         make_formatter_functions(&matchers, &mut fragments);
@@ -595,6 +611,14 @@ mod enum_impl {
         fragments.new_item_ast = quote! {
             #vis enum #ident {
                 #(#variants_ts)*
+            }
+        };
+
+        let new_context_format = format!("{{context}} / enum `{}`", &ident);
+        fragments.check_response_codes_fn = quote! {
+            fn __groom_check_response_codes(context: &String, codes: &mut ::groom::runtime_checks::HTTPCodeSet) {
+                let context = format!(#new_context_format);
+                #(#response_codes_checks)*
             }
         };
 
@@ -850,11 +874,15 @@ mod struct_impl {
 
         make_formatter_functions(&resp_args, &struct_impl, &mut fragments)?;
 
+        let code = resp_args.code.0;
+
         populate_openapi_impls(
             &struct_impl,
-            resp_args.code.0,
+            code,
             &mut fragments
         );
+
+        make_groom_check_response_codes_fn(&struct_impl, code, &mut fragments);
 
         Ok(fragments)
     }
@@ -1023,6 +1051,15 @@ mod struct_impl {
                 make_openapi_fragments_for_type(quote!{#ty}, description_tk, response_code_str, fragments);
             }
         }
+    }
+
+    fn make_groom_check_response_codes_fn(struct_impl: &ItemStruct, code: u16, fragments: &mut NewAstFragments) {
+        let new_context_format = format!("{{context}} / struct `{}`", &struct_impl.ident);
+        fragments.check_response_codes_fn = quote! {
+            fn __groom_check_response_codes(context: &String, codes: &mut ::groom::runtime_checks::HTTPCodeSet) {
+                codes.ensure_distinct(format!(#new_context_format), #code)
+            }
+        };
     }
 }
 

@@ -1,6 +1,6 @@
 use indexmap::IndexMap;
 use proc_macro2::{Ident, TokenStream};
-use syn::{parse2, Error, Item, ItemMod, ItemFn, Visibility};
+use syn::{parse2, Error, Item, ItemMod, ItemFn, Visibility, ReturnType};
 use quote::{format_ident, quote, ToTokens};
 use darling::FromMeta;
 use syn::Attribute;
@@ -69,6 +69,9 @@ struct ModuleASTFragments {
 
     /// compile-time checks of trait implementation (for better error messages)
     type_assertions: Vec<TokenStream>,
+
+    /// runtime checks of HTTP response codes
+    runtime_checks: Vec<TokenStream>,
 }
 
 struct HandlerASTFragments {
@@ -111,6 +114,7 @@ fn generate_impl(_args_t: TokenStream, args: ControllerArgs, input: TokenStream)
         routes_setup: Vec::new(),
         openapi_paths_setup: IndexMap::new(),
         type_assertions: Vec::new(),
+        runtime_checks: Vec::new(),
     };
 
     for item in items {
@@ -159,6 +163,15 @@ fn parse_handler_function(
 
     generate_new_handler_ast(&function, &route, &docblock, &fn_fragments, mod_fragments);
     generate_openapi_paths_setup_ast(&fn_fragments, &route, &docblock, mod_fragments);
+
+    if let ReturnType::Type(_, ty) = &function.sig.output {
+        let ident = &function.sig.ident;
+        let context_format = format!("{{context}}: handler `{ident}`");
+        mod_fragments.runtime_checks.push(quote! {
+            let mut codes = ::groom::runtime_checks::HTTPCodeSet::new();
+            <#ty>::__groom_check_response_codes(&format!(#context_format), &mut codes);
+        });
+    }
 
     Ok(())
 }
@@ -423,6 +436,9 @@ fn generate_new_mod_ast(
     let module_items = fragments.module_items;
     let routes_setup = fragments.routes_setup;
     let type_assertions = fragments.type_assertions;
+    let runtime_checks = fragments.runtime_checks;
+
+    let runtime_checks_context = format!("Groom runtime check of mod `{ident}`");
 
     quote! {
         #vis mod #ident {
@@ -430,9 +446,16 @@ fn generate_new_mod_ast(
 
             #(#module_items)*
 
-            // todo: validate return codes of types in runtime?
+            // todo: validate http codes of response types in runtime
+            // todo: validate content-types of response types in runtime
+            fn __groom_runtime_checks() {
+                let context = #runtime_checks_context.to_string();
+                #(#runtime_checks)*
+            }
 
             pub fn merge_into_router(other: ::axum::Router<#state_ty>) -> ::axum::Router<#state_ty> {
+                __groom_runtime_checks();
+
                 let this_router = ::axum::Router::new()
                     #(#routes_setup)*
                 ;

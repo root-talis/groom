@@ -5,6 +5,8 @@ pub mod response;
 pub mod schema;
 pub mod content_negotiation;
 
+pub mod runtime_checks;
+
 /// Indicates that type is annotated with `#[DTO(...)]`.
 /// 
 /// Do not implement this manually.
