@@ -1,6 +1,13 @@
 ///! Tests of separate features
 
+// region: project structuring
+//
+
 mod dependency_injection;
+mod multiple_controllers;
+
+//
+// endregion: project structuring
 
 // region: requests
 //

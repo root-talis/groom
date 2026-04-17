@@ -1249,7 +1249,9 @@ mod result_struct_struct {
                         .build()
                 },
             );
-        other.paths(paths)
+        let mut b = other.build();
+        b.merge(::utoipa::openapi::OpenApiBuilder::new().paths(paths).build());
+        b.into()
     }
     const _: fn() = || {
         fn assert_impl_all<T: ?Sized + ::groom::response::Response>() {}
@@ -1525,7 +1527,9 @@ mod result_struct_enum {
                         .build()
                 },
             );
-        other.paths(paths)
+        let mut b = other.build();
+        b.merge(::utoipa::openapi::OpenApiBuilder::new().paths(paths).build());
+        b.into()
     }
     const _: fn() = || {
         fn assert_impl_all<T: ?Sized + ::groom::response::Response>() {}

@@ -1400,7 +1400,9 @@ pub mod api_root {
                         .build()
                 },
             );
-        other.paths(paths)
+        let mut b = other.build();
+        b.merge(::utoipa::openapi::OpenApiBuilder::new().paths(paths).build());
+        b.into()
     }
     const _: fn() = || {
         fn assert_impl_all<T: ?Sized + ::groom::response::Response>() {}

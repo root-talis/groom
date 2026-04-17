@@ -284,12 +284,8 @@ mod weights_controller {
     use groom::{
         html_format,
         response::Response,
-        schema::GroomSchema,
-        extract::GroomExtractor
     };
     use groom_macros::{DTO,Response};
-
-    use utoipa::ToSchema;
 
     #[DTO(response)]
     pub struct PageData(String);

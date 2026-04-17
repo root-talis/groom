@@ -468,7 +468,9 @@ fn generate_new_mod_ast(
 
                 #(#paths)*
 
-                other.paths(paths)
+                let mut b = other.build();
+                b.merge(::utoipa::openapi::OpenApiBuilder::new().paths(paths).build());
+                b.into()
             }
 
             #(#type_assertions)*
