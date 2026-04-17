@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use axum::{
     Router, body::Body, http::{self, HeaderMap, Request, StatusCode}
 };
@@ -63,10 +65,11 @@ impl RequestResult {
 }
 
 pub struct Req {
-    pub method: http::Method,
-    pub url:    String,
-    pub accept: Option<&'static str>,
-    pub body:   Option<ReqBody>,
+    pub method:  http::Method,
+    pub url:     String,
+    pub accept:  Option<&'static str>,
+    pub headers: Option<HashMap<&'static str, &'static str>>,
+    pub body:    Option<ReqBody>,
 }
 
 #[allow(dead_code)]
@@ -92,7 +95,7 @@ impl Req {
     }
 
     fn new<T: Into<String>>(method: http::Method, url: T) -> Self {
-        Self { method, url: url.into(), accept: None, body: None }
+        Self { method, url: url.into(), accept: None, headers: None, body: None }
     }
 
     pub fn accept(mut self, accept: &'static str) -> Self {
@@ -105,11 +108,22 @@ impl Req {
         self
     }
 
+    pub fn with_headers <T: Into<HashMap<&'static str, &'static str>>>(mut self, headers: T) -> Self {
+        self.headers = Some(headers.into());
+        self
+    }
+
     pub async fn call(self, r: &Router) -> RequestResult {
         let mut request = Request::builder().uri(self.url).method(self.method);
 
         if self.accept.is_some() {
             request = request.header("accept", self.accept.unwrap());
+        }
+
+        if let Some(headers) = self.headers {
+            for h in headers {
+                request = request.header(h.0, h.1);
+            }
         }
 
         let request = if let Some(b) = self.body {
@@ -144,8 +158,8 @@ pub struct ReqBody {
 
 #[allow(dead_code)]
 impl ReqBody {
-    pub fn new(body: Body) -> Self {
-        Self { body, content_type: None }
+    pub fn new<T: Into<Body>>(body: T) -> Self {
+        Self { body: body.into(), content_type: None }
     }
 
     pub fn with_content_type(mut self, ct: &'static str) -> Self {

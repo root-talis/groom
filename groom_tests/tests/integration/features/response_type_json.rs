@@ -12,7 +12,7 @@ mod controller {
     use groom::{schema::GroomSchema, response::Response};
     use groom_macros::{DTO,Response};
 
-    use utoipa::ToSchema;
+    use utoipa::{ToSchema, PartialSchema};
 
     // ---
 
@@ -65,25 +65,21 @@ mod controller {
 
     // ---
 
-    /*
-    todo: make it work
-
     #[Response(format(json))]
     pub enum JsonStringResponse {
         #[Response()]
-        Ok(String)
+        Ok(String) // requires utoipa::PartialSchema
     }
 
     #[Route(method="get", path="/json_string")]
     pub async fn json_string() -> JsonStringResponse {
-        JsonStringResponse::Ok(SOME_TEXT.into())
+        JsonStringResponse::Ok("Hello, world!".into())
     }
-    */
 
     // ---
 }
 
-/// Tests that handler for delete request is set correctly
+/// Tests that json struct is returned correctly
 #[tokio::test]
 pub async fn json_struct() {
     let r = controller::merge_into_router(Router::new());
@@ -95,7 +91,7 @@ pub async fn json_struct() {
     ;
 }
 
-/// Tests that handler for delete request is set correctly
+/// Tests that json struct with None value is returned correctly
 #[tokio::test]
 pub async fn json_struct_no_time() {
     let r = controller::merge_into_router(Router::new());
@@ -103,6 +99,18 @@ pub async fn json_struct_no_time() {
     Req::get("/json_struct/no_time").call(&r).await
         .assert_status(200)
         .assert_body(DataObject::unknown_time_str())
+        .assert_content_type("application/json")
+    ;
+}
+
+/// Tests that json string is returned correctly
+#[tokio::test]
+pub async fn json_string() {
+    let r = controller::merge_into_router(Router::new());
+
+    Req::get("/json_string").call(&r).await
+        .assert_status(200)
+        .assert_body("\"Hello, world!\"")
         .assert_content_type("application/json")
     ;
 }
@@ -122,6 +130,22 @@ pub async fn test_openapi() {
             },
             "openapi": "3.0.3",
             "paths": {
+                "/json_string": {
+                    "get": {
+                        "responses": {
+                            "200": {
+                                "content": {
+                                    "application/json": {
+                                        "schema": {
+                                            "type": "string",
+                                        },
+                                    },
+                                },
+                                "description": "",
+                            },
+                        },
+                    },
+                },
                 "/json_struct": {
                     "get": {
                         "responses": {
