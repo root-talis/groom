@@ -9,14 +9,16 @@ use crate::{
 #[Controller()]
 mod controller {
     use axum::response::IntoResponse;
+
     use groom::response::Response;
     use groom_macros::Response;
 
-
     /// https://twitter.com/stahnma/status/634849376343429120
-    pub const SOME_TEXT: &'static str = "Everybody has a testing environment. \
-                                    Some people are lucky enough enough to have a totally separate environment \
-                                    to run production in";
+    pub const SOME_TEXT: &'static str = 
+        "Everybody has a testing environment. \
+         Some people are lucky enough enough to have a totally separate environment \
+         to run production in";
+
     // ---
 
     #[Response(format(plain_text))]

@@ -9,10 +9,21 @@ use crate::{
 #[Controller()]
 mod controller {
     use axum::response::IntoResponse;
-    use groom::{html_format, response::Response, schema::GroomSchema};
-    use groom_macros::{DTO,Response};
 
-    use utoipa::{ToSchema, PartialSchema};
+    use groom::{
+        html_format,
+        response::Response,
+        schema::GroomSchema
+    };
+    use groom_macros::{
+        DTO,
+        Response
+    };
+
+    use utoipa::{
+        ToSchema,
+        PartialSchema // required for String type in response
+    };
 
     /// Named struct as a response
     #[Response(format(plain_text, html, json), default_format="plain_text", code=418)]

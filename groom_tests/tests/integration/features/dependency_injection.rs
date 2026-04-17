@@ -6,15 +6,18 @@ use crate::{
     integration::test_utils::{Req, assert_openapi_doc}
 };
 
+// Important: state type should be mentioned in `use` INSIDE the controller.
 #[Controller(state_type = SomeState)]
 mod controller {
+    use crate::integration::features::dependency_injection::SomeState;
+
     use axum::{Extension, extract::State, response::IntoResponse};
-    use groom::{response::Response, extract::GroomExtractor};
+
+    use groom::{
+        response::Response,
+        extract::GroomExtractor
+    };
     use groom_macros::Response;
-
-    use utoipa::ToSchema;
-
-    use crate::integration::features::dependency_injection::{SomeExt,SomeState};
 
     // ---
     

@@ -1,5 +1,4 @@
-use axum::{Router, body::Body};
-use groom::response::HtmlFormat;
+use axum::{Router};
 use serde_json::json;
 
 use crate::{
@@ -7,28 +6,37 @@ use crate::{
     integration::test_utils::{Req, ReqBody, assert_openapi_doc}
 };
 
+/// A controller
 #[Controller()]
 mod controller {
-    use axum::{extract::Query, response::IntoResponse};
-    use groom::{html_format, response::Response, schema::GroomSchema, extract::GroomExtractor};
+    use axum::response::IntoResponse;
+    
+    use groom::{
+        response::Response,
+        extract::GroomExtractor
+    };
     use groom_macros::{DTO,Response,RequestBody};
 
     use utoipa::ToSchema;
 
     // ---
 
+    /// Simple string response
     #[Response(format(plain_text))]
     pub enum StringResponse {
+        /// Everything is ok
         #[Response()]
         Ok(String),
 
+        #[allow(dead_code)]
+        /// Something in the request is not ok
         #[Response(code = 400)]
         BadRequest(String),
     }
 
     // ---
 
-    // Request consumption: String body
+    /// Request consumption: String body
     #[Route(method = "post", path = "/string_body")]
     async fn rq_cons_string_body(body: String) -> StringResponse {
         StringResponse::Ok(format!("body: {body}"))
@@ -36,7 +44,7 @@ mod controller {
 
     // ---
 
-    // Request consumption: Bytes body
+    /// Request consumption: Bytes body
     #[Route(method = "post", path = "/bytes_body")]
     async fn rq_cons_bytes_body(body: axum::body::Bytes) -> StringResponse {
         StringResponse::Ok(format!("bytes count: {}", body.iter().count()))
@@ -44,9 +52,9 @@ mod controller {
 
     // ---
 
-    // Request consumption: ImageJpeg body
     groom::binary_request_body!(ImageJpeg with content_type "image/jpeg");
 
+    /// Request consumption: ImageJpeg body
     #[Route(method = "post", path = "/image_body")]
     async fn rq_cons_image_body(body: ImageJpeg) -> StringResponse {
         StringResponse::Ok(format!("bytes count: {}", body.0.iter().count()))
@@ -57,10 +65,14 @@ mod controller {
     /// Request body as a named struct.
     #[RequestBody(format(json, url_encoded))]
     pub struct MultiFormatRequestBody {
+        /// Person's name
         name: String,
+
+        /// Person's age
         age: Option<u8>,
     }
 
+    /// Accepts data in JSON or URL-encoded
     #[Route(method = "post", path = "/multi_format")]
     async fn rq_cons_multi_format_body(body: MultiFormatRequestBody) -> StringResponse {
         StringResponse::Ok(format!("someone named {} is {} years old", body.name, body.age.map_or(
@@ -320,7 +332,7 @@ pub async fn test_openapi() {
                                         },
                                     },
                                 },
-                                "description": "",
+                                "description": "Everything is ok",
                             },
                             "400": {
                                 "content": {
@@ -330,9 +342,10 @@ pub async fn test_openapi() {
                                         },
                                     },
                                 },
-                                "description": "",
+                                "description": "Something in the request is not ok",
                             },
                         },
+                        "summary": "Request consumption: Bytes body",
                     },
                 },
                 "/image_body": {
@@ -357,7 +370,7 @@ pub async fn test_openapi() {
                                         },
                                     },
                                 },
-                                "description": "",
+                                "description": "Everything is ok",
                             },
                             "400": {
                                 "content": {
@@ -367,9 +380,10 @@ pub async fn test_openapi() {
                                         },
                                     },
                                 },
-                                "description": "",
+                                "description": "Something in the request is not ok",
                             },
                         },
+                        "summary": "Request consumption: ImageJpeg body",
                     },
                 },
                 "/multi_format": {
@@ -381,12 +395,14 @@ pub async fn test_openapi() {
                                         "description": ("Request body as a named struct."),
                                         "properties": {
                                             "age": {
+                                                "description": "Person's age",
                                                 "format": "int32",
                                                 "minimum": 0,
                                                 "nullable": true,
                                                 "type": "integer",
                                             },
                                             "name": {
+                                                "description": "Person's name",
                                                 "type": "string",
                                             },
                                         },
@@ -401,12 +417,14 @@ pub async fn test_openapi() {
                                         "description": ("Request body as a named struct."),
                                         "properties": {
                                             "age": {
+                                                "description": "Person's age",
                                                 "format": "int32",
                                                 "minimum": 0,
                                                 "nullable": true,
                                                 "type": "integer",
                                             },
                                             "name": {
+                                                "description": "Person's name",
                                                 "type": "string",
                                             },
                                         },
@@ -429,7 +447,7 @@ pub async fn test_openapi() {
                                         },
                                     },
                                 },
-                                "description": "",
+                                "description": "Everything is ok",
                             },
                             "400": {
                                 "content": {
@@ -439,9 +457,10 @@ pub async fn test_openapi() {
                                         },
                                     },
                                 },
-                                "description": "",
+                                "description": "Something in the request is not ok",
                             },
                         },
+                        "summary": "Accepts data in JSON or URL-encoded",
                     },
                 },
                 "/multi_format_dto": {
@@ -501,7 +520,7 @@ pub async fn test_openapi() {
                                         },
                                     },
                                 },
-                                "description": "",
+                                "description": "Everything is ok",
                             },
                             "400": {
                                 "content": {
@@ -511,7 +530,7 @@ pub async fn test_openapi() {
                                         },
                                     },
                                 },
-                                "description": "",
+                                "description": "Something in the request is not ok",
                             },
                         },
                     },
@@ -537,7 +556,7 @@ pub async fn test_openapi() {
                                         },
                                     },
                                 },
-                                "description": "",
+                                "description": "Everything is ok",
                             },
                             "400": {
                                 "content": {
@@ -547,9 +566,10 @@ pub async fn test_openapi() {
                                         },
                                     },
                                 },
-                                "description": "",
+                                "description": "Something in the request is not ok",
                             },
                         },
+                        "summary": "Request consumption: String body",
                     },
                 },
             },

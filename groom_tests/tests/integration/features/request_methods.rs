@@ -7,13 +7,12 @@ use crate::{
 
 use serde_json::json;
 
-
 #[Controller()]
 mod controller {
-    use crate::groom_macros::Response;
-
     use axum::response::IntoResponse;
+
     use groom::response::Response;
+    use groom_macros::Response;
 
     #[Response()]
     pub enum RootResponse {

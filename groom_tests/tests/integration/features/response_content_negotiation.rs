@@ -1,10 +1,12 @@
 use axum::Router;
-use groom::{response::HtmlFormat};
 use serde_json::json;
 
 use crate::{
     groom_macros::Controller,
-    integration::{features::response_content_negotiation::controller::DataObject, test_utils::{Req, assert_openapi_doc}}
+    integration::{
+        features::response_content_negotiation::controller::DataObject,
+        test_utils::{Req, assert_openapi_doc}
+    }
 };
 
 #[Controller()]
@@ -15,7 +17,6 @@ mod controller {
         html_format,
         response::Response,
         schema::GroomSchema,
-        extract::GroomExtractor
     };
     use groom_macros::{DTO,Response};
 

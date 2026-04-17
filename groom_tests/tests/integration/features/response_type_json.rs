@@ -9,10 +9,20 @@ use crate::{
 #[Controller()]
 mod controller {
     use axum::response::IntoResponse;
-    use groom::{schema::GroomSchema, response::Response};
-    use groom_macros::{DTO,Response};
 
-    use utoipa::{ToSchema, PartialSchema};
+    use groom::{
+        schema::GroomSchema,
+        response::Response
+    };
+    use groom_macros::{
+        DTO,
+        Response
+    };
+
+    use utoipa::{
+        ToSchema,
+        PartialSchema // required to send unnamed struct or enum variant with unnamed contents as JSON
+    };
 
     // ---
 

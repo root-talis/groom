@@ -8,12 +8,15 @@ use crate::{
 #[Controller()]
 mod controller {
     use axum::response::IntoResponse;
+
     use groom::{
-        schema::GroomSchema,
         html_format,
         response::Response
     };
-    use groom_macros::{DTO,Response};
+    use groom_macros::{
+        DTO,
+        Response
+    };
 
     pub const SOME_TEXT: &str = "<strong>apes strong together</strong>";
 

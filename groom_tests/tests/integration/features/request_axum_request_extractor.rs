@@ -1,5 +1,4 @@
 use axum::Router;
-use groom::response::HtmlFormat;
 use serde_json::json;
 
 use crate::{
@@ -9,11 +8,13 @@ use crate::{
 
 #[Controller()]
 mod controller {
-    use axum::{extract::{Path, Request}, response::IntoResponse};
-    use groom::{html_format, response::Response, schema::GroomSchema, extract::GroomExtractor};
-    use groom_macros::{DTO,Response};
-
-    use utoipa::ToSchema;
+    use axum::{extract::Request, response::IntoResponse};
+    
+    use groom::{
+        response::Response,
+        extract::GroomExtractor
+    };
+    use groom_macros::Response;
 
     // ---
 
