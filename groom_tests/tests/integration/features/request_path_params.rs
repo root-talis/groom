@@ -31,7 +31,7 @@ mod controller {
         Ok(String),
     }
 
-    #[Route(method = "get", path = "/team/:team_id/user/:user_id")]
+    #[Route(method = "get", path = "/team/{team_id}/user/{user_id}")]
     async fn rq_cons_path_struct(Path(team): Path<PathParams>) -> TextResponse {
         TextResponse::Ok(format!("{} -> {}", team.user_id, team.team_id))
     }
@@ -71,9 +71,9 @@ pub async fn test_openapi() {
                 "title": "t",
                 "version": "0.0.0",
             },
-            "openapi": "3.0.3",
+            "openapi": "3.1.0",
             "paths": {
-                "/team/:team_id/user/:user_id": {
+                "/team/{team_id}/user/{user_id}": {
                     "get": {
                         "parameters": [
                             {
@@ -113,6 +113,7 @@ pub async fn test_openapi() {
                     },
                 },
             },
+            "components": {},
         })
     );
 }

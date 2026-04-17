@@ -58,7 +58,7 @@ pub async fn test_openapi() {
                 "title": "t",
                 "version": "0.0.0",
             },
-            "openapi": "3.0.3",
+            "openapi": "3.1.0",
             "paths": {
                 "/request-extractor": {
                     "get": {
@@ -77,6 +77,7 @@ pub async fn test_openapi() {
                     },
                 },
             },
+            "components": {},
         })
     );
 }

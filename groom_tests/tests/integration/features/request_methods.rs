@@ -125,7 +125,7 @@ pub async fn test_openapi() {
     assert_openapi_doc(
         |b| controller::merge_into_openapi_builder(b),
         json!({
-            "openapi":"3.0.3",
+            "openapi":"3.1.0",
             "info":{
                 "title":"t",
                 "description":"d",
@@ -181,7 +181,8 @@ pub async fn test_openapi() {
                         }
                     }
                 }
-            }
+            },
+            "components": {},
         })
     );
 }

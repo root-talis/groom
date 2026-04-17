@@ -10,19 +10,13 @@ use crate::{
 mod controller {
     use axum::response::IntoResponse;
 
-    use groom::{
-        schema::GroomSchema,
-        response::Response
-    };
+    use groom::response::Response;
     use groom_macros::{
         DTO,
         Response
     };
 
-    use utoipa::{
-        ToSchema,
-        PartialSchema // required to send unnamed struct or enum variant with unnamed contents as JSON
-    };
+    use utoipa::PartialSchema; // required to send unnamed struct or enum variant with unnamed contents as JSON
 
     // ---
 
@@ -138,7 +132,7 @@ pub async fn test_openapi() {
                 "title": "t",
                 "version": "0.0.0",
             },
-            "openapi": "3.0.3",
+            "openapi": "3.1.0",
             "paths": {
                 "/json_string": {
                     "get": {
@@ -170,8 +164,10 @@ pub async fn test_openapi() {
                                                 "status_timestamp": {
                                                     "format": "int64",
                                                     "minimum": 0,
-                                                    "nullable": true,
-                                                    "type": "integer"
+                                                    "type": [
+                                                        "integer",
+                                                        "null",
+                                                    ]
                                                 }
                                             },
                                             "required": [
@@ -200,8 +196,10 @@ pub async fn test_openapi() {
                                                 "status_timestamp": {
                                                     "format": "int64",
                                                     "minimum": 0,
-                                                    "nullable": true,
-                                                    "type": "integer"
+                                                    "type": [
+                                                        "integer",
+                                                        "null",
+                                                    ]
                                                 }
                                             },
                                             "required": [
@@ -217,6 +215,7 @@ pub async fn test_openapi() {
                     },
                 },
             },
+            "components": {},
         })
     );
 }

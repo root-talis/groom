@@ -147,7 +147,12 @@ mod plaintext_only {
                         .content(
                             ::mime::TEXT_PLAIN_UTF_8.as_ref(),
                             ::utoipa::openapi::ContentBuilder::new()
-                                .schema(<String as utoipa::PartialSchema>::schema())
+                                .schema({
+                                    match <String as utoipa::PartialSchema>::schema() {
+                                        ::utoipa::openapi::RefOr::T(s) => Some(s),
+                                        ::utoipa::openapi::RefOr::Ref(_) => None,
+                                    }
+                                })
                                 .build(),
                         )
                         .build(),
@@ -309,7 +314,12 @@ mod html_only {
                         .content(
                             ::mime::TEXT_HTML_UTF_8.as_ref(),
                             ::utoipa::openapi::ContentBuilder::new()
-                                .schema(<String as utoipa::PartialSchema>::schema())
+                                .schema(
+                                    match <String as utoipa::PartialSchema>::schema() {
+                                        ::utoipa::openapi::RefOr::T(s) => Some(s),
+                                        ::utoipa::openapi::RefOr::Ref(_) => None,
+                                    },
+                                )
                                 .build(),
                         )
                         .build(),
@@ -459,7 +469,12 @@ mod json_only {
                         .content(
                             ::mime::APPLICATION_JSON.as_ref(),
                             ::utoipa::openapi::ContentBuilder::new()
-                                .schema(StructJson::schema().extract_schema())
+                                .schema(
+                                    match StructJson::schema() {
+                                        ::utoipa::openapi::RefOr::T(s) => Some(s),
+                                        ::utoipa::openapi::RefOr::Ref(_) => None,
+                                    },
+                                )
                                 .build(),
                         )
                         .build(),
@@ -659,19 +674,34 @@ mod multiple_content_types {
                         .content(
                             ::mime::TEXT_PLAIN_UTF_8.as_ref(),
                             ::utoipa::openapi::ContentBuilder::new()
-                                .schema(<String as utoipa::PartialSchema>::schema())
+                                .schema({
+                                    match <String as utoipa::PartialSchema>::schema() {
+                                        ::utoipa::openapi::RefOr::T(s) => Some(s),
+                                        ::utoipa::openapi::RefOr::Ref(_) => None,
+                                    }
+                                })
                                 .build(),
                         )
                         .content(
                             ::mime::TEXT_HTML_UTF_8.as_ref(),
                             ::utoipa::openapi::ContentBuilder::new()
-                                .schema(<String as utoipa::PartialSchema>::schema())
+                                .schema(
+                                    match <String as utoipa::PartialSchema>::schema() {
+                                        ::utoipa::openapi::RefOr::T(s) => Some(s),
+                                        ::utoipa::openapi::RefOr::Ref(_) => None,
+                                    },
+                                )
                                 .build(),
                         )
                         .content(
                             ::mime::APPLICATION_JSON.as_ref(),
                             ::utoipa::openapi::ContentBuilder::new()
-                                .schema(Struct::schema().extract_schema())
+                                .schema(
+                                    match Struct::schema() {
+                                        ::utoipa::openapi::RefOr::T(s) => Some(s),
+                                        ::utoipa::openapi::RefOr::Ref(_) => None,
+                                    },
+                                )
                                 .build(),
                         )
                         .build(),
@@ -816,13 +846,23 @@ mod named_struct_response {
                         .content(
                             ::mime::TEXT_HTML_UTF_8.as_ref(),
                             ::utoipa::openapi::ContentBuilder::new()
-                                .schema(<String as utoipa::PartialSchema>::schema())
+                                .schema(
+                                    match <String as utoipa::PartialSchema>::schema() {
+                                        ::utoipa::openapi::RefOr::T(s) => Some(s),
+                                        ::utoipa::openapi::RefOr::Ref(_) => None,
+                                    },
+                                )
                                 .build(),
                         )
                         .content(
                             ::mime::APPLICATION_JSON.as_ref(),
                             ::utoipa::openapi::ContentBuilder::new()
-                                .schema(Named::schema().extract_schema())
+                                .schema(
+                                    match Named::schema() {
+                                        ::utoipa::openapi::RefOr::T(s) => Some(s),
+                                        ::utoipa::openapi::RefOr::Ref(_) => None,
+                                    },
+                                )
                                 .build(),
                         )
                         .build(),
@@ -954,13 +994,23 @@ mod unnamed_struct_response {
                         .content(
                             ::mime::TEXT_HTML_UTF_8.as_ref(),
                             ::utoipa::openapi::ContentBuilder::new()
-                                .schema(<String as utoipa::PartialSchema>::schema())
+                                .schema(
+                                    match <String as utoipa::PartialSchema>::schema() {
+                                        ::utoipa::openapi::RefOr::T(s) => Some(s),
+                                        ::utoipa::openapi::RefOr::Ref(_) => None,
+                                    },
+                                )
                                 .build(),
                         )
                         .content(
                             ::mime::APPLICATION_JSON.as_ref(),
                             ::utoipa::openapi::ContentBuilder::new()
-                                .schema(String::schema().extract_schema())
+                                .schema(
+                                    match String::schema() {
+                                        ::utoipa::openapi::RefOr::T(s) => Some(s),
+                                        ::utoipa::openapi::RefOr::Ref(_) => None,
+                                    },
+                                )
                                 .build(),
                         )
                         .build(),
@@ -1243,7 +1293,7 @@ mod result_struct_struct {
                     >>::__openapi_modify_operation(op_builder);
                     ::utoipa::openapi::path::PathItemBuilder::new()
                         .operation(
-                            ::utoipa::openapi::PathItemType::Get,
+                            ::utoipa::openapi::path::HttpMethod::Get,
                             op_builder.build(),
                         )
                         .build()
@@ -1399,7 +1449,12 @@ mod result_struct_enum {
                         .content(
                             ::mime::TEXT_PLAIN_UTF_8.as_ref(),
                             ::utoipa::openapi::ContentBuilder::new()
-                                .schema(<String as utoipa::PartialSchema>::schema())
+                                .schema({
+                                    match <String as utoipa::PartialSchema>::schema() {
+                                        ::utoipa::openapi::RefOr::T(s) => Some(s),
+                                        ::utoipa::openapi::RefOr::Ref(_) => None,
+                                    }
+                                })
                                 .build(),
                         )
                         .build(),
@@ -1521,7 +1576,7 @@ mod result_struct_enum {
                     >>::__openapi_modify_operation(op_builder);
                     ::utoipa::openapi::path::PathItemBuilder::new()
                         .operation(
-                            ::utoipa::openapi::PathItemType::Get,
+                            ::utoipa::openapi::path::HttpMethod::Get,
                             op_builder.build(),
                         )
                         .build()

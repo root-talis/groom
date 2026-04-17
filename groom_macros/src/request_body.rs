@@ -155,7 +155,10 @@ mod struct_impl {
 
             Fields::Named(_) => {
                 Ok(DtoFragments {
-                    schema: quote! { #ident::schema().1},
+                    schema: quote! { match #ident::schema() {
+                        ::utoipa::openapi::RefOr::T(s) => Some(s),
+                        ::utoipa::openapi::RefOr::Ref(_) => None,
+                    }},
                     extract_ty: quote! { #ident},
                     pack_dto: quote! { dto },
                 })
@@ -184,7 +187,10 @@ mod struct_impl {
                 });
 
                 Ok(DtoFragments {
-                    schema: quote! { #ty::schema().1 },
+                    schema: quote! { match #ty::schema() {
+                        ::utoipa::openapi::RefOr::T(s) => Some(s),
+                        ::utoipa::openapi::RefOr::Ref(_) => None,
+                    }},
                     extract_ty: quote! { #ty },
                     pack_dto: quote! { #ident(dto) },
                 })
@@ -222,14 +228,15 @@ mod struct_impl {
                 }
             }
 
-            #[::async_trait::async_trait]
             impl<S> ::axum::extract::FromRequest<S> for #ident
             where
                 S: Send + Sync,
             {
                 type Rejection = #rejection_ident;
 
-                async fn from_request(req: ::axum::extract::Request, state: &S) -> Result<Self, Self::Rejection> {
+                async fn from_request(req: ::axum::extract::Request, state: &S) 
+                    -> ::core::result::Result<Self, Self::Rejection> 
+                {
                     let content_type = ::groom::content_negotiation::parse_content_type_header(req.headers());
 
                     match ::groom::content_negotiation::get_body_content_type(content_type) {

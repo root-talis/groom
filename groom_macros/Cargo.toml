@@ -17,8 +17,8 @@ unsafe_code = "forbid"
 proc-macro = true
 
 [dependencies]
-axum = { version = "0.7.4", default-features = false }
-darling = "0.20.3"
+axum = { version = "0.8.9", default-features = false }
+darling = "0.23.0"
 indexmap = "2.1.0"
 mime = "0.3.17"
 proc-macro-error = "1.0.4"
@@ -27,12 +27,12 @@ proc-macro2 = "1.0.70"
 quote = "1.0.33"
 serde = { version = "1.0.195", features = ["derive"] }
 static_assertions = "1.1.0"
-strum = { version = "0.25.0", features = ["strum_macros"] }
-strum_macros = "0.25.3"
+strum = { version = "0.28.0", features = ["strum_macros"] }
+strum_macros = "0.28.0"
 syn = { version = "2.0.41", features = ["full"] }
-thiserror = "1.0.51"
+thiserror = "2.0.18"
 groom = {path = "../groom" }
-derive_more = { version = "0.99.17", default-features = false, features = ["deref_mut"] }
+derive_more = { version = "2.1.1", default-features = false, features = ["deref", "deref_mut"] }
 
 [dev-dependencies]
 macrotest = "1.0.9"

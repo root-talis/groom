@@ -17,7 +17,7 @@ mod controller {
     };
     use groom_macros::{DTO,Response,RequestBody};
 
-    use utoipa::ToSchema;
+    use utoipa::PartialSchema;
 
     // ---
 
@@ -300,15 +300,20 @@ pub async fn test_openapi() {
     assert_openapi_doc(
         |b| controller::merge_into_openapi_builder(b),
         json!({
+            "components": {},
             "info": {
-                "contact": {"email": "mail@example.com","name": "name",
+                "contact": {
+                    "email": "mail@example.com",
+                    "name": "name",
                 },
                 "description": "d",
-                "license": {"name": "n"},
+                "license": {
+                    "name": "n",
+                },
                 "title": "t",
                 "version": "0.0.0",
             },
-            "openapi": ("3.0.3"),
+            "openapi": "3.1.0",
             "paths": {
                 "/bytes_body": {
                     "post": {
@@ -392,14 +397,16 @@ pub async fn test_openapi() {
                             "content": {
                                 "application/json": {
                                     "schema": {
-                                        "description": ("Request body as a named struct."),
+                                        "description": "Request body as a named struct.",
                                         "properties": {
                                             "age": {
                                                 "description": "Person's age",
                                                 "format": "int32",
                                                 "minimum": 0,
-                                                "nullable": true,
-                                                "type": "integer",
+                                                "type": [
+                                                    "integer",
+                                                    "null",
+                                                ],
                                             },
                                             "name": {
                                                 "description": "Person's name",
@@ -414,14 +421,16 @@ pub async fn test_openapi() {
                                 },
                                 "application/x-www-form-urlencoded": {
                                     "schema": {
-                                        "description": ("Request body as a named struct."),
+                                        "description": "Request body as a named struct.",
                                         "properties": {
                                             "age": {
                                                 "description": "Person's age",
                                                 "format": "int32",
                                                 "minimum": 0,
-                                                "nullable": true,
-                                                "type": "integer",
+                                                "type": [
+                                                    "integer",
+                                                    "null",
+                                                ],
                                             },
                                             "name": {
                                                 "description": "Person's name",
@@ -474,8 +483,10 @@ pub async fn test_openapi() {
                                             "age": {
                                                 "format": "int32",
                                                 "minimum": 0,
-                                                "nullable": true,
-                                                "type": "integer",
+                                                "type": [
+                                                    "integer",
+                                                    "null",
+                                                ],
                                             },
                                             "name": {
                                                 "type": "string",
@@ -494,8 +505,10 @@ pub async fn test_openapi() {
                                             "age": {
                                                 "format": "int32",
                                                 "minimum": 0,
-                                                "nullable": true,
-                                                "type": "integer",
+                                                "type": [
+                                                    "integer",
+                                                    "null",
+                                                ],
                                             },
                                             "name": {
                                                 "type": "string",

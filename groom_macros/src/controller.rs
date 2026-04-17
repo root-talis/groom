@@ -301,15 +301,15 @@ fn generate_openapi_paths_setup_ast(
     let method = &route.method;
 
     let operation = match method {
-        HTTPMethod::Connect  => quote! {::utoipa::openapi::PathItemType::Connect},
-        HTTPMethod::Delete   => quote! {::utoipa::openapi::PathItemType::Delete },
-        HTTPMethod::Get      => quote! {::utoipa::openapi::PathItemType::Get    },
-        HTTPMethod::Head     => quote! {::utoipa::openapi::PathItemType::Head   },
-        HTTPMethod::Options  => quote! {::utoipa::openapi::PathItemType::Option },
-        HTTPMethod::Patch    => quote! {::utoipa::openapi::PathItemType::Patch  },
-        HTTPMethod::Post     => quote! {::utoipa::openapi::PathItemType::Post   },
-        HTTPMethod::Put      => quote! {::utoipa::openapi::PathItemType::Put    },
-        HTTPMethod::Trace    => quote! {::utoipa::openapi::PathItemType::Trace  },
+        HTTPMethod::Connect  => quote! {::utoipa::openapi::path::HttpMethod::Connect},
+        HTTPMethod::Delete   => quote! {::utoipa::openapi::path::HttpMethod::Delete },
+        HTTPMethod::Get      => quote! {::utoipa::openapi::path::HttpMethod::Get    },
+        HTTPMethod::Head     => quote! {::utoipa::openapi::path::HttpMethod::Head   },
+        HTTPMethod::Options  => quote! {::utoipa::openapi::path::HttpMethod::Option },
+        HTTPMethod::Patch    => quote! {::utoipa::openapi::path::HttpMethod::Patch  },
+        HTTPMethod::Post     => quote! {::utoipa::openapi::path::HttpMethod::Post   },
+        HTTPMethod::Put      => quote! {::utoipa::openapi::path::HttpMethod::Put    },
+        HTTPMethod::Trace    => quote! {::utoipa::openapi::path::HttpMethod::Trace  },
     };
 
     let summary_tk = match &docblock.summary {

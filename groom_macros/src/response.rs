@@ -239,19 +239,19 @@ fn populate_supported_mimes(
 )
 {
     if content_types.plain_text {
-        supported_mimes.push(quote! {
+        supported_mimes.0.push(quote! {
             ::mime::TEXT_PLAIN,
         });
     }
 
     if content_types.html {
-        supported_mimes.push(quote! {
+        supported_mimes.0.push(quote! {
             ::mime::TEXT_HTML,
         });
     }
 
     if content_types.json {
-        supported_mimes.push(quote! {
+        supported_mimes.0.push(quote! {
             ::mime::APPLICATION_JSON,
         });
     }
@@ -290,7 +290,12 @@ fn make_openapi_fragments_for_type(ty: TokenStream, description_tk: TokenStream,
             .content(
                 ::mime::TEXT_PLAIN_UTF_8.as_ref(),
                 ::utoipa::openapi::ContentBuilder::new()
-                    .schema(<String as utoipa::PartialSchema>::schema())
+                    .schema({
+                        match <String as utoipa::PartialSchema>::schema() {
+                            ::utoipa::openapi::RefOr::T(s) => Some(s),
+                            ::utoipa::openapi::RefOr::Ref(_) => None,
+                        }
+                    })
                     //.example(Some("Hello, world!".into()))
                     .build()
             )
@@ -301,7 +306,12 @@ fn make_openapi_fragments_for_type(ty: TokenStream, description_tk: TokenStream,
             .content(
                 ::mime::TEXT_HTML_UTF_8.as_ref(),
                 ::utoipa::openapi::ContentBuilder::new()
-                    .schema(<String as utoipa::PartialSchema>::schema())
+                    .schema(
+                        match <String as utoipa::PartialSchema>::schema() {
+                            ::utoipa::openapi::RefOr::T(s) => Some(s),
+                            ::utoipa::openapi::RefOr::Ref(_) => None,
+                        }
+                    )
                     //.example(Some("<h1>Hello, world!</h1>".into()))
                     .build()
             )
@@ -312,7 +322,10 @@ fn make_openapi_fragments_for_type(ty: TokenStream, description_tk: TokenStream,
             .content(
                 ::mime::APPLICATION_JSON.as_ref(),
                 ::utoipa::openapi::ContentBuilder::new()
-                    .schema(#ty::schema().extract_schema())
+                    .schema(match #ty::schema() {
+                        ::utoipa::openapi::RefOr::T(s) => Some(s),
+                        ::utoipa::openapi::RefOr::Ref(_) => None,
+                    })
                     .build()
             )
         });

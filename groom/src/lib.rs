@@ -10,7 +10,7 @@ pub mod runtime_checks;
 /// Indicates that type is annotated with `#[DTO(...)]`.
 /// 
 /// Do not implement this manually.
-pub trait DTO: ToSchema<'static> {}
+pub trait DTO: ToSchema {}
 
 /// Indicates that type is annotated with `#[DTO(request)]`.
 ///

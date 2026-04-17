@@ -16,11 +16,10 @@ mod controller {
     use groom::{
         html_format,
         response::Response,
-        schema::GroomSchema,
     };
     use groom_macros::{DTO,Response};
 
-    use utoipa::ToSchema;
+    use utoipa::PartialSchema;
 
     // ---
 
@@ -188,7 +187,7 @@ pub async fn test_openapi() {
                 "title": "t",
                 "version": "0.0.0",
             },
-            "openapi": "3.0.3",
+            "openapi": "3.1.0",
             "paths": {
                 "/no-content": {
                     "put": {
@@ -273,6 +272,7 @@ pub async fn test_openapi() {
                     },
                 },
             },
+            "components": {},
         })
     );
 }
@@ -388,7 +388,7 @@ pub async fn test_html_or_text_weights_openapi() {
                 "title": "t",
                 "version": "0.0.0",
             },
-            "openapi": "3.0.3",
+            "openapi": "3.1.0",
             "paths": {
                 "/html-or-text": {
                     "get": {
@@ -412,6 +412,7 @@ pub async fn test_html_or_text_weights_openapi() {
                     },
                 },
             },
+            "components": {},
         })
     );
 }

@@ -13,17 +13,13 @@ mod controller {
     use groom::{
         html_format,
         response::Response,
-        schema::GroomSchema
     };
     use groom_macros::{
         DTO,
         Response
     };
 
-    use utoipa::{
-        ToSchema,
-        PartialSchema // required for String type in response
-    };
+    use utoipa::PartialSchema; // required for String type in response
 
     /// Named struct as a response
     #[Response(format(plain_text, html, json), default_format="plain_text", code=418)]
@@ -400,7 +396,7 @@ pub async fn test_openapi() {
                 "title": ("t"),
                 "version": ("0.0.0"),
             },
-            "openapi": ("3.0.3"),
+            "openapi": ("3.1.0"),
             "paths": {
                 "/named-struct": {
                     "get": {
@@ -530,6 +526,7 @@ pub async fn test_openapi() {
                     },
                 },
             },
+            "components": {},
         })
     );
 }

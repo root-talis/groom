@@ -112,7 +112,7 @@ pub async fn test_openapi() {
                 "title": "t",
                 "version": "0.0.0",
             },
-            "openapi": "3.0.3",
+            "openapi": "3.1.0",
             "paths": {
                 "/two_query_inputs": {
                     "get": {
@@ -127,8 +127,10 @@ pub async fn test_openapi() {
                                             "type": "string",
                                         },
                                         "last_name": {
-                                            "nullable": true,
-                                            "type": "string",
+                                            "type": [
+                                                "string",
+                                                "null",
+                                            ],
                                         },
                                     },
                                     "required": [
@@ -144,8 +146,10 @@ pub async fn test_openapi() {
                                 "schema": {
                                     "properties": {
                                         "title": {
-                                            "nullable": true,
-                                            "type": "string",
+                                            "type": [
+                                                "string",
+                                                "null",
+                                            ],
                                         },
                                     },
                                     "type": "object",
@@ -177,6 +181,7 @@ pub async fn test_openapi() {
                     },
                 },
             },
+            "components": {},
         })
     );
 }

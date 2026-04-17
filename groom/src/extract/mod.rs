@@ -25,10 +25,12 @@ macro_rules! binary_request_body {
                             $content_type,
                             ::utoipa::openapi::ContentBuilder::new()
                                 .schema(
-                                    ::utoipa::openapi::ObjectBuilder::new()
-                                        .format(Some(::utoipa::openapi::SchemaFormat::KnownFormat(::utoipa::openapi::KnownFormat::Binary)))
-                                        .schema_type(::utoipa::openapi::SchemaType::String)
-                                        .build()
+                                    ::std::option::Option::Some(
+                                        ::utoipa::openapi::ObjectBuilder::new()
+                                            .format(Some(::utoipa::openapi::SchemaFormat::KnownFormat(::utoipa::openapi::KnownFormat::Binary)))
+                                            .schema_type(::utoipa::openapi::schema::SchemaType::Type(::utoipa::openapi::schema::Type::String))
+                                            .build()
+                                    )
                                 )
                                 .build()
                         )
