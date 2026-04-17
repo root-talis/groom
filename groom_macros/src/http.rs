@@ -2,7 +2,7 @@ use darling::{self, FromMeta};
 use strum_macros::Display;
 
 /// This enum is used to parse `method` argument of `#[Route()]` annotation
-/// and also to select appropriate actix function when generating router bootstrap code.
+/// and also to select appropriate axum function when generating router bootstrap code.
 #[derive(Debug, Copy, Clone, FromMeta, Eq, PartialEq, Hash, Display)]
 #[darling(rename_all = "lowercase")]
 #[strum(serialize_all = "lowercase")]

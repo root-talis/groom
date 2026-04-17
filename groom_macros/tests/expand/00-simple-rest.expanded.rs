@@ -198,40 +198,34 @@ pub mod api_root {
             context: &String,
             codes: &mut ::groom::runtime_checks::HTTPCodeSet,
         ) {
-            let context = {
-                let res = ::alloc::fmt::format(
+            let context = ::alloc::__export::must_use({
+                ::alloc::fmt::format(
                     format_args!("{0} / enum `GetRootResponse`", context),
-                );
-                res
-            };
+                )
+            });
             codes
                 .ensure_distinct(
-                    {
-                        let res = ::alloc::fmt::format(
-                            format_args!("{0} / variant `Ok`", context),
-                        );
-                        res
-                    },
+                    ::alloc::__export::must_use({
+                        ::alloc::fmt::format(format_args!("{0} / variant `Ok`", context))
+                    }),
                     200u16,
                 );
             codes
                 .ensure_distinct(
-                    {
-                        let res = ::alloc::fmt::format(
+                    ::alloc::__export::must_use({
+                        ::alloc::fmt::format(
                             format_args!("{0} / variant `BadRequest`", context),
-                        );
-                        res
-                    },
+                        )
+                    }),
                     400u16,
                 );
             codes
                 .ensure_distinct(
-                    {
-                        let res = ::alloc::fmt::format(
+                    ::alloc::__export::must_use({
+                        ::alloc::fmt::format(
                             format_args!("{0} / variant `Forbidden`", context),
-                        );
-                        res
-                    },
+                        )
+                    }),
                     401u16,
                 );
         }
@@ -322,7 +316,12 @@ pub mod api_root {
         name: String,
     }
     #[doc(hidden)]
-    #[allow(non_upper_case_globals, unused_attributes, unused_qualifications)]
+    #[allow(
+        non_upper_case_globals,
+        unused_attributes,
+        unused_qualifications,
+        clippy::absolute_paths,
+    )]
     const _: () = {
         #[allow(unused_extern_crates, clippy::useless_attribute)]
         extern crate serde as _serde;
@@ -330,7 +329,7 @@ pub mod api_root {
         impl<'de> _serde::Deserialize<'de> for RqConsQueryStruct {
             fn deserialize<__D>(
                 __deserializer: __D,
-            ) -> _serde::__private::Result<Self, __D::Error>
+            ) -> _serde::__private228::Result<Self, __D::Error>
             where
                 __D: _serde::Deserializer<'de>,
             {
@@ -342,13 +341,14 @@ pub mod api_root {
                 }
                 #[doc(hidden)]
                 struct __FieldVisitor;
+                #[automatically_derived]
                 impl<'de> _serde::de::Visitor<'de> for __FieldVisitor {
                     type Value = __Field;
                     fn expecting(
                         &self,
-                        __formatter: &mut _serde::__private::Formatter,
-                    ) -> _serde::__private::fmt::Result {
-                        _serde::__private::Formatter::write_str(
+                        __formatter: &mut _serde::__private228::Formatter,
+                    ) -> _serde::__private228::fmt::Result {
+                        _serde::__private228::Formatter::write_str(
                             __formatter,
                             "field identifier",
                         )
@@ -356,45 +356,46 @@ pub mod api_root {
                     fn visit_u64<__E>(
                         self,
                         __value: u64,
-                    ) -> _serde::__private::Result<Self::Value, __E>
+                    ) -> _serde::__private228::Result<Self::Value, __E>
                     where
                         __E: _serde::de::Error,
                     {
                         match __value {
-                            0u64 => _serde::__private::Ok(__Field::__field0),
-                            _ => _serde::__private::Ok(__Field::__ignore),
+                            0u64 => _serde::__private228::Ok(__Field::__field0),
+                            _ => _serde::__private228::Ok(__Field::__ignore),
                         }
                     }
                     fn visit_str<__E>(
                         self,
                         __value: &str,
-                    ) -> _serde::__private::Result<Self::Value, __E>
+                    ) -> _serde::__private228::Result<Self::Value, __E>
                     where
                         __E: _serde::de::Error,
                     {
                         match __value {
-                            "name" => _serde::__private::Ok(__Field::__field0),
-                            _ => _serde::__private::Ok(__Field::__ignore),
+                            "name" => _serde::__private228::Ok(__Field::__field0),
+                            _ => _serde::__private228::Ok(__Field::__ignore),
                         }
                     }
                     fn visit_bytes<__E>(
                         self,
                         __value: &[u8],
-                    ) -> _serde::__private::Result<Self::Value, __E>
+                    ) -> _serde::__private228::Result<Self::Value, __E>
                     where
                         __E: _serde::de::Error,
                     {
                         match __value {
-                            b"name" => _serde::__private::Ok(__Field::__field0),
-                            _ => _serde::__private::Ok(__Field::__ignore),
+                            b"name" => _serde::__private228::Ok(__Field::__field0),
+                            _ => _serde::__private228::Ok(__Field::__ignore),
                         }
                     }
                 }
+                #[automatically_derived]
                 impl<'de> _serde::Deserialize<'de> for __Field {
                     #[inline]
                     fn deserialize<__D>(
                         __deserializer: __D,
-                    ) -> _serde::__private::Result<Self, __D::Error>
+                    ) -> _serde::__private228::Result<Self, __D::Error>
                     where
                         __D: _serde::Deserializer<'de>,
                     {
@@ -406,16 +407,17 @@ pub mod api_root {
                 }
                 #[doc(hidden)]
                 struct __Visitor<'de> {
-                    marker: _serde::__private::PhantomData<RqConsQueryStruct>,
-                    lifetime: _serde::__private::PhantomData<&'de ()>,
+                    marker: _serde::__private228::PhantomData<RqConsQueryStruct>,
+                    lifetime: _serde::__private228::PhantomData<&'de ()>,
                 }
+                #[automatically_derived]
                 impl<'de> _serde::de::Visitor<'de> for __Visitor<'de> {
                     type Value = RqConsQueryStruct;
                     fn expecting(
                         &self,
-                        __formatter: &mut _serde::__private::Formatter,
-                    ) -> _serde::__private::fmt::Result {
-                        _serde::__private::Formatter::write_str(
+                        __formatter: &mut _serde::__private228::Formatter,
+                    ) -> _serde::__private228::fmt::Result {
+                        _serde::__private228::Formatter::write_str(
                             __formatter,
                             "struct RqConsQueryStruct",
                         )
@@ -424,16 +426,16 @@ pub mod api_root {
                     fn visit_seq<__A>(
                         self,
                         mut __seq: __A,
-                    ) -> _serde::__private::Result<Self::Value, __A::Error>
+                    ) -> _serde::__private228::Result<Self::Value, __A::Error>
                     where
                         __A: _serde::de::SeqAccess<'de>,
                     {
                         let __field0 = match _serde::de::SeqAccess::next_element::<
                             String,
                         >(&mut __seq)? {
-                            _serde::__private::Some(__value) => __value,
-                            _serde::__private::None => {
-                                return _serde::__private::Err(
+                            _serde::__private228::Some(__value) => __value,
+                            _serde::__private228::None => {
+                                return _serde::__private228::Err(
                                     _serde::de::Error::invalid_length(
                                         0usize,
                                         &"struct RqConsQueryStruct with 1 element",
@@ -441,7 +443,7 @@ pub mod api_root {
                                 );
                             }
                         };
-                        _serde::__private::Ok(RqConsQueryStruct {
+                        _serde::__private228::Ok(RqConsQueryStruct {
                             name: __field0,
                         })
                     }
@@ -449,22 +451,22 @@ pub mod api_root {
                     fn visit_map<__A>(
                         self,
                         mut __map: __A,
-                    ) -> _serde::__private::Result<Self::Value, __A::Error>
+                    ) -> _serde::__private228::Result<Self::Value, __A::Error>
                     where
                         __A: _serde::de::MapAccess<'de>,
                     {
-                        let mut __field0: _serde::__private::Option<String> = _serde::__private::None;
-                        while let _serde::__private::Some(__key) = _serde::de::MapAccess::next_key::<
+                        let mut __field0: _serde::__private228::Option<String> = _serde::__private228::None;
+                        while let _serde::__private228::Some(__key) = _serde::de::MapAccess::next_key::<
                             __Field,
                         >(&mut __map)? {
                             match __key {
                                 __Field::__field0 => {
-                                    if _serde::__private::Option::is_some(&__field0) {
-                                        return _serde::__private::Err(
+                                    if _serde::__private228::Option::is_some(&__field0) {
+                                        return _serde::__private228::Err(
                                             <__A::Error as _serde::de::Error>::duplicate_field("name"),
                                         );
                                     }
-                                    __field0 = _serde::__private::Some(
+                                    __field0 = _serde::__private228::Some(
                                         _serde::de::MapAccess::next_value::<String>(&mut __map)?,
                                     );
                                 }
@@ -476,12 +478,12 @@ pub mod api_root {
                             }
                         }
                         let __field0 = match __field0 {
-                            _serde::__private::Some(__field0) => __field0,
-                            _serde::__private::None => {
-                                _serde::__private::de::missing_field("name")?
+                            _serde::__private228::Some(__field0) => __field0,
+                            _serde::__private228::None => {
+                                _serde::__private228::de::missing_field("name")?
                             }
                         };
-                        _serde::__private::Ok(RqConsQueryStruct {
+                        _serde::__private228::Ok(RqConsQueryStruct {
                             name: __field0,
                         })
                     }
@@ -493,8 +495,8 @@ pub mod api_root {
                     "RqConsQueryStruct",
                     FIELDS,
                     __Visitor {
-                        marker: _serde::__private::PhantomData::<RqConsQueryStruct>,
-                        lifetime: _serde::__private::PhantomData,
+                        marker: _serde::__private228::PhantomData::<RqConsQueryStruct>,
+                        lifetime: _serde::__private228::PhantomData,
                     },
                 )
             }
@@ -601,30 +603,25 @@ pub mod api_root {
             context: &String,
             codes: &mut ::groom::runtime_checks::HTTPCodeSet,
         ) {
-            let context = {
-                let res = ::alloc::fmt::format(
+            let context = ::alloc::__export::must_use({
+                ::alloc::fmt::format(
                     format_args!("{0} / enum `RqConsQueryResponse`", context),
-                );
-                res
-            };
+                )
+            });
             codes
                 .ensure_distinct(
-                    {
-                        let res = ::alloc::fmt::format(
-                            format_args!("{0} / variant `Ok`", context),
-                        );
-                        res
-                    },
+                    ::alloc::__export::must_use({
+                        ::alloc::fmt::format(format_args!("{0} / variant `Ok`", context))
+                    }),
                     200u16,
                 );
             codes
                 .ensure_distinct(
-                    {
-                        let res = ::alloc::fmt::format(
+                    ::alloc::__export::must_use({
+                        ::alloc::fmt::format(
                             format_args!("{0} / variant `BadRequest`", context),
-                        );
-                        res
-                    },
+                        )
+                    }),
                     400u16,
                 );
         }
@@ -716,7 +713,12 @@ pub mod api_root {
         team_id: i32,
     }
     #[doc(hidden)]
-    #[allow(non_upper_case_globals, unused_attributes, unused_qualifications)]
+    #[allow(
+        non_upper_case_globals,
+        unused_attributes,
+        unused_qualifications,
+        clippy::absolute_paths,
+    )]
     const _: () = {
         #[allow(unused_extern_crates, clippy::useless_attribute)]
         extern crate serde as _serde;
@@ -724,7 +726,7 @@ pub mod api_root {
         impl<'de> _serde::Deserialize<'de> for RqConsPathStruct {
             fn deserialize<__D>(
                 __deserializer: __D,
-            ) -> _serde::__private::Result<Self, __D::Error>
+            ) -> _serde::__private228::Result<Self, __D::Error>
             where
                 __D: _serde::Deserializer<'de>,
             {
@@ -737,13 +739,14 @@ pub mod api_root {
                 }
                 #[doc(hidden)]
                 struct __FieldVisitor;
+                #[automatically_derived]
                 impl<'de> _serde::de::Visitor<'de> for __FieldVisitor {
                     type Value = __Field;
                     fn expecting(
                         &self,
-                        __formatter: &mut _serde::__private::Formatter,
-                    ) -> _serde::__private::fmt::Result {
-                        _serde::__private::Formatter::write_str(
+                        __formatter: &mut _serde::__private228::Formatter,
+                    ) -> _serde::__private228::fmt::Result {
+                        _serde::__private228::Formatter::write_str(
                             __formatter,
                             "field identifier",
                         )
@@ -751,48 +754,49 @@ pub mod api_root {
                     fn visit_u64<__E>(
                         self,
                         __value: u64,
-                    ) -> _serde::__private::Result<Self::Value, __E>
+                    ) -> _serde::__private228::Result<Self::Value, __E>
                     where
                         __E: _serde::de::Error,
                     {
                         match __value {
-                            0u64 => _serde::__private::Ok(__Field::__field0),
-                            1u64 => _serde::__private::Ok(__Field::__field1),
-                            _ => _serde::__private::Ok(__Field::__ignore),
+                            0u64 => _serde::__private228::Ok(__Field::__field0),
+                            1u64 => _serde::__private228::Ok(__Field::__field1),
+                            _ => _serde::__private228::Ok(__Field::__ignore),
                         }
                     }
                     fn visit_str<__E>(
                         self,
                         __value: &str,
-                    ) -> _serde::__private::Result<Self::Value, __E>
+                    ) -> _serde::__private228::Result<Self::Value, __E>
                     where
                         __E: _serde::de::Error,
                     {
                         match __value {
-                            "user_id" => _serde::__private::Ok(__Field::__field0),
-                            "team_id" => _serde::__private::Ok(__Field::__field1),
-                            _ => _serde::__private::Ok(__Field::__ignore),
+                            "user_id" => _serde::__private228::Ok(__Field::__field0),
+                            "team_id" => _serde::__private228::Ok(__Field::__field1),
+                            _ => _serde::__private228::Ok(__Field::__ignore),
                         }
                     }
                     fn visit_bytes<__E>(
                         self,
                         __value: &[u8],
-                    ) -> _serde::__private::Result<Self::Value, __E>
+                    ) -> _serde::__private228::Result<Self::Value, __E>
                     where
                         __E: _serde::de::Error,
                     {
                         match __value {
-                            b"user_id" => _serde::__private::Ok(__Field::__field0),
-                            b"team_id" => _serde::__private::Ok(__Field::__field1),
-                            _ => _serde::__private::Ok(__Field::__ignore),
+                            b"user_id" => _serde::__private228::Ok(__Field::__field0),
+                            b"team_id" => _serde::__private228::Ok(__Field::__field1),
+                            _ => _serde::__private228::Ok(__Field::__ignore),
                         }
                     }
                 }
+                #[automatically_derived]
                 impl<'de> _serde::Deserialize<'de> for __Field {
                     #[inline]
                     fn deserialize<__D>(
                         __deserializer: __D,
-                    ) -> _serde::__private::Result<Self, __D::Error>
+                    ) -> _serde::__private228::Result<Self, __D::Error>
                     where
                         __D: _serde::Deserializer<'de>,
                     {
@@ -804,16 +808,17 @@ pub mod api_root {
                 }
                 #[doc(hidden)]
                 struct __Visitor<'de> {
-                    marker: _serde::__private::PhantomData<RqConsPathStruct>,
-                    lifetime: _serde::__private::PhantomData<&'de ()>,
+                    marker: _serde::__private228::PhantomData<RqConsPathStruct>,
+                    lifetime: _serde::__private228::PhantomData<&'de ()>,
                 }
+                #[automatically_derived]
                 impl<'de> _serde::de::Visitor<'de> for __Visitor<'de> {
                     type Value = RqConsPathStruct;
                     fn expecting(
                         &self,
-                        __formatter: &mut _serde::__private::Formatter,
-                    ) -> _serde::__private::fmt::Result {
-                        _serde::__private::Formatter::write_str(
+                        __formatter: &mut _serde::__private228::Formatter,
+                    ) -> _serde::__private228::fmt::Result {
+                        _serde::__private228::Formatter::write_str(
                             __formatter,
                             "struct RqConsPathStruct",
                         )
@@ -822,16 +827,16 @@ pub mod api_root {
                     fn visit_seq<__A>(
                         self,
                         mut __seq: __A,
-                    ) -> _serde::__private::Result<Self::Value, __A::Error>
+                    ) -> _serde::__private228::Result<Self::Value, __A::Error>
                     where
                         __A: _serde::de::SeqAccess<'de>,
                     {
                         let __field0 = match _serde::de::SeqAccess::next_element::<
                             String,
                         >(&mut __seq)? {
-                            _serde::__private::Some(__value) => __value,
-                            _serde::__private::None => {
-                                return _serde::__private::Err(
+                            _serde::__private228::Some(__value) => __value,
+                            _serde::__private228::None => {
+                                return _serde::__private228::Err(
                                     _serde::de::Error::invalid_length(
                                         0usize,
                                         &"struct RqConsPathStruct with 2 elements",
@@ -842,9 +847,9 @@ pub mod api_root {
                         let __field1 = match _serde::de::SeqAccess::next_element::<
                             i32,
                         >(&mut __seq)? {
-                            _serde::__private::Some(__value) => __value,
-                            _serde::__private::None => {
-                                return _serde::__private::Err(
+                            _serde::__private228::Some(__value) => __value,
+                            _serde::__private228::None => {
+                                return _serde::__private228::Err(
                                     _serde::de::Error::invalid_length(
                                         1usize,
                                         &"struct RqConsPathStruct with 2 elements",
@@ -852,7 +857,7 @@ pub mod api_root {
                                 );
                             }
                         };
-                        _serde::__private::Ok(RqConsPathStruct {
+                        _serde::__private228::Ok(RqConsPathStruct {
                             user_id: __field0,
                             team_id: __field1,
                         })
@@ -861,37 +866,37 @@ pub mod api_root {
                     fn visit_map<__A>(
                         self,
                         mut __map: __A,
-                    ) -> _serde::__private::Result<Self::Value, __A::Error>
+                    ) -> _serde::__private228::Result<Self::Value, __A::Error>
                     where
                         __A: _serde::de::MapAccess<'de>,
                     {
-                        let mut __field0: _serde::__private::Option<String> = _serde::__private::None;
-                        let mut __field1: _serde::__private::Option<i32> = _serde::__private::None;
-                        while let _serde::__private::Some(__key) = _serde::de::MapAccess::next_key::<
+                        let mut __field0: _serde::__private228::Option<String> = _serde::__private228::None;
+                        let mut __field1: _serde::__private228::Option<i32> = _serde::__private228::None;
+                        while let _serde::__private228::Some(__key) = _serde::de::MapAccess::next_key::<
                             __Field,
                         >(&mut __map)? {
                             match __key {
                                 __Field::__field0 => {
-                                    if _serde::__private::Option::is_some(&__field0) {
-                                        return _serde::__private::Err(
+                                    if _serde::__private228::Option::is_some(&__field0) {
+                                        return _serde::__private228::Err(
                                             <__A::Error as _serde::de::Error>::duplicate_field(
                                                 "user_id",
                                             ),
                                         );
                                     }
-                                    __field0 = _serde::__private::Some(
+                                    __field0 = _serde::__private228::Some(
                                         _serde::de::MapAccess::next_value::<String>(&mut __map)?,
                                     );
                                 }
                                 __Field::__field1 => {
-                                    if _serde::__private::Option::is_some(&__field1) {
-                                        return _serde::__private::Err(
+                                    if _serde::__private228::Option::is_some(&__field1) {
+                                        return _serde::__private228::Err(
                                             <__A::Error as _serde::de::Error>::duplicate_field(
                                                 "team_id",
                                             ),
                                         );
                                     }
-                                    __field1 = _serde::__private::Some(
+                                    __field1 = _serde::__private228::Some(
                                         _serde::de::MapAccess::next_value::<i32>(&mut __map)?,
                                     );
                                 }
@@ -903,18 +908,18 @@ pub mod api_root {
                             }
                         }
                         let __field0 = match __field0 {
-                            _serde::__private::Some(__field0) => __field0,
-                            _serde::__private::None => {
-                                _serde::__private::de::missing_field("user_id")?
+                            _serde::__private228::Some(__field0) => __field0,
+                            _serde::__private228::None => {
+                                _serde::__private228::de::missing_field("user_id")?
                             }
                         };
                         let __field1 = match __field1 {
-                            _serde::__private::Some(__field1) => __field1,
-                            _serde::__private::None => {
-                                _serde::__private::de::missing_field("team_id")?
+                            _serde::__private228::Some(__field1) => __field1,
+                            _serde::__private228::None => {
+                                _serde::__private228::de::missing_field("team_id")?
                             }
                         };
-                        _serde::__private::Ok(RqConsPathStruct {
+                        _serde::__private228::Ok(RqConsPathStruct {
                             user_id: __field0,
                             team_id: __field1,
                         })
@@ -927,8 +932,8 @@ pub mod api_root {
                     "RqConsPathStruct",
                     FIELDS,
                     __Visitor {
-                        marker: _serde::__private::PhantomData::<RqConsPathStruct>,
-                        lifetime: _serde::__private::PhantomData,
+                        marker: _serde::__private228::PhantomData::<RqConsPathStruct>,
+                        lifetime: _serde::__private228::PhantomData,
                     },
                 )
             }
@@ -1014,20 +1019,16 @@ pub mod api_root {
             context: &String,
             codes: &mut ::groom::runtime_checks::HTTPCodeSet,
         ) {
-            let context = {
-                let res = ::alloc::fmt::format(
+            let context = ::alloc::__export::must_use({
+                ::alloc::fmt::format(
                     format_args!("{0} / enum `RqConsPathResponse`", context),
-                );
-                res
-            };
+                )
+            });
             codes
                 .ensure_distinct(
-                    {
-                        let res = ::alloc::fmt::format(
-                            format_args!("{0} / variant `Ok`", context),
-                        );
-                        res
-                    },
+                    ::alloc::__export::must_use({
+                        ::alloc::fmt::format(format_args!("{0} / variant `Ok`", context))
+                    }),
                     200u16,
                 );
         }
@@ -1077,7 +1078,12 @@ pub mod api_root {
         success: bool,
     }
     #[doc(hidden)]
-    #[allow(non_upper_case_globals, unused_attributes, unused_qualifications)]
+    #[allow(
+        non_upper_case_globals,
+        unused_attributes,
+        unused_qualifications,
+        clippy::absolute_paths,
+    )]
     const _: () = {
         #[allow(unused_extern_crates, clippy::useless_attribute)]
         extern crate serde as _serde;
@@ -1086,7 +1092,7 @@ pub mod api_root {
             fn serialize<__S>(
                 &self,
                 __serializer: __S,
-            ) -> _serde::__private::Result<__S::Ok, __S::Error>
+            ) -> _serde::__private228::Result<__S::Ok, __S::Error>
             where
                 __S: _serde::Serializer,
             {
@@ -1184,20 +1190,16 @@ pub mod api_root {
             context: &String,
             codes: &mut ::groom::runtime_checks::HTTPCodeSet,
         ) {
-            let context = {
-                let res = ::alloc::fmt::format(
+            let context = ::alloc::__export::must_use({
+                ::alloc::fmt::format(
                     format_args!("{0} / enum `RespJsonResponse`", context),
-                );
-                res
-            };
+                )
+            });
             codes
                 .ensure_distinct(
-                    {
-                        let res = ::alloc::fmt::format(
-                            format_args!("{0} / variant `Ok`", context),
-                        );
-                        res
-                    },
+                    ::alloc::__export::must_use({
+                        ::alloc::fmt::format(format_args!("{0} / variant `Ok`", context))
+                    }),
                     200u16,
                 );
         }
@@ -1247,52 +1249,41 @@ pub mod api_root {
         let context = "Groom runtime check of mod `api_root`".to_string();
         let mut codes = ::groom::runtime_checks::HTTPCodeSet::new();
         <GetRootResponse>::__groom_check_response_codes(
-            &{
-                let res = ::alloc::fmt::format(
-                    format_args!("{0}: handler `get_root`", context),
-                );
-                res
-            },
+            &::alloc::__export::must_use({
+                ::alloc::fmt::format(format_args!("{0}: handler `get_root`", context))
+            }),
             &mut codes,
         );
         let mut codes = ::groom::runtime_checks::HTTPCodeSet::new();
         <GetRootResponse>::__groom_check_response_codes(
-            &{
-                let res = ::alloc::fmt::format(
-                    format_args!("{0}: handler `post_root`", context),
-                );
-                res
-            },
+            &::alloc::__export::must_use({
+                ::alloc::fmt::format(format_args!("{0}: handler `post_root`", context))
+            }),
             &mut codes,
         );
         let mut codes = ::groom::runtime_checks::HTTPCodeSet::new();
         <RqConsQueryResponse>::__groom_check_response_codes(
-            &{
-                let res = ::alloc::fmt::format(
+            &::alloc::__export::must_use({
+                ::alloc::fmt::format(
                     format_args!("{0}: handler `rq_cons_query_struct`", context),
-                );
-                res
-            },
+                )
+            }),
             &mut codes,
         );
         let mut codes = ::groom::runtime_checks::HTTPCodeSet::new();
         <RqConsPathResponse>::__groom_check_response_codes(
-            &{
-                let res = ::alloc::fmt::format(
+            &::alloc::__export::must_use({
+                ::alloc::fmt::format(
                     format_args!("{0}: handler `rq_cons_path_struct`", context),
-                );
-                res
-            },
+                )
+            }),
             &mut codes,
         );
         let mut codes = ::groom::runtime_checks::HTTPCodeSet::new();
         <RespJsonResponse>::__groom_check_response_codes(
-            &{
-                let res = ::alloc::fmt::format(
-                    format_args!("{0}: handler `resp_json`", context),
-                );
-                res
-            },
+            &::alloc::__export::must_use({
+                ::alloc::fmt::format(format_args!("{0}: handler `resp_json`", context))
+            }),
             &mut codes,
         );
     }

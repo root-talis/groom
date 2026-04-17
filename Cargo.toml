@@ -8,8 +8,8 @@ members = [
 
 [workspace.package]
 authors = ["root-talis <root.talis@gmail.com>"]
-edition = "2021"
-rust-version = "1.78"
+edition = "2024"
+rust-version = "1.95"
 homepage = "https://github.com/root-talis/groom"
 repository = "https://github.com/root-talis/groom"
 documentation = "https://github.com/root-talis/groom"

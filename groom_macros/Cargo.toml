@@ -8,7 +8,7 @@ documentation.workspace = true
 homepage.workspace = true
 repository.workspace = true
 rust-version.workspace = true
-description = "Macros for groom - a thin wrapper around actix for making code-first strictly-typed HTTP APIs."
+description = "Macros for groom - a thin wrapper around axum for making code-first strictly-typed HTTP APIs."
 
 [lints.rust]
 unsafe_code = "forbid"

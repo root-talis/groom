@@ -47,30 +47,27 @@ mod no_content_type {
             context: &String,
             codes: &mut ::groom::runtime_checks::HTTPCodeSet,
         ) {
-            let context = {
-                let res = ::alloc::fmt::format(
+            let context = ::alloc::__export::must_use({
+                ::alloc::fmt::format(
                     format_args!("{0} / enum `RespJsonResponse`", context),
-                );
-                res
-            };
+                )
+            });
             codes
                 .ensure_distinct(
-                    {
-                        let res = ::alloc::fmt::format(
+                    ::alloc::__export::must_use({
+                        ::alloc::fmt::format(
                             format_args!("{0} / variant `Accepted`", context),
-                        );
-                        res
-                    },
+                        )
+                    }),
                     202u16,
                 );
             codes
                 .ensure_distinct(
-                    {
-                        let res = ::alloc::fmt::format(
+                    ::alloc::__export::must_use({
+                        ::alloc::fmt::format(
                             format_args!("{0} / variant `NotFound`", context),
-                        );
-                        res
-                    },
+                        )
+                    }),
                     404u16,
                 );
         }
@@ -166,30 +163,25 @@ mod plaintext_only {
             context: &String,
             codes: &mut ::groom::runtime_checks::HTTPCodeSet,
         ) {
-            let context = {
-                let res = ::alloc::fmt::format(
+            let context = ::alloc::__export::must_use({
+                ::alloc::fmt::format(
                     format_args!("{0} / enum `RespPlaintextResponse`", context),
-                );
-                res
-            };
+                )
+            });
             codes
                 .ensure_distinct(
-                    {
-                        let res = ::alloc::fmt::format(
-                            format_args!("{0} / variant `Ok`", context),
-                        );
-                        res
-                    },
+                    ::alloc::__export::must_use({
+                        ::alloc::fmt::format(format_args!("{0} / variant `Ok`", context))
+                    }),
                     200u16,
                 );
             codes
                 .ensure_distinct(
-                    {
-                        let res = ::alloc::fmt::format(
+                    ::alloc::__export::must_use({
+                        ::alloc::fmt::format(
                             format_args!("{0} / variant `NotFound`", context),
-                        );
-                        res
-                    },
+                        )
+                    }),
                     404u16,
                 );
         }
@@ -202,7 +194,12 @@ mod html_only {
         success: bool,
     }
     #[doc(hidden)]
-    #[allow(non_upper_case_globals, unused_attributes, unused_qualifications)]
+    #[allow(
+        non_upper_case_globals,
+        unused_attributes,
+        unused_qualifications,
+        clippy::absolute_paths,
+    )]
     const _: () = {
         #[allow(unused_extern_crates, clippy::useless_attribute)]
         extern crate serde as _serde;
@@ -211,7 +208,7 @@ mod html_only {
             fn serialize<__S>(
                 &self,
                 __serializer: __S,
-            ) -> _serde::__private::Result<__S::Ok, __S::Error>
+            ) -> _serde::__private228::Result<__S::Ok, __S::Error>
             where
                 __S: _serde::Serializer,
             {
@@ -328,30 +325,25 @@ mod html_only {
             context: &String,
             codes: &mut ::groom::runtime_checks::HTTPCodeSet,
         ) {
-            let context = {
-                let res = ::alloc::fmt::format(
+            let context = ::alloc::__export::must_use({
+                ::alloc::fmt::format(
                     format_args!("{0} / enum `RespHtmlResponse`", context),
-                );
-                res
-            };
+                )
+            });
             codes
                 .ensure_distinct(
-                    {
-                        let res = ::alloc::fmt::format(
-                            format_args!("{0} / variant `Ok`", context),
-                        );
-                        res
-                    },
+                    ::alloc::__export::must_use({
+                        ::alloc::fmt::format(format_args!("{0} / variant `Ok`", context))
+                    }),
                     200u16,
                 );
             codes
                 .ensure_distinct(
-                    {
-                        let res = ::alloc::fmt::format(
+                    ::alloc::__export::must_use({
+                        ::alloc::fmt::format(
                             format_args!("{0} / variant `NotFound`", context),
-                        );
-                        res
-                    },
+                        )
+                    }),
                     404u16,
                 );
         }
@@ -362,7 +354,12 @@ mod json_only {
         success: bool,
     }
     #[doc(hidden)]
-    #[allow(non_upper_case_globals, unused_attributes, unused_qualifications)]
+    #[allow(
+        non_upper_case_globals,
+        unused_attributes,
+        unused_qualifications,
+        clippy::absolute_paths,
+    )]
     const _: () = {
         #[allow(unused_extern_crates, clippy::useless_attribute)]
         extern crate serde as _serde;
@@ -371,7 +368,7 @@ mod json_only {
             fn serialize<__S>(
                 &self,
                 __serializer: __S,
-            ) -> _serde::__private::Result<__S::Ok, __S::Error>
+            ) -> _serde::__private228::Result<__S::Ok, __S::Error>
             where
                 __S: _serde::Serializer,
             {
@@ -478,30 +475,25 @@ mod json_only {
             context: &String,
             codes: &mut ::groom::runtime_checks::HTTPCodeSet,
         ) {
-            let context = {
-                let res = ::alloc::fmt::format(
+            let context = ::alloc::__export::must_use({
+                ::alloc::fmt::format(
                     format_args!("{0} / enum `RespJsonResponse`", context),
-                );
-                res
-            };
+                )
+            });
             codes
                 .ensure_distinct(
-                    {
-                        let res = ::alloc::fmt::format(
-                            format_args!("{0} / variant `Ok`", context),
-                        );
-                        res
-                    },
+                    ::alloc::__export::must_use({
+                        ::alloc::fmt::format(format_args!("{0} / variant `Ok`", context))
+                    }),
                     200u16,
                 );
             codes
                 .ensure_distinct(
-                    {
-                        let res = ::alloc::fmt::format(
+                    ::alloc::__export::must_use({
+                        ::alloc::fmt::format(
                             format_args!("{0} / variant `NotFound`", context),
-                        );
-                        res
-                    },
+                        )
+                    }),
                     404u16,
                 );
         }
@@ -514,7 +506,12 @@ mod multiple_content_types {
         success: bool,
     }
     #[doc(hidden)]
-    #[allow(non_upper_case_globals, unused_attributes, unused_qualifications)]
+    #[allow(
+        non_upper_case_globals,
+        unused_attributes,
+        unused_qualifications,
+        clippy::absolute_paths,
+    )]
     const _: () = {
         #[allow(unused_extern_crates, clippy::useless_attribute)]
         extern crate serde as _serde;
@@ -523,7 +520,7 @@ mod multiple_content_types {
             fn serialize<__S>(
                 &self,
                 __serializer: __S,
-            ) -> _serde::__private::Result<__S::Ok, __S::Error>
+            ) -> _serde::__private228::Result<__S::Ok, __S::Error>
             where
                 __S: _serde::Serializer,
             {
@@ -690,30 +687,25 @@ mod multiple_content_types {
             context: &String,
             codes: &mut ::groom::runtime_checks::HTTPCodeSet,
         ) {
-            let context = {
-                let res = ::alloc::fmt::format(
+            let context = ::alloc::__export::must_use({
+                ::alloc::fmt::format(
                     format_args!("{0} / enum `RespMultipleTypesResponse`", context),
-                );
-                res
-            };
+                )
+            });
             codes
                 .ensure_distinct(
-                    {
-                        let res = ::alloc::fmt::format(
-                            format_args!("{0} / variant `Ok`", context),
-                        );
-                        res
-                    },
+                    ::alloc::__export::must_use({
+                        ::alloc::fmt::format(format_args!("{0} / variant `Ok`", context))
+                    }),
                     200u16,
                 );
             codes
                 .ensure_distinct(
-                    {
-                        let res = ::alloc::fmt::format(
+                    ::alloc::__export::must_use({
+                        ::alloc::fmt::format(
                             format_args!("{0} / variant `NotFound`", context),
-                        );
-                        res
-                    },
+                        )
+                    }),
                     404u16,
                 );
         }
@@ -726,7 +718,12 @@ mod named_struct_response {
         success: bool,
     }
     #[doc(hidden)]
-    #[allow(non_upper_case_globals, unused_attributes, unused_qualifications)]
+    #[allow(
+        non_upper_case_globals,
+        unused_attributes,
+        unused_qualifications,
+        clippy::absolute_paths,
+    )]
     const _: () = {
         #[allow(unused_extern_crates, clippy::useless_attribute)]
         extern crate serde as _serde;
@@ -735,7 +732,7 @@ mod named_struct_response {
             fn serialize<__S>(
                 &self,
                 __serializer: __S,
-            ) -> _serde::__private::Result<__S::Ok, __S::Error>
+            ) -> _serde::__private228::Result<__S::Ok, __S::Error>
             where
                 __S: _serde::Serializer,
             {
@@ -838,12 +835,11 @@ mod named_struct_response {
         ) {
             codes
                 .ensure_distinct(
-                    {
-                        let res = ::alloc::fmt::format(
+                    ::alloc::__export::must_use({
+                        ::alloc::fmt::format(
                             format_args!("{0} / struct `Named`", context),
-                        );
-                        res
-                    },
+                        )
+                    }),
                     200u16,
                 )
         }
@@ -866,7 +862,12 @@ mod unnamed_struct_response {
     use groom::response::HtmlFormat;
     pub struct Unnamed(String);
     #[doc(hidden)]
-    #[allow(non_upper_case_globals, unused_attributes, unused_qualifications)]
+    #[allow(
+        non_upper_case_globals,
+        unused_attributes,
+        unused_qualifications,
+        clippy::absolute_paths,
+    )]
     const _: () = {
         #[allow(unused_extern_crates, clippy::useless_attribute)]
         extern crate serde as _serde;
@@ -875,7 +876,7 @@ mod unnamed_struct_response {
             fn serialize<__S>(
                 &self,
                 __serializer: __S,
-            ) -> _serde::__private::Result<__S::Ok, __S::Error>
+            ) -> _serde::__private228::Result<__S::Ok, __S::Error>
             where
                 __S: _serde::Serializer,
             {
@@ -972,12 +973,11 @@ mod unnamed_struct_response {
         ) {
             codes
                 .ensure_distinct(
-                    {
-                        let res = ::alloc::fmt::format(
+                    ::alloc::__export::must_use({
+                        ::alloc::fmt::format(
                             format_args!("{0} / struct `Unnamed`", context),
-                        );
-                        res
-                    },
+                        )
+                    }),
                     200u16,
                 )
         }
@@ -985,14 +985,13 @@ mod unnamed_struct_response {
     impl ::groom::response::HtmlFormat for Unnamed {
         fn render(self) -> ::axum::response::Html<axum::body::Body> {
             ::axum::response::Html(
-                {
-                    let res = ::alloc::fmt::format(
-                        format_args!(
-                            "<span style=\"color: #a3be8c;\">{0}</span>", self.0,
-                        ),
-                    );
-                    res
-                }
+                ::alloc::__export::must_use({
+                        ::alloc::fmt::format(
+                            format_args!(
+                                "<span style=\"color: #a3be8c;\">{0}</span>", self.0,
+                            ),
+                        )
+                    })
                     .into(),
             )
         }
@@ -1001,7 +1000,12 @@ mod unnamed_struct_response {
 mod unit_struct_response {
     pub struct Unit;
     #[doc(hidden)]
-    #[allow(non_upper_case_globals, unused_attributes, unused_qualifications)]
+    #[allow(
+        non_upper_case_globals,
+        unused_attributes,
+        unused_qualifications,
+        clippy::absolute_paths,
+    )]
     const _: () = {
         #[allow(unused_extern_crates, clippy::useless_attribute)]
         extern crate serde as _serde;
@@ -1010,7 +1014,7 @@ mod unit_struct_response {
             fn serialize<__S>(
                 &self,
                 __serializer: __S,
-            ) -> _serde::__private::Result<__S::Ok, __S::Error>
+            ) -> _serde::__private228::Result<__S::Ok, __S::Error>
             where
                 __S: _serde::Serializer,
             {
@@ -1050,12 +1054,11 @@ mod unit_struct_response {
         ) {
             codes
                 .ensure_distinct(
-                    {
-                        let res = ::alloc::fmt::format(
+                    ::alloc::__export::must_use({
+                        ::alloc::fmt::format(
                             format_args!("{0} / struct `Unit`", context),
-                        );
-                        res
-                    },
+                        )
+                    }),
                     200u16,
                 )
         }
@@ -1065,7 +1068,12 @@ mod result_struct_struct {
     use ::static_assertions::{assert_impl_all, assert_impl_any};
     pub struct Success;
     #[doc(hidden)]
-    #[allow(non_upper_case_globals, unused_attributes, unused_qualifications)]
+    #[allow(
+        non_upper_case_globals,
+        unused_attributes,
+        unused_qualifications,
+        clippy::absolute_paths,
+    )]
     const _: () = {
         #[allow(unused_extern_crates, clippy::useless_attribute)]
         extern crate serde as _serde;
@@ -1074,7 +1082,7 @@ mod result_struct_struct {
             fn serialize<__S>(
                 &self,
                 __serializer: __S,
-            ) -> _serde::__private::Result<__S::Ok, __S::Error>
+            ) -> _serde::__private228::Result<__S::Ok, __S::Error>
             where
                 __S: _serde::Serializer,
             {
@@ -1114,19 +1122,23 @@ mod result_struct_struct {
         ) {
             codes
                 .ensure_distinct(
-                    {
-                        let res = ::alloc::fmt::format(
+                    ::alloc::__export::must_use({
+                        ::alloc::fmt::format(
                             format_args!("{0} / struct `Success`", context),
-                        );
-                        res
-                    },
+                        )
+                    }),
                     200u16,
                 )
         }
     }
     pub struct Error;
     #[doc(hidden)]
-    #[allow(non_upper_case_globals, unused_attributes, unused_qualifications)]
+    #[allow(
+        non_upper_case_globals,
+        unused_attributes,
+        unused_qualifications,
+        clippy::absolute_paths,
+    )]
     const _: () = {
         #[allow(unused_extern_crates, clippy::useless_attribute)]
         extern crate serde as _serde;
@@ -1135,7 +1147,7 @@ mod result_struct_struct {
             fn serialize<__S>(
                 &self,
                 __serializer: __S,
-            ) -> _serde::__private::Result<__S::Ok, __S::Error>
+            ) -> _serde::__private228::Result<__S::Ok, __S::Error>
             where
                 __S: _serde::Serializer,
             {
@@ -1175,12 +1187,11 @@ mod result_struct_struct {
         ) {
             codes
                 .ensure_distinct(
-                    {
-                        let res = ::alloc::fmt::format(
+                    ::alloc::__export::must_use({
+                        ::alloc::fmt::format(
                             format_args!("{0} / struct `Error`", context),
-                        );
-                        res
-                    },
+                        )
+                    }),
                     404u16,
                 )
         }
@@ -1203,12 +1214,9 @@ mod result_struct_struct {
             Success,
             Error,
         >>::__groom_check_response_codes(
-            &{
-                let res = ::alloc::fmt::format(
-                    format_args!("{0}: handler `foo`", context),
-                );
-                res
-            },
+            &::alloc::__export::must_use({
+                ::alloc::fmt::format(format_args!("{0}: handler `foo`", context))
+            }),
             &mut codes,
         );
     }
@@ -1252,7 +1260,12 @@ mod result_struct_enum {
     use ::static_assertions::{assert_impl_all, assert_impl_any};
     pub struct Success;
     #[doc(hidden)]
-    #[allow(non_upper_case_globals, unused_attributes, unused_qualifications)]
+    #[allow(
+        non_upper_case_globals,
+        unused_attributes,
+        unused_qualifications,
+        clippy::absolute_paths,
+    )]
     const _: () = {
         #[allow(unused_extern_crates, clippy::useless_attribute)]
         extern crate serde as _serde;
@@ -1261,7 +1274,7 @@ mod result_struct_enum {
             fn serialize<__S>(
                 &self,
                 __serializer: __S,
-            ) -> _serde::__private::Result<__S::Ok, __S::Error>
+            ) -> _serde::__private228::Result<__S::Ok, __S::Error>
             where
                 __S: _serde::Serializer,
             {
@@ -1301,12 +1314,11 @@ mod result_struct_enum {
         ) {
             codes
                 .ensure_distinct(
-                    {
-                        let res = ::alloc::fmt::format(
+                    ::alloc::__export::must_use({
+                        ::alloc::fmt::format(
                             format_args!("{0} / struct `Success`", context),
-                        );
-                        res
-                    },
+                        )
+                    }),
                     200u16,
                 )
         }
@@ -1396,30 +1408,25 @@ mod result_struct_enum {
             context: &String,
             codes: &mut ::groom::runtime_checks::HTTPCodeSet,
         ) {
-            let context = {
-                let res = ::alloc::fmt::format(
-                    format_args!("{0} / enum `Error`", context),
-                );
-                res
-            };
+            let context = ::alloc::__export::must_use({
+                ::alloc::fmt::format(format_args!("{0} / enum `Error`", context))
+            });
             codes
                 .ensure_distinct(
-                    {
-                        let res = ::alloc::fmt::format(
+                    ::alloc::__export::must_use({
+                        ::alloc::fmt::format(
                             format_args!("{0} / variant `NotFound`", context),
-                        );
-                        res
-                    },
+                        )
+                    }),
                     404u16,
                 );
             codes
                 .ensure_distinct(
-                    {
-                        let res = ::alloc::fmt::format(
+                    ::alloc::__export::must_use({
+                        ::alloc::fmt::format(
                             format_args!("{0} / variant `NoAccess`", context),
-                        );
-                        res
-                    },
+                        )
+                    }),
                     400u16,
                 );
         }
@@ -1483,12 +1490,9 @@ mod result_struct_enum {
             Success,
             Error,
         >>::__groom_check_response_codes(
-            &{
-                let res = ::alloc::fmt::format(
-                    format_args!("{0}: handler `foo`", context),
-                );
-                res
-            },
+            &::alloc::__export::must_use({
+                ::alloc::fmt::format(format_args!("{0}: handler `foo`", context))
+            }),
             &mut codes,
         );
     }

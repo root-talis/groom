@@ -8,8 +8,8 @@ documentation.workspace = true
 homepage.workspace = true
 repository.workspace = true
 rust-version.workspace = true
-description = "A thin wrapper around actix for making code-first strictly-typed HTTP APIs."
-keywords = ["http", "async", "openapi", "swagger", "actix"]
+description = "A thin wrapper around axum for making code-first strictly-typed HTTP APIs."
+keywords = ["http", "async", "openapi", "swagger", "axum"]
 categories = [
     "network-programming",
     "asynchronous",
