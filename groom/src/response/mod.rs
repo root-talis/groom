@@ -1,6 +1,8 @@
 use accept_header::Accept;
 use utoipa::openapi::path::OperationBuilder;
 
+/// Response is the trait that enables enums and structs to turn themselves into HTTP responses
+/// and into openapi spec.
 pub trait Response {
 
     fn __openapi_modify_operation(op: OperationBuilder) -> OperationBuilder;

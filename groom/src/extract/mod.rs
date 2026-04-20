@@ -4,6 +4,7 @@ mod query;
 mod path;
 mod std_types;
 
+/// GroomExtractor is the trait that enables types to describe themselves into openapi spec.
 pub trait GroomExtractor {
     fn __openapi_modify_operation(op: OperationBuilder) -> OperationBuilder;
 }
