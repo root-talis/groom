@@ -35,3 +35,5 @@ mod response_type_plaintext;
 
 //
 // endregion: responses
+
+mod value_objects;
