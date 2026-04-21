@@ -1,6 +1,6 @@
 [workspace]
 resolver = "2"
-members = ["examples/hello-world",
+members = ["examples/hello-world", "examples/todo/backend",
     "groom",
     "groom_macros",
     "groom_tests"

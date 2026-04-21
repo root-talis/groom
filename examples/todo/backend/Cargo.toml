@@ -1,5 +1,5 @@
 [package]
-name = "groom-example_hello-world"
+name = "groom-example_todo-backend"
 version = "0.1.0"
 authors.workspace = true
 edition.workspace = true
@@ -11,16 +11,24 @@ license.workspace = true
 
 [dependencies]
 accept-header = "0.2.3"
-axum = "0.8.9"
+async-trait = "0.1.89"
+axum = { version = "0.8.9", features = ["macros"] }
 color-eyre = "0.6.5"
-groom = {path = "../../groom" }
-groom_macros = {path = "../../groom_macros" }
+groom = {path = "../../../groom" }
+groom_macros = {path = "../../../groom_macros" }
 mime = "0.3.17"
+pretty_assertions = "1.4.1"
 serde = { version = "1.0.228", features = ["derive"] }
 serde_json = "1.0.149"
 static_assertions = "1.1.0"
+thiserror = "2.0.18"
 tokio = { version = "1.52.1", features = ["full"] }
+tower = "0.5.3"
 tower-http = { version = "0.6.8", features = ["trace"] }
 tracing = "0.1.44"
 tracing-subscriber = { version = "0.3.23" }
 utoipa = { version = "5.4.0", features = ["yaml"] }
+
+[dev-dependencies]
+assert_matches = "1.5.0"
+mockall = "0.14.0"
