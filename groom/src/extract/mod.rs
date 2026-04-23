@@ -3,10 +3,13 @@ use utoipa::openapi::path::OperationBuilder;
 mod query;
 mod path;
 mod std_types;
+mod components_registry;
+
+pub use components_registry::ComponentsRegistry;
 
 /// GroomExtractor is the trait that enables types to describe themselves into openapi spec.
 pub trait GroomExtractor {
-    fn __openapi_modify_operation(op: OperationBuilder) -> OperationBuilder;
+    fn __openapi_modify_operation(op: OperationBuilder, components: &mut ComponentsRegistry) -> OperationBuilder;
 }
 
 /// Creates a newtype for axum::body::Bytes with custom content type specified in the openapi spec.
@@ -19,7 +22,11 @@ macro_rules! binary_request_body {
         struct $name(::axum::body::Bytes);
 
         impl ::groom::extract::GroomExtractor for $name {
-            fn __openapi_modify_operation(op: ::utoipa::openapi::path::OperationBuilder) -> ::utoipa::openapi::path::OperationBuilder {
+            fn __openapi_modify_operation(
+                op: ::utoipa::openapi::path::OperationBuilder,
+                _c: &mut groom::extract::ComponentsRegistry
+            ) -> ::utoipa::openapi::path::OperationBuilder 
+            {
                 op.request_body(Some(
                     ::utoipa::openapi::request_body::RequestBodyBuilder::new()
                         .content(

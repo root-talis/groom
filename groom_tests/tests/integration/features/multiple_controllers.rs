@@ -188,3 +188,236 @@ pub async fn test_openapi() {
         })
     );
 }
+
+/// Disallow having different components with the same schema name when merging controllers.
+mod disallow_overlaps {
+    use groom_macros::Controller;
+    use utoipa::openapi::OpenApiBuilder;
+
+    #[Controller()]
+    pub mod controller1 {
+        use axum::{response::IntoResponse};
+
+        use groom::{
+            response::Response
+        };
+        use groom_macros::{DTO, Response};
+        use utoipa::PartialSchema;
+
+        #[DTO(response)]
+        pub struct RespData {
+            pub v: i32,
+        }
+
+        #[Response(format(json))]
+        pub enum HelloResult {
+            #[Response()]
+            Ok(RespData),
+        }
+
+        #[Route(method = "get", path = "/1/hello")]
+        async fn hello() -> HelloResult {
+            HelloResult::Ok(RespData{v:123})
+        }
+    }
+
+    #[Controller()]
+    pub mod controller2 {
+        use axum::{response::IntoResponse};
+
+        use groom::{
+            extract::GroomExtractor,
+            response::Response
+        };
+        use groom_macros::{DTO, Response};
+        use utoipa::PartialSchema;
+
+        #[DTO(response)]
+        pub struct RespData {
+            pub v: String,
+        }
+
+        #[Response(format(json))]
+        pub enum HelloResult {
+            #[Response()]
+            Ok(RespData),
+        }
+
+        #[Route(method = "get", path = "/2/hello")]
+        async fn hello() -> HelloResult {
+            HelloResult::Ok(RespData{v:"456".into()})
+        }
+    }
+
+    #[test]
+    #[should_panic(expected = "Component `RespData` is defined more then once.")]
+    fn test_openapi_doc() {
+        let b = OpenApiBuilder::new();
+        let b = controller1::merge_into_openapi_builder(b);
+        let _ = controller2::merge_into_openapi_builder(b);
+    }
+}
+
+/// Allow having same shared component when merging controllers.
+mod allow_shared_components {
+    use groom_macros::{Controller, DTO};
+    use serde_json::json;
+    use utoipa::openapi::OpenApiBuilder;
+
+    use crate::integration::test_utils::assert_openapi_doc;
+
+    #[DTO(response)]
+    pub struct RespData {
+        pub v: i32,
+    }
+
+    #[Controller()]
+    pub mod controller1 {
+        use axum::{response::IntoResponse};
+
+        use groom::{
+            response::Response
+        };
+        use groom_macros::Response;
+        use super::RespData;
+
+        use utoipa::PartialSchema;
+
+        #[Response(format(json))]
+        pub enum HelloResult {
+            #[Response()]
+            Ok(RespData),
+        }
+
+        #[Route(method = "get", path = "/1/hello")]
+        async fn hello() -> HelloResult {
+            HelloResult::Ok(RespData{v:123})
+        }
+    }
+
+    #[Controller()]
+    pub mod controller2 {
+        use axum::{response::IntoResponse};
+
+        use groom::{
+            response::Response
+        };
+        use groom_macros::Response;
+        use super::RespData;
+
+        use utoipa::PartialSchema;
+
+
+        #[Response(format(json))]
+        pub enum HelloResult {
+            #[Response()]
+            Ok(RespData),
+        }
+
+        #[Route(method = "get", path = "/2/hello")]
+        async fn hello() -> HelloResult {
+            HelloResult::Ok(RespData{v:123})
+        }
+    }
+
+    #[test]
+    fn test_openapi_doc() {
+        assert_openapi_doc(
+            |b| {
+                let b = controller1::merge_into_openapi_builder(b);
+                let b = controller2::merge_into_openapi_builder(b);
+                b
+            },
+            json!( {
+                "components": {
+                    "schemas": {
+                        "HelloResult": {
+                            // incorrect!!!
+                            "oneOf": [
+                                {
+                                    "properties": {
+                                        "Ok": {
+                                            "$ref": ("#/components/schemas/RespData"),
+                                        },
+                                    },
+                                    "required": [
+                                        ("Ok"),
+                                    ],
+                                    "type": ("object"),
+                                },
+                            ],
+                        },
+                        "RespData": {
+                            "properties": {
+                                "v": {
+                                    "format": ("int32"),
+                                    "type": ("integer"),
+                                },
+                            },
+                            "required": [
+                                ("v"),
+                            ],
+                            "type": ("object"),
+                        },
+                    },
+                },
+                "info": {
+                    "contact": {
+                        "email": ("mail@example.com"),
+                        "name": ("name"),
+                    },
+                    "description": ("d"),
+                    "license": {
+                        "name": ("n"),
+                    },
+                    "title": ("t"),
+                    "version": ("0.0.0"),
+                },
+                "openapi": ("3.1.0"),
+                "paths": {
+                    "/1/hello": {
+                        "get": {
+                            "responses": {
+                                "200": {
+                                    "content": {
+                                        "application/json": {
+                                            "schema": {
+                                                "$ref": "/components/schema/HelloResult",
+                                            },
+                                        },
+                                    },
+                                    "description": (""),
+                                },
+                            },
+                        },
+                    },
+                    "/2/hello": {
+                        "get": {
+                            "responses": {
+                                "200": {
+                                    "content": {
+                                        "application/json": {
+                                            "schema": {
+                                                "properties": {
+                                                    "v": {
+                                                        "format": ("int32"),
+                                                        "type": ("integer"),
+                                                    },
+                                                },
+                                                "required": [
+                                                    ("v"),
+                                                ],
+                                                "type": ("object"),
+                                            },
+                                        },
+                                    },
+                                    "description": (""),
+                                },
+                            },
+                        },
+                    },
+                },
+            })
+        )
+    }
+}

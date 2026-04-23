@@ -5,7 +5,7 @@ use utoipa::openapi::path::OperationBuilder;
 /// and into openapi spec.
 pub trait Response {
 
-    fn __openapi_modify_operation(op: OperationBuilder) -> OperationBuilder;
+    fn __openapi_modify_operation(op: OperationBuilder, _c: &mut ComponentsRegistry) -> OperationBuilder;
 
     fn __groom_into_response(self, accept: Option<Accept>) -> ::axum::response::Response;
 
@@ -18,6 +18,6 @@ pub trait Response {
 
 pub mod html_response;
 pub use html_response::{HtmlFormat, html_format};
-use crate::runtime_checks::HTTPCodeSet;
+use crate::{extract::ComponentsRegistry, runtime_checks::HTTPCodeSet};
 
 pub mod result;

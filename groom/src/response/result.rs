@@ -1,14 +1,15 @@
 use accept_header::Accept;
 use utoipa::openapi::path::OperationBuilder;
+use crate::extract::ComponentsRegistry;
 use crate::response::Response;
 use crate::runtime_checks::HTTPCodeSet;
 
 impl<T, E> Response for Result<T, E>
 where T: Response, E: Response
 {
-    fn __openapi_modify_operation(op: OperationBuilder) -> OperationBuilder {
-        let op = T::__openapi_modify_operation(op);
-        let op = E::__openapi_modify_operation(op);
+    fn __openapi_modify_operation(op: OperationBuilder, c: &mut ComponentsRegistry) -> OperationBuilder {
+        let op = T::__openapi_modify_operation(op, c);
+        let op = E::__openapi_modify_operation(op, c);
         op
     }
 

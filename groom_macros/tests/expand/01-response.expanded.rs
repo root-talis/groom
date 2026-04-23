@@ -30,7 +30,9 @@ mod no_content_type {
         }
         fn __openapi_modify_operation(
             op: ::utoipa::openapi::path::OperationBuilder,
+            c: &mut ::groom::extract::ComponentsRegistry,
         ) -> ::utoipa::openapi::path::OperationBuilder {
+            c.add_components::<RespJsonResponse>();
             let op = op
                 .response(
                     "202",
@@ -138,7 +140,9 @@ mod plaintext_only {
         }
         fn __openapi_modify_operation(
             op: ::utoipa::openapi::path::OperationBuilder,
+            c: &mut ::groom::extract::ComponentsRegistry,
         ) -> ::utoipa::openapi::path::OperationBuilder {
+            c.add_components::<RespPlaintextResponse>();
             let op = op
                 .response(
                     "200",
@@ -150,7 +154,11 @@ mod plaintext_only {
                                 .schema({
                                     match <String as utoipa::PartialSchema>::schema() {
                                         ::utoipa::openapi::RefOr::T(s) => Some(s),
-                                        ::utoipa::openapi::RefOr::Ref(_) => None,
+                                        ::utoipa::openapi::RefOr::Ref(_) => {
+                                            ::core::panicking::panic_fmt(
+                                                format_args!("String schema for plain_text is ref"),
+                                            );
+                                        }
                                     }
                                 })
                                 .build(),
@@ -305,7 +313,9 @@ mod html_only {
         }
         fn __openapi_modify_operation(
             op: ::utoipa::openapi::path::OperationBuilder,
+            c: &mut ::groom::extract::ComponentsRegistry,
         ) -> ::utoipa::openapi::path::OperationBuilder {
+            c.add_components::<RespHtmlResponse>();
             let op = op
                 .response(
                     "200",
@@ -317,7 +327,11 @@ mod html_only {
                                 .schema(
                                     match <String as utoipa::PartialSchema>::schema() {
                                         ::utoipa::openapi::RefOr::T(s) => Some(s),
-                                        ::utoipa::openapi::RefOr::Ref(_) => None,
+                                        ::utoipa::openapi::RefOr::Ref(_) => {
+                                            ::core::panicking::panic_fmt(
+                                                format_args!("String schema for html is ref"),
+                                            );
+                                        }
                                     },
                                 )
                                 .build(),
@@ -460,7 +474,9 @@ mod json_only {
         }
         fn __openapi_modify_operation(
             op: ::utoipa::openapi::path::OperationBuilder,
+            c: &mut ::groom::extract::ComponentsRegistry,
         ) -> ::utoipa::openapi::path::OperationBuilder {
+            c.add_components::<RespJsonResponse>();
             let op = op
                 .response(
                     "200",
@@ -472,7 +488,14 @@ mod json_only {
                                 .schema(
                                     match StructJson::schema() {
                                         ::utoipa::openapi::RefOr::T(s) => Some(s),
-                                        ::utoipa::openapi::RefOr::Ref(_) => None,
+                                        ::utoipa::openapi::RefOr::Ref(_) => {
+                                            ::core::panicking::panic_fmt(
+                                                format_args!(
+                                                    "Type `{0}` schema for application/json is ref",
+                                                    "StructJson",
+                                                ),
+                                            );
+                                        }
                                     },
                                 )
                                 .build(),
@@ -665,7 +688,9 @@ mod multiple_content_types {
         }
         fn __openapi_modify_operation(
             op: ::utoipa::openapi::path::OperationBuilder,
+            c: &mut ::groom::extract::ComponentsRegistry,
         ) -> ::utoipa::openapi::path::OperationBuilder {
+            c.add_components::<RespMultipleTypesResponse>();
             let op = op
                 .response(
                     "200",
@@ -677,7 +702,11 @@ mod multiple_content_types {
                                 .schema({
                                     match <String as utoipa::PartialSchema>::schema() {
                                         ::utoipa::openapi::RefOr::T(s) => Some(s),
-                                        ::utoipa::openapi::RefOr::Ref(_) => None,
+                                        ::utoipa::openapi::RefOr::Ref(_) => {
+                                            ::core::panicking::panic_fmt(
+                                                format_args!("String schema for plain_text is ref"),
+                                            );
+                                        }
                                     }
                                 })
                                 .build(),
@@ -688,7 +717,11 @@ mod multiple_content_types {
                                 .schema(
                                     match <String as utoipa::PartialSchema>::schema() {
                                         ::utoipa::openapi::RefOr::T(s) => Some(s),
-                                        ::utoipa::openapi::RefOr::Ref(_) => None,
+                                        ::utoipa::openapi::RefOr::Ref(_) => {
+                                            ::core::panicking::panic_fmt(
+                                                format_args!("String schema for html is ref"),
+                                            );
+                                        }
                                     },
                                 )
                                 .build(),
@@ -699,7 +732,13 @@ mod multiple_content_types {
                                 .schema(
                                     match Struct::schema() {
                                         ::utoipa::openapi::RefOr::T(s) => Some(s),
-                                        ::utoipa::openapi::RefOr::Ref(_) => None,
+                                        ::utoipa::openapi::RefOr::Ref(_) => {
+                                            ::core::panicking::panic_fmt(
+                                                format_args!(
+                                                    "Type `{0}` schema for application/json is ref", "Struct",
+                                                ),
+                                            );
+                                        }
                                     },
                                 )
                                 .build(),
@@ -837,7 +876,9 @@ mod named_struct_response {
         }
         fn __openapi_modify_operation(
             op: ::utoipa::openapi::path::OperationBuilder,
+            c: &mut ::groom::extract::ComponentsRegistry,
         ) -> ::utoipa::openapi::path::OperationBuilder {
+            c.add_components::<Named>();
             let op = op
                 .response(
                     "200",
@@ -849,7 +890,11 @@ mod named_struct_response {
                                 .schema(
                                     match <String as utoipa::PartialSchema>::schema() {
                                         ::utoipa::openapi::RefOr::T(s) => Some(s),
-                                        ::utoipa::openapi::RefOr::Ref(_) => None,
+                                        ::utoipa::openapi::RefOr::Ref(_) => {
+                                            ::core::panicking::panic_fmt(
+                                                format_args!("String schema for html is ref"),
+                                            );
+                                        }
                                     },
                                 )
                                 .build(),
@@ -860,7 +905,13 @@ mod named_struct_response {
                                 .schema(
                                     match Named::schema() {
                                         ::utoipa::openapi::RefOr::T(s) => Some(s),
-                                        ::utoipa::openapi::RefOr::Ref(_) => None,
+                                        ::utoipa::openapi::RefOr::Ref(_) => {
+                                            ::core::panicking::panic_fmt(
+                                                format_args!(
+                                                    "Type `{0}` schema for application/json is ref", "Named",
+                                                ),
+                                            );
+                                        }
                                     },
                                 )
                                 .build(),
@@ -985,7 +1036,9 @@ mod unnamed_struct_response {
         }
         fn __openapi_modify_operation(
             op: ::utoipa::openapi::path::OperationBuilder,
+            c: &mut ::groom::extract::ComponentsRegistry,
         ) -> ::utoipa::openapi::path::OperationBuilder {
+            c.add_components::<Unnamed>();
             let op = op
                 .response(
                     "200",
@@ -997,7 +1050,11 @@ mod unnamed_struct_response {
                                 .schema(
                                     match <String as utoipa::PartialSchema>::schema() {
                                         ::utoipa::openapi::RefOr::T(s) => Some(s),
-                                        ::utoipa::openapi::RefOr::Ref(_) => None,
+                                        ::utoipa::openapi::RefOr::Ref(_) => {
+                                            ::core::panicking::panic_fmt(
+                                                format_args!("String schema for html is ref"),
+                                            );
+                                        }
                                     },
                                 )
                                 .build(),
@@ -1008,7 +1065,13 @@ mod unnamed_struct_response {
                                 .schema(
                                     match String::schema() {
                                         ::utoipa::openapi::RefOr::T(s) => Some(s),
-                                        ::utoipa::openapi::RefOr::Ref(_) => None,
+                                        ::utoipa::openapi::RefOr::Ref(_) => {
+                                            ::core::panicking::panic_fmt(
+                                                format_args!(
+                                                    "Type `{0}` schema for application/json is ref", "String",
+                                                ),
+                                            );
+                                        }
                                     },
                                 )
                                 .build(),
@@ -1090,7 +1153,9 @@ mod unit_struct_response {
         }
         fn __openapi_modify_operation(
             op: ::utoipa::openapi::path::OperationBuilder,
+            c: &mut ::groom::extract::ComponentsRegistry,
         ) -> ::utoipa::openapi::path::OperationBuilder {
+            c.add_components::<Unit>();
             let op = op
                 .response(
                     "200",
@@ -1158,7 +1223,9 @@ mod result_struct_struct {
         }
         fn __openapi_modify_operation(
             op: ::utoipa::openapi::path::OperationBuilder,
+            c: &mut ::groom::extract::ComponentsRegistry,
         ) -> ::utoipa::openapi::path::OperationBuilder {
+            c.add_components::<Success>();
             let op = op
                 .response(
                     "200",
@@ -1223,7 +1290,9 @@ mod result_struct_struct {
         }
         fn __openapi_modify_operation(
             op: ::utoipa::openapi::path::OperationBuilder,
+            c: &mut ::groom::extract::ComponentsRegistry,
         ) -> ::utoipa::openapi::path::OperationBuilder {
+            c.add_components::<Error>();
             let op = op
                 .response(
                     "404",
@@ -1280,6 +1349,7 @@ mod result_struct_struct {
         other: ::utoipa::openapi::OpenApiBuilder,
     ) -> ::utoipa::openapi::OpenApiBuilder {
         let mut paths = ::utoipa::openapi::path::PathsBuilder::new();
+        let mut components = ::groom::extract::ComponentsRegistry::new();
         paths = paths
             .path(
                 "/",
@@ -1290,7 +1360,7 @@ mod result_struct_struct {
                     op_builder = <Result<
                         Success,
                         Error,
-                    >>::__openapi_modify_operation(op_builder);
+                    >>::__openapi_modify_operation(op_builder, &mut components);
                     ::utoipa::openapi::path::PathItemBuilder::new()
                         .operation(
                             ::utoipa::openapi::path::HttpMethod::Get,
@@ -1299,8 +1369,16 @@ mod result_struct_struct {
                         .build()
                 },
             );
+        let c = components
+            .into_components(utoipa::openapi::ComponentsBuilder::new())
+            .build();
         let mut b = other.build();
-        b.merge(::utoipa::openapi::OpenApiBuilder::new().paths(paths).build());
+        b.merge(
+            ::utoipa::openapi::OpenApiBuilder::new()
+                .components(Some(c))
+                .paths(paths)
+                .build(),
+        );
         b.into()
     }
     const _: fn() = || {
@@ -1352,7 +1430,9 @@ mod result_struct_enum {
         }
         fn __openapi_modify_operation(
             op: ::utoipa::openapi::path::OperationBuilder,
+            c: &mut ::groom::extract::ComponentsRegistry,
         ) -> ::utoipa::openapi::path::OperationBuilder {
+            c.add_components::<Success>();
             let op = op
                 .response(
                     "200",
@@ -1435,7 +1515,9 @@ mod result_struct_enum {
         }
         fn __openapi_modify_operation(
             op: ::utoipa::openapi::path::OperationBuilder,
+            c: &mut ::groom::extract::ComponentsRegistry,
         ) -> ::utoipa::openapi::path::OperationBuilder {
+            c.add_components::<Error>();
             let op = op
                 .response(
                     "404",
@@ -1452,7 +1534,11 @@ mod result_struct_enum {
                                 .schema({
                                     match <String as utoipa::PartialSchema>::schema() {
                                         ::utoipa::openapi::RefOr::T(s) => Some(s),
-                                        ::utoipa::openapi::RefOr::Ref(_) => None,
+                                        ::utoipa::openapi::RefOr::Ref(_) => {
+                                            ::core::panicking::panic_fmt(
+                                                format_args!("String schema for plain_text is ref"),
+                                            );
+                                        }
                                     }
                                 })
                                 .build(),
@@ -1563,6 +1649,7 @@ mod result_struct_enum {
         other: ::utoipa::openapi::OpenApiBuilder,
     ) -> ::utoipa::openapi::OpenApiBuilder {
         let mut paths = ::utoipa::openapi::path::PathsBuilder::new();
+        let mut components = ::groom::extract::ComponentsRegistry::new();
         paths = paths
             .path(
                 "/",
@@ -1573,7 +1660,7 @@ mod result_struct_enum {
                     op_builder = <Result<
                         Success,
                         Error,
-                    >>::__openapi_modify_operation(op_builder);
+                    >>::__openapi_modify_operation(op_builder, &mut components);
                     ::utoipa::openapi::path::PathItemBuilder::new()
                         .operation(
                             ::utoipa::openapi::path::HttpMethod::Get,
@@ -1582,12 +1669,495 @@ mod result_struct_enum {
                         .build()
                 },
             );
+        let c = components
+            .into_components(utoipa::openapi::ComponentsBuilder::new())
+            .build();
         let mut b = other.build();
-        b.merge(::utoipa::openapi::OpenApiBuilder::new().paths(paths).build());
+        b.merge(
+            ::utoipa::openapi::OpenApiBuilder::new()
+                .components(Some(c))
+                .paths(paths)
+                .build(),
+        );
         b.into()
     }
     const _: fn() = || {
         fn assert_impl_all<T: ?Sized + ::groom::response::Response>() {}
         assert_impl_all::<Result<Success, Error>>();
+    };
+}
+mod wrapped_enum {
+    use ::static_assertions::{assert_impl_all, assert_impl_any};
+    pub enum EnumValueObject {
+        UnitVariant,
+        UnnamedStructVariant(String),
+        NamedStructVariant { value: String },
+    }
+    #[doc(hidden)]
+    #[allow(
+        non_upper_case_globals,
+        unused_attributes,
+        unused_qualifications,
+        clippy::absolute_paths,
+    )]
+    const _: () = {
+        #[allow(unused_extern_crates, clippy::useless_attribute)]
+        extern crate serde as _serde;
+        #[automatically_derived]
+        impl _serde::Serialize for EnumValueObject {
+            fn serialize<__S>(
+                &self,
+                __serializer: __S,
+            ) -> _serde::__private228::Result<__S::Ok, __S::Error>
+            where
+                __S: _serde::Serializer,
+            {
+                match *self {
+                    EnumValueObject::UnitVariant => {
+                        _serde::Serializer::serialize_unit_variant(
+                            __serializer,
+                            "EnumValueObject",
+                            0u32,
+                            "UnitVariant",
+                        )
+                    }
+                    EnumValueObject::UnnamedStructVariant(ref __field0) => {
+                        _serde::Serializer::serialize_newtype_variant(
+                            __serializer,
+                            "EnumValueObject",
+                            1u32,
+                            "UnnamedStructVariant",
+                            __field0,
+                        )
+                    }
+                    EnumValueObject::NamedStructVariant { ref value } => {
+                        let mut __serde_state = _serde::Serializer::serialize_struct_variant(
+                            __serializer,
+                            "EnumValueObject",
+                            2u32,
+                            "NamedStructVariant",
+                            0 + 1,
+                        )?;
+                        _serde::ser::SerializeStructVariant::serialize_field(
+                            &mut __serde_state,
+                            "value",
+                            value,
+                        )?;
+                        _serde::ser::SerializeStructVariant::end(__serde_state)
+                    }
+                }
+            }
+        }
+    };
+    impl ::groom::DTO for EnumValueObject {}
+    impl ::groom::DTO_Response for EnumValueObject {}
+    pub struct WrapperStruct {
+        pub v: EnumValueObject,
+    }
+    #[doc(hidden)]
+    #[allow(
+        non_upper_case_globals,
+        unused_attributes,
+        unused_qualifications,
+        clippy::absolute_paths,
+    )]
+    const _: () = {
+        #[allow(unused_extern_crates, clippy::useless_attribute)]
+        extern crate serde as _serde;
+        #[automatically_derived]
+        impl _serde::Serialize for WrapperStruct {
+            fn serialize<__S>(
+                &self,
+                __serializer: __S,
+            ) -> _serde::__private228::Result<__S::Ok, __S::Error>
+            where
+                __S: _serde::Serializer,
+            {
+                let mut __serde_state = _serde::Serializer::serialize_struct(
+                    __serializer,
+                    "WrapperStruct",
+                    false as usize + 1,
+                )?;
+                _serde::ser::SerializeStruct::serialize_field(
+                    &mut __serde_state,
+                    "v",
+                    &self.v,
+                )?;
+                _serde::ser::SerializeStruct::end(__serde_state)
+            }
+        }
+    };
+    impl ::groom::DTO for WrapperStruct {}
+    impl ::groom::DTO_Response for WrapperStruct {}
+    pub enum Resp {
+        Enum(EnumValueObject),
+        StructWithEnum(WrapperStruct),
+    }
+    #[allow(non_upper_case_globals)]
+    const __GROOM_RESPONSE_SUPPORTED_MIMES_Resp: &[::mime::Mime] = &[
+        ::mime::APPLICATION_JSON,
+    ];
+    impl Resp {
+        fn into_response_application_json(self) -> ::axum::response::Response {
+            match self {
+                Self::Enum(body) => {
+                    (
+                        ::axum::http::StatusCode::from_u16(200u16).unwrap(),
+                        ::axum::Json(body),
+                    )
+                        .into_response()
+                }
+                Self::StructWithEnum(body) => {
+                    (
+                        ::axum::http::StatusCode::from_u16(202u16).unwrap(),
+                        ::axum::Json(body),
+                    )
+                        .into_response()
+                }
+            }
+        }
+    }
+    impl ::groom::response::Response for Resp {
+        fn __groom_into_response(
+            self,
+            accept: Option<::accept_header::Accept>,
+        ) -> ::axum::response::Response {
+            match accept {
+                None => self.into_response_application_json(),
+                Some(accept) => {
+                    match accept.negotiate(&__GROOM_RESPONSE_SUPPORTED_MIMES_Resp) {
+                        Err(_) => {
+                            (
+                                ::axum::http::StatusCode::BAD_REQUEST,
+                                "Requested Content-Type is not supported.",
+                            )
+                                .into_response()
+                        }
+                        Ok(negotiated) => {
+                            match (negotiated.type_(), negotiated.subtype()) {
+                                (::mime::APPLICATION, mime::JSON) => {
+                                    self.into_response_application_json()
+                                }
+                                _ => {
+                                    (
+                                        ::axum::http::StatusCode::BAD_REQUEST,
+                                        "Content-Type negotiation produced an unexpected type/subtype pair.",
+                                    )
+                                        .into_response()
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        fn __openapi_modify_operation(
+            op: ::utoipa::openapi::path::OperationBuilder,
+            c: &mut ::groom::extract::ComponentsRegistry,
+        ) -> ::utoipa::openapi::path::OperationBuilder {
+            c.add_components::<Resp>();
+            let op = op
+                .response(
+                    "200",
+                    ::utoipa::openapi::ResponseBuilder::new()
+                        .description("")
+                        .content(
+                            ::mime::APPLICATION_JSON.as_ref(),
+                            ::utoipa::openapi::ContentBuilder::new()
+                                .schema(
+                                    match EnumValueObject::schema() {
+                                        ::utoipa::openapi::RefOr::T(s) => Some(s),
+                                        ::utoipa::openapi::RefOr::Ref(_) => {
+                                            ::core::panicking::panic_fmt(
+                                                format_args!(
+                                                    "Type `{0}` schema for application/json is ref",
+                                                    "EnumValueObject",
+                                                ),
+                                            );
+                                        }
+                                    },
+                                )
+                                .build(),
+                        )
+                        .build(),
+                );
+            let op = op
+                .response(
+                    "202",
+                    ::utoipa::openapi::ResponseBuilder::new()
+                        .description("")
+                        .content(
+                            ::mime::APPLICATION_JSON.as_ref(),
+                            ::utoipa::openapi::ContentBuilder::new()
+                                .schema(
+                                    match WrapperStruct::schema() {
+                                        ::utoipa::openapi::RefOr::T(s) => Some(s),
+                                        ::utoipa::openapi::RefOr::Ref(_) => {
+                                            ::core::panicking::panic_fmt(
+                                                format_args!(
+                                                    "Type `{0}` schema for application/json is ref",
+                                                    "WrapperStruct",
+                                                ),
+                                            );
+                                        }
+                                    },
+                                )
+                                .build(),
+                        )
+                        .build(),
+                );
+            op
+        }
+        fn __groom_check_response_codes(
+            context: &String,
+            codes: &mut ::groom::runtime_checks::HTTPCodeSet,
+        ) {
+            let context = ::alloc::__export::must_use({
+                ::alloc::fmt::format(format_args!("{0} / enum `Resp`", context))
+            });
+            codes
+                .ensure_distinct(
+                    ::alloc::__export::must_use({
+                        ::alloc::fmt::format(
+                            format_args!("{0} / variant `Enum`", context),
+                        )
+                    }),
+                    200u16,
+                );
+            codes
+                .ensure_distinct(
+                    ::alloc::__export::must_use({
+                        ::alloc::fmt::format(
+                            format_args!("{0} / variant `StructWithEnum`", context),
+                        )
+                    }),
+                    202u16,
+                );
+        }
+    }
+    const _: fn() = || {
+        use ::static_assertions::_core::marker::PhantomData;
+        use ::static_assertions::_core::ops::Deref;
+        let previous = AssertImplAnyFallback;
+        struct AssertImplAnyFallback;
+        struct ActualAssertImplAnyToken;
+        trait AssertImplAnyToken {}
+        impl AssertImplAnyToken for ActualAssertImplAnyToken {}
+        fn assert_impl_any_token<T: AssertImplAnyToken>(_: T) {}
+        let previous = {
+            struct Wrapper<T, N>(PhantomData<T>, N);
+            impl<T, N> Deref for Wrapper<T, N> {
+                type Target = N;
+                fn deref(&self) -> &Self::Target {
+                    &self.1
+                }
+            }
+            impl<T: ::utoipa::PartialSchema, N> Wrapper<T, N> {
+                fn _static_assertions_impl_any(&self) -> ActualAssertImplAnyToken {
+                    ActualAssertImplAnyToken
+                }
+            }
+            Wrapper::<EnumValueObject, _>(PhantomData, previous)
+        };
+        let previous = {
+            struct Wrapper<T, N>(PhantomData<T>, N);
+            impl<T, N> Deref for Wrapper<T, N> {
+                type Target = N;
+                fn deref(&self) -> &Self::Target {
+                    &self.1
+                }
+            }
+            impl<T: ::groom::DTO_Response, N> Wrapper<T, N> {
+                fn _static_assertions_impl_any(&self) -> ActualAssertImplAnyToken {
+                    ActualAssertImplAnyToken
+                }
+            }
+            Wrapper::<EnumValueObject, _>(PhantomData, previous)
+        };
+        assert_impl_any_token(previous._static_assertions_impl_any());
+    };
+    const _: fn() = || {
+        use ::static_assertions::_core::marker::PhantomData;
+        use ::static_assertions::_core::ops::Deref;
+        let previous = AssertImplAnyFallback;
+        struct AssertImplAnyFallback;
+        struct ActualAssertImplAnyToken;
+        trait AssertImplAnyToken {}
+        impl AssertImplAnyToken for ActualAssertImplAnyToken {}
+        fn assert_impl_any_token<T: AssertImplAnyToken>(_: T) {}
+        let previous = {
+            struct Wrapper<T, N>(PhantomData<T>, N);
+            impl<T, N> Deref for Wrapper<T, N> {
+                type Target = N;
+                fn deref(&self) -> &Self::Target {
+                    &self.1
+                }
+            }
+            impl<T: ::utoipa::PartialSchema, N> Wrapper<T, N> {
+                fn _static_assertions_impl_any(&self) -> ActualAssertImplAnyToken {
+                    ActualAssertImplAnyToken
+                }
+            }
+            Wrapper::<WrapperStruct, _>(PhantomData, previous)
+        };
+        let previous = {
+            struct Wrapper<T, N>(PhantomData<T>, N);
+            impl<T, N> Deref for Wrapper<T, N> {
+                type Target = N;
+                fn deref(&self) -> &Self::Target {
+                    &self.1
+                }
+            }
+            impl<T: ::groom::DTO_Response, N> Wrapper<T, N> {
+                fn _static_assertions_impl_any(&self) -> ActualAssertImplAnyToken {
+                    ActualAssertImplAnyToken
+                }
+            }
+            Wrapper::<WrapperStruct, _>(PhantomData, previous)
+        };
+        assert_impl_any_token(previous._static_assertions_impl_any());
+    };
+    pub struct Error;
+    #[doc(hidden)]
+    #[allow(
+        non_upper_case_globals,
+        unused_attributes,
+        unused_qualifications,
+        clippy::absolute_paths,
+    )]
+    const _: () = {
+        #[allow(unused_extern_crates, clippy::useless_attribute)]
+        extern crate serde as _serde;
+        #[automatically_derived]
+        impl _serde::Serialize for Error {
+            fn serialize<__S>(
+                &self,
+                __serializer: __S,
+            ) -> _serde::__private228::Result<__S::Ok, __S::Error>
+            where
+                __S: _serde::Serializer,
+            {
+                _serde::Serializer::serialize_unit_struct(__serializer, "Error")
+            }
+        }
+    };
+    impl ::groom::DTO for Error {}
+    impl ::groom::DTO_Response for Error {}
+    #[allow(non_upper_case_globals)]
+    const __GROOM_RESPONSE_SUPPORTED_MIMES_Error: &[::mime::Mime] = &[];
+    impl Error {
+        fn into_response_any_content_type(self) -> ::axum::response::Response {
+            (::axum::http::StatusCode::from_u16(404u16).unwrap()).into_response()
+        }
+    }
+    impl ::groom::response::Response for Error {
+        fn __groom_into_response(
+            self,
+            accept: Option<::accept_header::Accept>,
+        ) -> ::axum::response::Response {
+            self.into_response_any_content_type()
+        }
+        fn __openapi_modify_operation(
+            op: ::utoipa::openapi::path::OperationBuilder,
+            c: &mut ::groom::extract::ComponentsRegistry,
+        ) -> ::utoipa::openapi::path::OperationBuilder {
+            c.add_components::<Error>();
+            let op = op
+                .response(
+                    "404",
+                    ::utoipa::openapi::ResponseBuilder::new().description("").build(),
+                );
+            op
+        }
+        fn __groom_check_response_codes(
+            context: &String,
+            codes: &mut ::groom::runtime_checks::HTTPCodeSet,
+        ) {
+            codes
+                .ensure_distinct(
+                    ::alloc::__export::must_use({
+                        ::alloc::fmt::format(
+                            format_args!("{0} / struct `Error`", context),
+                        )
+                    }),
+                    404u16,
+                )
+        }
+    }
+    /// HTTP handler: GET /
+    async fn foo() -> Result<Resp, Error> {
+        Ok(
+            Resp::StructWithEnum(WrapperStruct {
+                v: EnumValueObject::NamedStructVariant {
+                    value: "hello, world",
+                },
+            }),
+        )
+    }
+    async fn __groom_wrapper_foo(
+        headers: ::axum::http::header::HeaderMap,
+    ) -> impl ::axum::response::IntoResponse {
+        let accept = ::groom::content_negotiation::parse_accept_header(&headers);
+        let result = foo().await;
+        result.__groom_into_response(accept)
+    }
+    fn __groom_runtime_checks() {
+        let context = "Groom runtime check of mod `wrapped_enum`".to_string();
+        let mut codes = ::groom::runtime_checks::HTTPCodeSet::new();
+        <Result<
+            Resp,
+            Error,
+        >>::__groom_check_response_codes(
+            &::alloc::__export::must_use({
+                ::alloc::fmt::format(format_args!("{0}: handler `foo`", context))
+            }),
+            &mut codes,
+        );
+    }
+    pub fn merge_into_router(other: ::axum::Router<()>) -> ::axum::Router<()> {
+        __groom_runtime_checks();
+        let this_router = ::axum::Router::new()
+            .route("/", ::axum::routing::get(__groom_wrapper_foo));
+        other.merge(this_router)
+    }
+    pub fn merge_into_openapi_builder(
+        other: ::utoipa::openapi::OpenApiBuilder,
+    ) -> ::utoipa::openapi::OpenApiBuilder {
+        let mut paths = ::utoipa::openapi::path::PathsBuilder::new();
+        let mut components = ::groom::extract::ComponentsRegistry::new();
+        paths = paths
+            .path(
+                "/",
+                {
+                    let mut op_builder = ::utoipa::openapi::path::OperationBuilder::new()
+                        .summary(None as Option<String>)
+                        .description(None as Option<String>);
+                    op_builder = <Result<
+                        Resp,
+                        Error,
+                    >>::__openapi_modify_operation(op_builder, &mut components);
+                    ::utoipa::openapi::path::PathItemBuilder::new()
+                        .operation(
+                            ::utoipa::openapi::path::HttpMethod::Get,
+                            op_builder.build(),
+                        )
+                        .build()
+                },
+            );
+        let c = components
+            .into_components(utoipa::openapi::ComponentsBuilder::new())
+            .build();
+        let mut b = other.build();
+        b.merge(
+            ::utoipa::openapi::OpenApiBuilder::new()
+                .components(Some(c))
+                .paths(paths)
+                .build(),
+        );
+        b.into()
+    }
+    const _: fn() = || {
+        fn assert_impl_all<T: ?Sized + ::groom::response::Response>() {}
+        assert_impl_all::<Result<Resp, Error>>();
     };
 }

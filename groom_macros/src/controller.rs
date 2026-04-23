@@ -67,6 +67,9 @@ struct ModuleASTFragments {
     /// code to set up paths in merge_into_openapi_builder()
     openapi_paths_setup: IndexMap<String, Vec<TokenStream>>,
 
+    /// code to set up components in merge_into_openapi_builder()
+    openapi_components_setup: IndexMap<String, Vec<TokenStream>>,
+
     /// compile-time checks of trait implementation (for better error messages)
     type_assertions: Vec<TokenStream>,
 
@@ -113,6 +116,7 @@ fn generate_impl(_args_t: TokenStream, args: ControllerArgs, input: TokenStream)
         module_items: Vec::with_capacity(items.len()),
         routes_setup: Vec::new(),
         openapi_paths_setup: IndexMap::new(),
+        openapi_components_setup: IndexMap::new(),
         type_assertions: Vec::new(),
         runtime_checks: Vec::new(),
     };
@@ -250,7 +254,7 @@ fn generate_handler_fragments(handler: &mut ItemFn, mod_fragments: &mut ModuleAS
                 });
 
                 fn_fragments.openapi_extractors_modifiers.push(quote! {
-                    op_builder = <#ty>::__openapi_modify_operation(op_builder);
+                    op_builder = <#ty>::__openapi_modify_operation(op_builder, &mut components);
                 });
 
                 let input_ident = format_ident!("input{}", fn_fragments.delegated_inputs.len());
@@ -285,7 +289,7 @@ fn generate_openapi_modify_op_ast(handler: &mut ItemFn, mod_fragments: &mut Modu
                 assert_impl_all!(#ty: ::groom::response::Response);
             });
 
-            quote! {op_builder = <#ty>::__openapi_modify_operation(op_builder);}
+            quote! {op_builder = <#ty>::__openapi_modify_operation(op_builder, &mut components);}
         },
     })
 }
@@ -465,11 +469,21 @@ fn generate_new_mod_ast(
 
             pub fn merge_into_openapi_builder(other: ::utoipa::openapi::OpenApiBuilder) -> ::utoipa::openapi::OpenApiBuilder {
                 let mut paths = ::utoipa::openapi::path::PathsBuilder::new();
+                let mut components = ::groom::extract::ComponentsRegistry::new();
 
                 #(#paths)*
 
                 let mut b = other.build();
-                b.merge(::utoipa::openapi::OpenApiBuilder::new().paths(paths).build());
+                
+                let c = b.components.as_ref().map(|v| v.clone()).unwrap_or(utoipa::openapi::Components::new());
+                let c = components.into_components(c);
+
+                b.merge(
+                    ::utoipa::openapi::OpenApiBuilder::new()
+                        .components(Some(c))
+                        .paths(paths)
+                        .build()
+                );
                 b.into()
             }
 

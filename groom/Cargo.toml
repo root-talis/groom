@@ -30,3 +30,10 @@ http = "1.0.0"
 mime = "0.3.17"
 serde = { version = "1.0.195", default-features = false }
 utoipa = "5.4.0"
+
+[dev-dependencies]
+utoipa = { version = "5.4.0", features = ["debug"] }
+
+[profile.dev]
+opt-level = 0
+debug = true

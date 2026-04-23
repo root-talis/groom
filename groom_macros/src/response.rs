@@ -293,7 +293,7 @@ fn make_openapi_fragments_for_type(ty: TokenStream, description_tk: TokenStream,
                     .schema({
                         match <String as utoipa::PartialSchema>::schema() {
                             ::utoipa::openapi::RefOr::T(s) => Some(s),
-                            ::utoipa::openapi::RefOr::Ref(_) => None,
+                            ::utoipa::openapi::RefOr::Ref(_) => panic!("String schema for plain_text is ref"),
                         }
                     })
                     //.example(Some("Hello, world!".into()))
@@ -309,7 +309,7 @@ fn make_openapi_fragments_for_type(ty: TokenStream, description_tk: TokenStream,
                     .schema(
                         match <String as utoipa::PartialSchema>::schema() {
                             ::utoipa::openapi::RefOr::T(s) => Some(s),
-                            ::utoipa::openapi::RefOr::Ref(_) => None,
+                            ::utoipa::openapi::RefOr::Ref(_) => panic!("String schema for html is ref"),
                         }
                     )
                     //.example(Some("<h1>Hello, world!</h1>".into()))
@@ -318,13 +318,14 @@ fn make_openapi_fragments_for_type(ty: TokenStream, description_tk: TokenStream,
         });
     }
     if content_types.json {
+        let type_name = ty.to_string();
         response_impls.push(quote! {
             .content(
                 ::mime::APPLICATION_JSON.as_ref(),
                 ::utoipa::openapi::ContentBuilder::new()
                     .schema(match #ty::schema() {
                         ::utoipa::openapi::RefOr::T(s) => Some(s),
-                        ::utoipa::openapi::RefOr::Ref(_) => None,
+                        ::utoipa::openapi::RefOr::Ref(_) => panic!("Type `{}` schema for application/json is ref", #type_name),
                     })
                     .build()
             )
@@ -382,9 +383,14 @@ fn make_new_ast(fragments: NewAstFragments)
             impl ::groom::response::Response for #item_ident {
                 #groom_into_response_function
 
-                fn __openapi_modify_operation(op: ::utoipa::openapi::path::OperationBuilder)
+                fn __openapi_modify_operation(
+                    op: ::utoipa::openapi::path::OperationBuilder,
+                    c: &mut ::groom::extract::ComponentsRegistry
+                )
                     -> ::utoipa::openapi::path::OperationBuilder
                 {
+                    c.add_components::<#item_ident>();
+
                     #(#openapi_impls)*
                     op
                 }
@@ -610,7 +616,9 @@ mod enum_impl {
                 &mut fragments,
             );
 
-            variants_ts.push(quote! { #variant, });
+            variants_ts.push(quote! { 
+                #variant,
+            });
 
             let new_context_format = format!("{{context}} / variant `{}`", &variant.ident);
             response_codes_checks.push(quote!{
@@ -622,6 +630,7 @@ mod enum_impl {
 
         let vis = &enum_impl.vis;
         fragments.new_item_ast = quote! {
+            #[derive(::utoipa::ToSchema)]
             #vis enum #ident {
                 #(#variants_ts)*
             }

@@ -30,9 +30,29 @@ mod controller {
         }
     }
 
+    pub mod submod {
+        use groom_macros::DTO;
+
+        #[DTO(response)]
+        pub enum EnumValueObject {
+            UnitVariant,
+            UnnamedStructVariant(String),
+            NamedStructVariant {
+                value: String
+            }
+        }
+    }
+
     #[DTO(response)]
     pub struct WrapperStruct {
-        pub v: EnumValueObject
+        pub v: EnumValueObject,
+    }
+
+
+    #[DTO(response)]
+    pub struct WrapperStructWithConflict {
+        pub v: EnumValueObject,
+        pub v2: submod::EnumValueObject,
     }
 
     // todo: other formats
@@ -43,10 +63,13 @@ mod controller {
 
         #[Response(code=202)]
         StructWithEnum(WrapperStruct),
+
+        #[Response(code=203)]
+        StructWithEnumWithConflict(WrapperStructWithConflict),
     }
 
     // todo: enums as request values
-    
+
     // todo: newtypes as response values
     // todo: newtypes as request values
 
@@ -79,6 +102,14 @@ mod controller {
     #[Route(method = "get", path = "/wrapped/named-struct")]
     async fn resp_wrapped_named_struct() -> Resp {
         Resp::StructWithEnum(WrapperStruct{ v: EnumValueObject::NamedStructVariant{value: "foo".into()} })
+    }
+
+    #[Route(method = "get", path = "/wrapped/conflict/named-struct")]
+    async fn resp_wrapped_named_struct_with_conflict() -> Resp {
+        Resp::StructWithEnumWithConflict(WrapperStructWithConflict{
+            v: EnumValueObject::NamedStructVariant{ value: "foo".into() },
+            v2: submod::EnumValueObject::NamedStructVariant { value: "bar".into() }
+        })
     }
 }
 
@@ -131,9 +162,116 @@ pub async fn test_wrapped_responses() {
 /// Tests that openapi definition is correctly generated
 #[tokio::test]
 pub async fn test_openapi() {
-    assert_openapi_doc(
-        |b| controller::merge_into_openapi_builder(b),
-        json!({
+   assert_openapi_doc(
+       |b| controller::merge_into_openapi_builder(b),
+       json!({
+            "components": {
+                "schemas": {
+                    "EnumValueObject": {
+                        "oneOf": [
+                            {
+                                "enum": [
+                                    "UnitVariant",
+                                ],
+                                "type": "string",
+                            },
+                            {
+                                "properties": {
+                                    "UnnamedStructVariant": {
+                                        "type": "string",
+                                    },
+                                },
+                                "required": [
+                                    "UnnamedStructVariant",
+                                ],
+                                "type": "object",
+                            },
+                            {
+                                "properties": {
+                                    "NamedStructVariant": {
+                                        "properties": {
+                                            "value": {
+                                                "type": ("string"),
+                                            },
+                                        },
+                                        "required": [
+                                            ("value"),
+                                        ],
+                                        "type": ("object"),
+                                    },
+                                },
+                                "required": [
+                                    ("NamedStructVariant"),
+                                ],
+                                "type": ("object"),
+                            },
+                        ],
+                    },
+                    "Resp": {
+                        "oneOf": [
+                            {
+                                "properties": {
+                                    "Enum": {
+                                        "$ref": ("#/components/schemas/EnumValueObject"),
+                                    },
+                                },
+                                "required": [
+                                    ("Enum"),
+                                ],
+                                "type": ("object"),
+                            },
+                            {
+                                "properties": {
+                                    "StructWithEnum": {
+                                        "$ref": ("#/components/schemas/WrapperStruct"),
+                                    },
+                                },
+                                "required": [
+                                    ("StructWithEnum"),
+                                ],
+                                "type": ("object"),
+                            },
+                            {
+                                "properties": {
+                                    "StructWithEnumWithConflict": {
+                                        "$ref": ("#/components/schemas/WrapperStructWithConflict"),
+                                    },
+                                },
+                                "required": [
+                                    ("StructWithEnumWithConflict"),
+                                ],
+                                "type": ("object"),
+                            },
+                        ],
+                    },
+                    "WrapperStruct": {
+                        "properties": {
+                            "v": {
+                                "$ref": ("#/components/schemas/EnumValueObject"),
+                            },
+                        },
+                        "required": [
+                            ("v"),
+                        ],
+                        "type": ("object"),
+                    },
+                    "WrapperStructWithConflict": {
+                        "properties": {
+                            "v": {
+                                "$ref": ("#/components/schemas/EnumValueObject"),
+                            },
+                            "v2": {
+                                "$ref": ("#/components/schemas/EnumValueObject"),
+                            },
+                        },
+                        "required": [
+                            ("v"),
+                            ("v2"),
+                        ],
+                        "type": ("object"),
+                    },
+                },
+            },
             "info": {
                 "contact": {
                     "email": ("mail@example.com"),
@@ -148,135 +286,658 @@ pub async fn test_openapi() {
             },
             "openapi": ("3.1.0"),
             "paths": {
-                "/named-struct": {
+                "/enum/named-struct": {
                     "get": {
                         "responses": {
-                            "418": {
+                            "200": {
                                 "content": {
                                     "application/json": {
                                         "schema": {
-                                            "description": ("Named struct as a response"),
-                                            "properties": {
-                                                "is_alive": {
-                                                    "type": ("boolean"),
+                                            "oneOf": [
+                                                {
+                                                    "enum": [
+                                                        ("UnitVariant"),
+                                                    ],
+                                                    "type": ("string"),
                                                 },
-                                            },
-                                            "required": [
-                                                ("is_alive"),
+                                                {
+                                                    "properties": {
+                                                        "UnnamedStructVariant": {
+                                                            "type": ("string"),
+                                                        },
+                                                    },
+                                                    "required": [
+                                                        ("UnnamedStructVariant"),
+                                                    ],
+                                                    "type": ("object"),
+                                                },
+                                                {
+                                                    "properties": {
+                                                        "NamedStructVariant": {
+                                                            "properties": {
+                                                                "value": {
+                                                                    "type": ("string"),
+                                                                },
+                                                            },
+                                                            "required": [
+                                                                ("value"),
+                                                            ],
+                                                            "type": ("object"),
+                                                        },
+                                                    },
+                                                    "required": [
+                                                        ("NamedStructVariant"),
+                                                    ],
+                                                    "type": ("object"),
+                                                },
                                             ],
-                                            "type": ("object"),
-                                        },
-                                    },
-                                    "text/html; charset=utf-8": {
-                                        "schema": {
-                                            "type": "string",
-                                        },
-                                    },
-                                    "text/plain; charset=utf-8": {
-                                        "schema": {
-                                            "type": "string",
                                         },
                                     },
                                 },
-                                "description": ("Named struct as a response"),
+                                "description": (""),
                             },
-                        },
-                    },
-                },
-                "/named-struct-only-plaintext": {
-                    "get": {
-                        "responses": {
-                            "418": {
-                                "content": {
-                                    "text/plain; charset=utf-8": {
-                                        "schema": {
-                                            "type": ("string"),
-                                        },
-                                    },
-                                },
-                                "description": ("Named struct as a plaintext-only response"),
-                            },
-                        },
-                    },
-                },
-                "/unit-struct": {
-                    "get": {
-                        "responses": {
-                            "418": {
-                                "description": ("Unit struct"),
-                            },
-                        },
-                    },
-                },
-                "/unnamed-struct": {
-                    "get": {
-                        "responses": {
-                            "418": {
+                            "202": {
                                 "content": {
                                     "application/json": {
                                         "schema": {
-                                            "type": "string",
-                                        },
-                                    },
-                                    "text/html; charset=utf-8": {
-                                        "schema": {
-                                            "type": "string",
-                                        },
-                                    },
-                                    "text/plain; charset=utf-8": {
-                                        "schema": {
-                                            "type": "string",
-                                        },
-                                    },
-                                },
-                                "description": ("Unnamed struct as a response"),
-                            },
-                        },
-                    },
-                },
-                "/unnamed-struct-dto": {
-                    "get": {
-                        "responses": {
-                            "418": {
-                                "content": {
-                                    "application/json": {
-                                        "schema": {
-                                            "description": ("Unnamed struct DTO"),
                                             "properties": {
                                                 "v": {
-                                                    "type": "string",
+                                                    "$ref": ("#/components/schemas/EnumValueObject"),
                                                 },
                                             },
                                             "required": [
-                                                "v",
+                                                ("v"),
                                             ],
                                             "type": ("object"),
                                         },
                                     },
                                 },
-                                "description": ("Unnamed struct DTO result"),
+                                "description": (""),
+                            },
+                            "203": {
+                                "content": {
+                                    "application/json": {
+                                        "schema": {
+                                            "properties": {
+                                                "v": {
+                                                    "$ref": ("#/components/schemas/EnumValueObject"),
+                                                },
+                                                "v2": {
+                                                    "$ref": ("#/components/schemas/EnumValueObject"),
+                                                },
+                                            },
+                                            "required": [
+                                                ("v"),
+                                                ("v2"),
+                                            ],
+                                            "type": ("object"),
+                                        },
+                                    },
+                                },
+                                "description": (""),
                             },
                         },
                     },
                 },
-                "/unnamed-struct-only-plaintext": {
+                "/enum/unit": {
                     "get": {
                         "responses": {
-                            "418": {
+                            "200": {
                                 "content": {
-                                    "text/plain; charset=utf-8": {
+                                    "application/json": {
                                         "schema": {
-                                            "type": ("string"),
+                                            "oneOf": [
+                                                {
+                                                    "enum": [
+                                                        ("UnitVariant"),
+                                                    ],
+                                                    "type": ("string"),
+                                                },
+                                                {
+                                                    "properties": {
+                                                        "UnnamedStructVariant": {
+                                                            "type": ("string"),
+                                                        },
+                                                    },
+                                                    "required": [
+                                                        ("UnnamedStructVariant"),
+                                                    ],
+                                                    "type": ("object"),
+                                                },
+                                                {
+                                                    "properties": {
+                                                        "NamedStructVariant": {
+                                                            "properties": {
+                                                                "value": {
+                                                                    "type": ("string"),
+                                                                },
+                                                            },
+                                                            "required": [
+                                                                ("value"),
+                                                            ],
+                                                            "type": ("object"),
+                                                        },
+                                                    },
+                                                    "required": [
+                                                        ("NamedStructVariant"),
+                                                    ],
+                                                    "type": ("object"),
+                                                },
+                                            ],
                                         },
                                     },
                                 },
-                                "description": ("Unnamed struct as a plaintext-only response"),
+                                "description": (""),
+                            },
+                            "202": {
+                                "content": {
+                                    "application/json": {
+                                        "schema": {
+                                            "properties": {
+                                                "v": {
+                                                    "$ref": ("#/components/schemas/EnumValueObject"),
+                                                },
+                                            },
+                                            "required": [
+                                                ("v"),
+                                            ],
+                                            "type": ("object"),
+                                        },
+                                    },
+                                },
+                                "description": (""),
+                            },
+                            "203": {
+                                "content": {
+                                    "application/json": {
+                                        "schema": {
+                                            "properties": {
+                                                "v": {
+                                                    "$ref": ("#/components/schemas/EnumValueObject"),
+                                                },
+                                                "v2": {
+                                                    "$ref": ("#/components/schemas/EnumValueObject"),
+                                                },
+                                            },
+                                            "required": [
+                                                ("v"),
+                                                ("v2"),
+                                            ],
+                                            "type": ("object"),
+                                        },
+                                    },
+                                },
+                                "description": (""),
+                            },
+                        },
+                    },
+                },
+                "/enum/unnamed-struct": {
+                    "get": {
+                        "responses": {
+                            "200": {
+                                "content": {
+                                    "application/json": {
+                                        "schema": {
+                                            "oneOf": [
+                                                {
+                                                    "enum": [
+                                                        ("UnitVariant"),
+                                                    ],
+                                                    "type": ("string"),
+                                                },
+                                                {
+                                                    "properties": {
+                                                        "UnnamedStructVariant": {
+                                                            "type": ("string"),
+                                                        },
+                                                    },
+                                                    "required": [
+                                                        ("UnnamedStructVariant"),
+                                                    ],
+                                                    "type": ("object"),
+                                                },
+                                                {
+                                                    "properties": {
+                                                        "NamedStructVariant": {
+                                                            "properties": {
+                                                                "value": {
+                                                                    "type": ("string"),
+                                                                },
+                                                            },
+                                                            "required": [
+                                                                ("value"),
+                                                            ],
+                                                            "type": ("object"),
+                                                        },
+                                                    },
+                                                    "required": [
+                                                        ("NamedStructVariant"),
+                                                    ],
+                                                    "type": ("object"),
+                                                },
+                                            ],
+                                        },
+                                    },
+                                },
+                                "description": (""),
+                            },
+                            "202": {
+                                "content": {
+                                    "application/json": {
+                                        "schema": {
+                                            "properties": {
+                                                "v": {
+                                                    "$ref": ("#/components/schemas/EnumValueObject"),
+                                                },
+                                            },
+                                            "required": [
+                                                ("v"),
+                                            ],
+                                            "type": ("object"),
+                                        },
+                                    },
+                                },
+                                "description": (""),
+                            },
+                            "203": {
+                                "content": {
+                                    "application/json": {
+                                        "schema": {
+                                            "properties": {
+                                                "v": {
+                                                    "$ref": ("#/components/schemas/EnumValueObject"),
+                                                },
+                                                "v2": {
+                                                    "$ref": ("#/components/schemas/EnumValueObject"),
+                                                },
+                                            },
+                                            "required": [
+                                                ("v"),
+                                                ("v2"),
+                                            ],
+                                            "type": ("object"),
+                                        },
+                                    },
+                                },
+                                "description": (""),
+                            },
+                        },
+                    },
+                },
+                "/wrapped/conflict/named-struct": {
+                    "get": {
+                        "responses": {
+                            "200": {
+                                "content": {
+                                    "application/json": {
+                                        "schema": {
+                                            "oneOf": [
+                                                {
+                                                    "enum": [
+                                                        ("UnitVariant"),
+                                                    ],
+                                                    "type": ("string"),
+                                                },
+                                                {
+                                                    "properties": {
+                                                        "UnnamedStructVariant": {
+                                                            "type": ("string"),
+                                                        },
+                                                    },
+                                                    "required": [
+                                                        ("UnnamedStructVariant"),
+                                                    ],
+                                                    "type": ("object"),
+                                                },
+                                                {
+                                                    "properties": {
+                                                        "NamedStructVariant": {
+                                                            "properties": {
+                                                                "value": {
+                                                                    "type": ("string"),
+                                                                },
+                                                            },
+                                                            "required": [
+                                                                ("value"),
+                                                            ],
+                                                            "type": ("object"),
+                                                        },
+                                                    },
+                                                    "required": [
+                                                        ("NamedStructVariant"),
+                                                    ],
+                                                    "type": ("object"),
+                                                },
+                                            ],
+                                        },
+                                    },
+                                },
+                                "description": (""),
+                            },
+                            "202": {
+                                "content": {
+                                    "application/json": {
+                                        "schema": {
+                                            "properties": {
+                                                "v": {
+                                                    "$ref": ("#/components/schemas/EnumValueObject"),
+                                                },
+                                            },
+                                            "required": [
+                                                ("v"),
+                                            ],
+                                            "type": ("object"),
+                                        },
+                                    },
+                                },
+                                "description": (""),
+                            },
+                            "203": {
+                                "content": {
+                                    "application/json": {
+                                        "schema": {
+                                            "properties": {
+                                                "v": {
+                                                    "$ref": ("#/components/schemas/EnumValueObject"),
+                                                },
+                                                "v2": {
+                                                    "$ref": ("#/components/schemas/EnumValueObject"),
+                                                },
+                                            },
+                                            "required": [
+                                                ("v"),
+                                                ("v2"),
+                                            ],
+                                            "type": ("object"),
+                                        },
+                                    },
+                                },
+                                "description": (""),
+                            },
+                        },
+                    },
+                },
+                "/wrapped/named-struct": {
+                    "get": {
+                        "responses": {
+                            "200": {
+                                "content": {
+                                    "application/json": {
+                                        "schema": {
+                                            "oneOf": [
+                                                {
+                                                    "enum": [
+                                                        ("UnitVariant"),
+                                                    ],
+                                                    "type": ("string"),
+                                                },
+                                                {
+                                                    "properties": {
+                                                        "UnnamedStructVariant": {
+                                                            "type": ("string"),
+                                                        },
+                                                    },
+                                                    "required": [
+                                                        ("UnnamedStructVariant"),
+                                                    ],
+                                                    "type": ("object"),
+                                                },
+                                                {
+                                                    "properties": {
+                                                        "NamedStructVariant": {
+                                                            "properties": {
+                                                                "value": {
+                                                                    "type": ("string"),
+                                                                },
+                                                            },
+                                                            "required": [
+                                                                ("value"),
+                                                            ],
+                                                            "type": ("object"),
+                                                        },
+                                                    },
+                                                    "required": [
+                                                        ("NamedStructVariant"),
+                                                    ],
+                                                    "type": ("object"),
+                                                },
+                                            ],
+                                        },
+                                    },
+                                },
+                                "description": (""),
+                            },
+                            "202": {
+                                "content": {
+                                    "application/json": {
+                                        "schema": {
+                                            "properties": {
+                                                "v": {
+                                                    "$ref": ("#/components/schemas/EnumValueObject"),
+                                                },
+                                            },
+                                            "required": [
+                                                ("v"),
+                                            ],
+                                            "type": ("object"),
+                                        },
+                                    },
+                                },
+                                "description": (""),
+                            },
+                            "203": {
+                                "content": {
+                                    "application/json": {
+                                        "schema": {
+                                            "properties": {
+                                                "v": {
+                                                    "$ref": ("#/components/schemas/EnumValueObject"),
+                                                },
+                                                "v2": {
+                                                    "$ref": ("#/components/schemas/EnumValueObject"),
+                                                },
+                                            },
+                                            "required": [
+                                                ("v"),
+                                                ("v2"),
+                                            ],
+                                            "type": ("object"),
+                                        },
+                                    },
+                                },
+                                "description": (""),
+                            },
+                        },
+                    },
+                },
+                "/wrapped/unit": {
+                    "get": {
+                        "responses": {
+                            "200": {
+                                "content": {
+                                    "application/json": {
+                                        "schema": {
+                                            "oneOf": [
+                                                {
+                                                    "enum": [
+                                                        ("UnitVariant"),
+                                                    ],
+                                                    "type": ("string"),
+                                                },
+                                                {
+                                                    "properties": {
+                                                        "UnnamedStructVariant": {
+                                                            "type": ("string"),
+                                                        },
+                                                    },
+                                                    "required": [
+                                                        ("UnnamedStructVariant"),
+                                                    ],
+                                                    "type": ("object"),
+                                                },
+                                                {
+                                                    "properties": {
+                                                        "NamedStructVariant": {
+                                                            "properties": {
+                                                                "value": {
+                                                                    "type": ("string"),
+                                                                },
+                                                            },
+                                                            "required": [
+                                                                ("value"),
+                                                            ],
+                                                            "type": ("object"),
+                                                        },
+                                                    },
+                                                    "required": [
+                                                        ("NamedStructVariant"),
+                                                    ],
+                                                    "type": ("object"),
+                                                },
+                                            ],
+                                        },
+                                    },
+                                },
+                                "description": (""),
+                            },
+                            "202": {
+                                "content": {
+                                    "application/json": {
+                                        "schema": {
+                                            "properties": {
+                                                "v": {
+                                                    "$ref": ("#/components/schemas/EnumValueObject"),
+                                                },
+                                            },
+                                            "required": [
+                                                ("v"),
+                                            ],
+                                            "type": ("object"),
+                                        },
+                                    },
+                                },
+                                "description": (""),
+                            },
+                            "203": {
+                                "content": {
+                                    "application/json": {
+                                        "schema": {
+                                            "properties": {
+                                                "v": {
+                                                    "$ref": ("#/components/schemas/EnumValueObject"),
+                                                },
+                                                "v2": {
+                                                    "$ref": ("#/components/schemas/EnumValueObject"),
+                                                },
+                                            },
+                                            "required": [
+                                                ("v"),
+                                                ("v2"),
+                                            ],
+                                            "type": ("object"),
+                                        },
+                                    },
+                                },
+                                "description": (""),
+                            },
+                        },
+                    },
+                },
+                "/wrapped/unnamed-struct": {
+                    "get": {
+                        "responses": {
+                            "200": {
+                                "content": {
+                                    "application/json": {
+                                        "schema": {
+                                            "oneOf": [
+                                                {
+                                                    "enum": [
+                                                        ("UnitVariant"),
+                                                    ],
+                                                    "type": ("string"),
+                                                },
+                                                {
+                                                    "properties": {
+                                                        "UnnamedStructVariant": {
+                                                            "type": ("string"),
+                                                        },
+                                                    },
+                                                    "required": [
+                                                        ("UnnamedStructVariant"),
+                                                    ],
+                                                    "type": ("object"),
+                                                },
+                                                {
+                                                    "properties": {
+                                                        "NamedStructVariant": {
+                                                            "properties": {
+                                                                "value": {
+                                                                    "type": ("string"),
+                                                                },
+                                                            },
+                                                            "required": [
+                                                                ("value"),
+                                                            ],
+                                                            "type": ("object"),
+                                                        },
+                                                    },
+                                                    "required": [
+                                                        ("NamedStructVariant"),
+                                                    ],
+                                                    "type": ("object"),
+                                                },
+                                            ],
+                                        },
+                                    },
+                                },
+                                "description": (""),
+                            },
+                            "202": {
+                                "content": {
+                                    "application/json": {
+                                        "schema": {
+                                            "properties": {
+                                                "v": {
+                                                    "$ref": ("#/components/schemas/EnumValueObject"),
+                                                },
+                                            },
+                                            "required": [
+                                                ("v"),
+                                            ],
+                                            "type": ("object"),
+                                        },
+                                    },
+                                },
+                                "description": (""),
+                            },
+                            "203": {
+                                "content": {
+                                    "application/json": {
+                                        "schema": {
+                                            "properties": {
+                                                "v": {
+                                                    "$ref": ("#/components/schemas/EnumValueObject"),
+                                                },
+                                                "v2": {
+                                                    "$ref": ("#/components/schemas/EnumValueObject"),
+                                                },
+                                            },
+                                            "required": [
+                                                ("v"),
+                                                ("v2"),
+                                            ],
+                                            "type": ("object"),
+                                        },
+                                    },
+                                },
+                                "description": (""),
                             },
                         },
                     },
                 },
             },
-            "components": {},
         })
     );
 }

@@ -167,3 +167,46 @@ mod result_struct_enum {
         Err(Error::NoAccess("ip blocked".into()))
     }
 }
+
+
+#[Controller]
+mod wrapped_enum {
+    #[DTO(response)]
+    pub enum EnumValueObject {
+        UnitVariant,
+        UnnamedStructVariant(String),
+        NamedStructVariant {
+            value: String
+        }
+    }
+
+    #[DTO(response)]
+    pub struct WrapperStruct {
+        pub v: EnumValueObject
+    }
+
+    #[Response(format(json))]
+    pub enum Resp {
+        #[Response(code=200)]
+        Enum(EnumValueObject),
+
+        #[Response(code=202)]
+        StructWithEnum(WrapperStruct),
+    }
+
+    #[Response(code = 404)]
+    pub struct Error;
+
+    #[Route(method = "get", path = "/")]
+    async fn foo() -> Result<Resp, Error> {
+        Ok(
+            Resp::StructWithEnum(
+                WrapperStruct {
+                    v: EnumValueObject::NamedStructVariant {
+                        value: "hello, world"
+                    }
+                }
+            )
+        )
+    }
+}

@@ -6,11 +6,11 @@
 use utoipa::openapi::{ContentBuilder, KnownFormat, ObjectBuilder, Required, SchemaFormat, schema::{SchemaType, Type}};
 use utoipa::openapi::path::{OperationBuilder};
 use utoipa::openapi::request_body::RequestBodyBuilder;
-use crate::extract::GroomExtractor;
+use crate::extract::{ComponentsRegistry, GroomExtractor};
 use utoipa::PartialSchema;
 
 impl GroomExtractor for String {
-    fn __openapi_modify_operation(op: OperationBuilder) -> OperationBuilder {
+    fn __openapi_modify_operation(op: OperationBuilder, _c: &mut ComponentsRegistry) -> OperationBuilder {
         op.request_body(Some(
             RequestBodyBuilder::new()
                 .content(
@@ -26,7 +26,7 @@ impl GroomExtractor for String {
 }
 
 impl GroomExtractor for axum::body::Bytes {
-    fn __openapi_modify_operation(op: OperationBuilder) -> OperationBuilder {
+    fn __openapi_modify_operation(op: OperationBuilder, _c: &mut ComponentsRegistry) -> OperationBuilder {
         op.request_body(Some(
             RequestBodyBuilder::new()
                 .content(
@@ -52,7 +52,7 @@ impl GroomExtractor for axum::body::Bytes {
 macro_rules! groom_empty_extractor {
     ($ty:ty) => {
         impl ::groom::extract::GroomExtractor for $ty {
-            fn __openapi_modify_operation(op: OperationBuilder) -> OperationBuilder {
+            fn __openapi_modify_operation(op: OperationBuilder, _c: &mut ComponentsRegistry) -> OperationBuilder {
                 op
             }
         }
@@ -66,7 +66,7 @@ macro_rules! groom_empty_extractor {
 macro_rules! _groom_empty_extractor_crate {
     ($ty:ty) => {
         impl GroomExtractor for $ty {
-            fn __openapi_modify_operation(op: OperationBuilder) -> OperationBuilder {
+            fn __openapi_modify_operation(op: OperationBuilder, _c: &mut ComponentsRegistry) -> OperationBuilder {
                 op
             }
         }
@@ -76,15 +76,14 @@ macro_rules! _groom_empty_extractor_crate {
 _groom_empty_extractor_crate!(axum::extract::Request);
 _groom_empty_extractor_crate!(axum::http::HeaderMap);
 
-
 impl<T> crate::extract::GroomExtractor for axum::extract::Extension<T> {
-    fn __openapi_modify_operation(op: OperationBuilder) -> OperationBuilder {
+    fn __openapi_modify_operation(op: OperationBuilder, _c: &mut ComponentsRegistry) -> OperationBuilder {
         op
     }
 }
 
 impl<T> crate::extract::GroomExtractor for axum::extract::State<T> {
-    fn __openapi_modify_operation(op: OperationBuilder) -> OperationBuilder {
+    fn __openapi_modify_operation(op: OperationBuilder, _c: &mut ComponentsRegistry) -> OperationBuilder {
         op
     }
 }

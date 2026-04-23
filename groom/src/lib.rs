@@ -2,7 +2,6 @@ use utoipa::ToSchema;
 
 pub mod extract;
 pub mod response;
-pub mod schema;
 pub mod content_negotiation;
 
 pub mod runtime_checks;
@@ -10,7 +9,7 @@ pub mod runtime_checks;
 /// Indicates that type is annotated with `#[DTO(...)]`.
 /// 
 /// Do not implement this manually.
-pub trait DTO: ToSchema {}
+pub trait DTO: ToSchema + 'static {}
 
 /// Indicates that type is annotated with `#[DTO(request)]`.
 ///

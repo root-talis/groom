@@ -157,7 +157,7 @@ mod struct_impl {
                 Ok(DtoFragments {
                     schema: quote! { match #ident::schema() {
                         ::utoipa::openapi::RefOr::T(s) => Some(s),
-                        ::utoipa::openapi::RefOr::Ref(_) => None,
+                        ::utoipa::openapi::RefOr::Ref(_) => panic!("dto schema is ref"),
                     }},
                     extract_ty: quote! { #ident},
                     pack_dto: quote! { dto },
@@ -189,7 +189,7 @@ mod struct_impl {
                 Ok(DtoFragments {
                     schema: quote! { match #ty::schema() {
                         ::utoipa::openapi::RefOr::T(s) => Some(s),
-                        ::utoipa::openapi::RefOr::Ref(_) => None,
+                        ::utoipa::openapi::RefOr::Ref(_) => panic!("dto schema is ref"),
                     }},
                     extract_ty: quote! { #ty },
                     pack_dto: quote! { #ident(dto) },
@@ -217,7 +217,12 @@ mod struct_impl {
             #item_struct
 
             impl ::groom::extract::GroomExtractor for #ident {
-                fn __openapi_modify_operation(op: ::utoipa::openapi::path::OperationBuilder) -> ::utoipa::openapi::path::OperationBuilder {
+                fn __openapi_modify_operation(
+                    op: ::utoipa::openapi::path::OperationBuilder,
+                    c: &mut ::groom::extract::ComponentsRegistry
+                ) -> ::utoipa::openapi::path::OperationBuilder {
+                    c.add_components::<#ident>();
+
                     op.request_body(Some(
                         ::utoipa::openapi::request_body::RequestBodyBuilder::new()
                             #(#openapi_generators)*
