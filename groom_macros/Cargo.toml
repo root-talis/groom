@@ -37,4 +37,5 @@ derive_more = { version = "2.1.1", default-features = false, features = ["deref"
 [dev-dependencies]
 macrotest = "1.0.9"
 mime = "0.3.17"
+pretty_assertions = "1.4.1"
 serde = { version = "1.0.195", features = ["derive"] }

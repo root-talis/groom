@@ -1,6 +1,6 @@
 use std::{any::TypeId, collections::{BTreeSet, HashMap, HashSet, hash_map}};
 
-use utoipa::{ToSchema, openapi::{Components, ComponentsBuilder, OpenApiBuilder, RefOr, Schema}};
+use utoipa::{ToSchema, openapi::{Components, ComponentsBuilder, ContentBuilder, OpenApiBuilder, RefOr, Schema}};
 
 #[derive(Clone, PartialEq)]
 pub struct ComponentEntry {
@@ -12,23 +12,6 @@ pub struct ComponentEntry {
 pub struct ComponentsRegistry {
     components: HashMap<String, ComponentEntry>,
     seen_types: HashSet<TypeId>,
-}
-
-fn foo() {
-    let b = OpenApiBuilder::new();
-    let components = ComponentsRegistry::new();
-
-    let mut b = b.build();
-                
-    let c = b.components.as_ref().map(|v| v.clone()).unwrap_or(utoipa::openapi::Components::new());
-    let c = components.into_components(c);
-
-    b.merge(
-        ::utoipa::openapi::OpenApiBuilder::new()
-            .components(Some(c))
-            .build()
-    );
-    let b: ::utoipa::openapi::OpenApiBuilder = b.into();
 }
 
 impl ComponentsRegistry {
@@ -56,11 +39,12 @@ impl ComponentsRegistry {
     fn add_component(&mut self, name: String, schema: RefOr<Schema>) {
         let schema = match schema {
             RefOr::T(s) => s,
-            RefOr::Ref(r) => panic!(
-                "ComponentsRegistry::add_component: schema for `{}` is a ref to `{}`, expected to be a schema!",
-                name,
-                r.ref_location
-            ),
+            RefOr::Ref(r) => return,
+                // panic!(
+                //     "ComponentsRegistry::add_component: schema for `{}` is a ref to `{}`, expected to be a schema!",
+                //     name,
+                //     r.ref_location
+                // ),
         };
 
         match self.components.entry(name.clone()) {
@@ -218,6 +202,35 @@ mod tests {
                 let c = ComponentsBuilder::new().build();
                 let c = reg1.into_components(c);
                 let c = reg2.into_components(c);
+            }
+        }
+
+        mod identical_components {
+            use utoipa::openapi::ComponentsBuilder;
+
+            use crate::extract::ComponentsRegistry;
+
+            #[derive(utoipa::ToSchema)]
+            pub struct Struct1 {
+                pub v: i32,
+            }
+            
+            mod submod {
+                #[derive(utoipa::ToSchema)]
+                pub struct Struct1 {
+                    pub v: i32,
+                }
+                
+            }
+
+            #[test]
+            fn allow_identical_components() {
+                let mut reg = ComponentsRegistry::new();
+                reg.add_components::<Struct1>();
+                reg.add_components::<submod::Struct1>();
+
+                let c = ComponentsBuilder::new().build();
+                let c = reg.into_components(c);
             }
         }
     }

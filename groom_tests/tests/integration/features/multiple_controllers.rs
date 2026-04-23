@@ -262,13 +262,18 @@ mod disallow_overlaps {
 mod allow_shared_components {
     use groom_macros::{Controller, DTO};
     use serde_json::json;
-    use utoipa::openapi::OpenApiBuilder;
+    use utoipa::{PartialSchema, openapi::OpenApiBuilder};
 
     use crate::integration::test_utils::assert_openapi_doc;
 
     #[DTO(response)]
     pub struct RespData {
         pub v: i32,
+    }
+
+    #[DTO(response)]
+    pub struct RespData2 {
+        pub v2: i32,
     }
 
     #[Controller()]
@@ -279,6 +284,8 @@ mod allow_shared_components {
             response::Response
         };
         use groom_macros::Response;
+        use crate::integration::features::multiple_controllers::allow_shared_components::RespData2;
+
         use super::RespData;
 
         use utoipa::PartialSchema;
@@ -287,6 +294,9 @@ mod allow_shared_components {
         pub enum HelloResult {
             #[Response()]
             Ok(RespData),
+
+            #[Response(code=202)]
+            Ok2(RespData2),
         }
 
         #[Route(method = "get", path = "/1/hello")]
@@ -305,7 +315,7 @@ mod allow_shared_components {
         use groom_macros::Response;
         use super::RespData;
 
-        use utoipa::PartialSchema;
+        //use utoipa::PartialSchema;
 
 
         #[Response(format(json))]
@@ -331,22 +341,6 @@ mod allow_shared_components {
             json!( {
                 "components": {
                     "schemas": {
-                        "HelloResult": {
-                            // incorrect!!!
-                            "oneOf": [
-                                {
-                                    "properties": {
-                                        "Ok": {
-                                            "$ref": ("#/components/schemas/RespData"),
-                                        },
-                                    },
-                                    "required": [
-                                        ("Ok"),
-                                    ],
-                                    "type": ("object"),
-                                },
-                            ],
-                        },
                         "RespData": {
                             "properties": {
                                 "v": {
@@ -356,6 +350,18 @@ mod allow_shared_components {
                             },
                             "required": [
                                 ("v"),
+                            ],
+                            "type": ("object"),
+                        },
+                        "RespData2": {
+                            "properties": {
+                                "v2": {
+                                    "format": ("int32"),
+                                    "type": ("integer"),
+                                },
+                            },
+                            "required": [
+                                ("v2"),
                             ],
                             "type": ("object"),
                         },
@@ -382,7 +388,17 @@ mod allow_shared_components {
                                     "content": {
                                         "application/json": {
                                             "schema": {
-                                                "$ref": "/components/schema/HelloResult",
+                                                "$ref": "#/components/schemas/RespData",
+                                            },
+                                        },
+                                    },
+                                    "description": (""),
+                                },
+                                "202": {
+                                    "content": {
+                                        "application/json": {
+                                            "schema": {
+                                                "$ref": "#/components/schemas/RespData2",
                                             },
                                         },
                                     },
@@ -398,16 +414,7 @@ mod allow_shared_components {
                                     "content": {
                                         "application/json": {
                                             "schema": {
-                                                "properties": {
-                                                    "v": {
-                                                        "format": ("int32"),
-                                                        "type": ("integer"),
-                                                    },
-                                                },
-                                                "required": [
-                                                    ("v"),
-                                                ],
-                                                "type": ("object"),
+                                                "$ref": "#/components/schemas/RespData",
                                             },
                                         },
                                     },

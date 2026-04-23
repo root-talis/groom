@@ -281,9 +281,16 @@ fn extract_response_code<T: ToTokens>(response_code: HTTPStatusCode, span: T) ->
 }
 
 
-fn make_openapi_fragments_for_type(ty: TokenStream, description_tk: TokenStream, response_code_str: String, fragments: &mut NewAstFragments) {
+fn make_openapi_fragments_for_type(
+    ty: TokenStream,
+    description_tk: TokenStream,
+    response_code_str: String,
+    fragments: &mut NewAstFragments
+) {
     let mut response_impls: Vec<TokenStream> = Vec::new();
     let content_types = &fragments.response_args.format;
+
+    let mut component_init: Option<TokenStream> = None;
 
     if content_types.plain_text {
         response_impls.push(quote! {
@@ -323,12 +330,27 @@ fn make_openapi_fragments_for_type(ty: TokenStream, description_tk: TokenStream,
             .content(
                 ::mime::APPLICATION_JSON.as_ref(),
                 ::utoipa::openapi::ContentBuilder::new()
-                    .schema(match #ty::schema() {
-                        ::utoipa::openapi::RefOr::T(s) => Some(s),
+                    .schema(match <#ty as ::utoipa::PartialSchema>::schema() {
+                        ::utoipa::openapi::RefOr::T(s) => Some(
+                            ::utoipa::openapi::RefOr::<utoipa::openapi::Schema>::Ref(
+                                ::utoipa::openapi::schema::RefBuilder::new()
+                                    .ref_location(format!(
+                                        "#/components/schemas/{}",
+                                        ::groom::json_ptr::escape_json_pointer(
+                                            <#ty as ::utoipa::ToSchema>::name().as_ref()
+                                        )
+                                    ))
+                                    .build()
+                            )
+                        ),
                         ::utoipa::openapi::RefOr::Ref(_) => panic!("Type `{}` schema for application/json is ref", #type_name),
                     })
                     .build()
             )
+        });
+        
+        component_init = Some(quote! {
+            components.add_components::<#ty>();
         });
     }
 
@@ -340,7 +362,11 @@ fn make_openapi_fragments_for_type(ty: TokenStream, description_tk: TokenStream,
                 #(#response_impls)*
                 .build()
         );
-    })
+    });
+
+    if let Some(tokens) = component_init {
+        fragments.openapi_impls.push(tokens);
+    }
 }
 
 /// Assembles final AST
@@ -385,11 +411,11 @@ fn make_new_ast(fragments: NewAstFragments)
 
                 fn __openapi_modify_operation(
                     op: ::utoipa::openapi::path::OperationBuilder,
-                    c: &mut ::groom::extract::ComponentsRegistry
+                    components: &mut ::groom::extract::ComponentsRegistry
                 )
                     -> ::utoipa::openapi::path::OperationBuilder
                 {
-                    c.add_components::<#item_ident>();
+                    // c.add_components::<#item_ident>();
 
                     #(#openapi_impls)*
                     op
@@ -601,7 +627,7 @@ mod enum_impl {
 
             let response_body_field = extract_response_body_field(&variant)?;
 
-            populate_matchers(
+            populate_content_type_matchers(
                 &variant.ident,
                 &response_body_field,
                 &response_code_ts,
@@ -616,9 +642,7 @@ mod enum_impl {
                 &mut fragments,
             );
 
-            variants_ts.push(quote! { 
-                #variant,
-            });
+            variants_ts.push(quote! { #variant, });
 
             let new_context_format = format!("{{context}} / variant `{}`", &variant.ident);
             response_codes_checks.push(quote!{
@@ -688,7 +712,7 @@ mod enum_impl {
     }
 
     /// Makes matchers for content type negotiation.
-    fn populate_matchers(
+    fn populate_content_type_matchers(
         variant_ident: &Ident,
         response_body_field: &Option<&Field>,
         response_code_ts: &TokenStream,

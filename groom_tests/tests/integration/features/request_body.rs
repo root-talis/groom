@@ -300,7 +300,52 @@ pub async fn test_openapi() {
     assert_openapi_doc(
         |b| controller::merge_into_openapi_builder(b),
         json!({
-            "components": {},
+            "components": {
+                "schemas": {
+                    "MultiFormatDto": {
+                        "description": "Some DTO",
+                        "properties": {
+                            "age": {
+                                "format": "int32",
+                                "minimum": 0,
+                                "type": [
+                                    "integer",
+                                    "null",
+                                ],
+                            },
+                            "name": {
+                                "type": "string",
+                            },
+                        },
+                        "required":  [
+                            "name",
+                        ],
+                        "type": "object",
+                    },
+                    "MultiFormatRequestBody": {
+                        "description": "Request body as a named struct.",
+                        "properties": {
+                            "age": {
+                                "description": "Person's age",
+                                "format": "int32",
+                                "minimum": 0,
+                                "type": [
+                                    "integer",
+                                    "null",
+                                ],
+                            },
+                            "name": {
+                                "description": "Person's name",
+                                "type": "string",
+                            },
+                        },
+                        "required": [
+                            "name",
+                        ],
+                        "type": "object",
+                    },
+                },
+            },
             "info": {
                 "contact": {
                     "email": "mail@example.com",
@@ -397,50 +442,12 @@ pub async fn test_openapi() {
                             "content": {
                                 "application/json": {
                                     "schema": {
-                                        "description": "Request body as a named struct.",
-                                        "properties": {
-                                            "age": {
-                                                "description": "Person's age",
-                                                "format": "int32",
-                                                "minimum": 0,
-                                                "type": [
-                                                    "integer",
-                                                    "null",
-                                                ],
-                                            },
-                                            "name": {
-                                                "description": "Person's name",
-                                                "type": "string",
-                                            },
-                                        },
-                                        "required": [
-                                            "name",
-                                        ],
-                                        "type": "object",
+                                        "$ref": "#/components/schemas/MultiFormatRequestBody"
                                     },
                                 },
                                 "application/x-www-form-urlencoded": {
                                     "schema": {
-                                        "description": "Request body as a named struct.",
-                                        "properties": {
-                                            "age": {
-                                                "description": "Person's age",
-                                                "format": "int32",
-                                                "minimum": 0,
-                                                "type": [
-                                                    "integer",
-                                                    "null",
-                                                ],
-                                            },
-                                            "name": {
-                                                "description": "Person's name",
-                                                "type": "string",
-                                            },
-                                        },
-                                        "required": [
-                                            "name",
-                                        ],
-                                        "type": "object",
+                                        "$ref": "#/components/schemas/MultiFormatRequestBody",
                                     },
                                 },
                             },
@@ -478,46 +485,12 @@ pub async fn test_openapi() {
                             "content": {
                                 "application/json": {
                                     "schema": {
-                                        "description": "Some DTO",
-                                        "properties": {
-                                            "age": {
-                                                "format": "int32",
-                                                "minimum": 0,
-                                                "type": [
-                                                    "integer",
-                                                    "null",
-                                                ],
-                                            },
-                                            "name": {
-                                                "type": "string",
-                                            },
-                                        },
-                                        "required": [
-                                            "name",
-                                        ],
-                                        "type": "object",
+                                        "$ref": "#/components/schemas/MultiFormatDto",
                                     },
                                 },
                                 "application/x-www-form-urlencoded": {
                                     "schema": {
-                                        "description": "Some DTO",
-                                        "properties": {
-                                            "age": {
-                                                "format": "int32",
-                                                "minimum": 0,
-                                                "type": [
-                                                    "integer",
-                                                    "null",
-                                                ],
-                                            },
-                                            "name": {
-                                                "type": "string",
-                                            },
-                                        },
-                                        "required": [
-                                            "name",
-                                        ],
-                                        "type": "object",
+                                        "$ref": "#/components/schemas/MultiFormatDto",
                                     },
                                 },
                             },
@@ -589,4 +562,3 @@ pub async fn test_openapi() {
         })
     );
 }
-

@@ -3,6 +3,7 @@ use utoipa::ToSchema;
 pub mod extract;
 pub mod response;
 pub mod content_negotiation;
+pub mod json_ptr;
 
 pub mod runtime_checks;
 

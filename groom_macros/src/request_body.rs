@@ -159,7 +159,7 @@ mod struct_impl {
                         ::utoipa::openapi::RefOr::T(s) => Some(s),
                         ::utoipa::openapi::RefOr::Ref(_) => panic!("dto schema is ref"),
                     }},
-                    extract_ty: quote! { #ident},
+                    extract_ty: quote! { #ident },
                     pack_dto: quote! { dto },
                 })
             },
@@ -277,7 +277,6 @@ mod struct_impl {
     /// Makes AST fragment to support application/x-www-form-urlencoded
     fn make_fragments_for_format_url_encoded(context: &mut AllFragments) {
         let rejection_ident = &context.rejection_ident;
-        let schema = &context.dto_fragments.schema;
         let extract_ty = &context.dto_fragments.extract_ty;
         let pack_dto = &context.dto_fragments.pack_dto;
 
@@ -305,7 +304,21 @@ mod struct_impl {
             .content(
                 ::mime::APPLICATION_WWW_FORM_URLENCODED.as_ref(),
                 ::utoipa::openapi::ContentBuilder::new()
-                    .schema(#schema)
+                    .schema(match <#extract_ty as ::utoipa::PartialSchema>::schema() {
+                        ::utoipa::openapi::RefOr::T(s) => Some(
+                            ::utoipa::openapi::RefOr::<utoipa::openapi::Schema>::Ref(
+                                ::utoipa::openapi::schema::RefBuilder::new()
+                                    .ref_location(format!(
+                                        "#/components/schemas/{}",
+                                        ::groom::json_ptr::escape_json_pointer(
+                                            <#extract_ty as ::utoipa::ToSchema>::name().as_ref()
+                                        )
+                                    ))
+                                    .build()
+                            )
+                        ),
+                        ::utoipa::openapi::RefOr::Ref(_) => panic!("Type `{}` schema for application/json is ref", stringify!(#extract_ty)),
+                    })
                     .build()
             )
         });
@@ -314,7 +327,6 @@ mod struct_impl {
     /// Makes AST fragment to support application/json
     fn make_fragments_for_format_json(context: &mut AllFragments) {
         let rejection_ident = &context.rejection_ident;
-        let schema = &context.dto_fragments.schema;
         let extract_ty = &context.dto_fragments.extract_ty;
         let pack_dto = &context.dto_fragments.pack_dto;
 
@@ -342,7 +354,21 @@ mod struct_impl {
             .content(
                 ::mime::APPLICATION_JSON.as_ref(),
                 ::utoipa::openapi::ContentBuilder::new()
-                    .schema(#schema)
+                    .schema(match <#extract_ty as ::utoipa::PartialSchema>::schema() {
+                        ::utoipa::openapi::RefOr::T(s) => Some(
+                            ::utoipa::openapi::RefOr::<utoipa::openapi::Schema>::Ref(
+                                ::utoipa::openapi::schema::RefBuilder::new()
+                                    .ref_location(format!(
+                                        "#/components/schemas/{}",
+                                        ::groom::json_ptr::escape_json_pointer(
+                                            <#extract_ty as ::utoipa::ToSchema>::name().as_ref()
+                                        )
+                                    ))
+                                    .build()
+                            )
+                        ),
+                        ::utoipa::openapi::RefOr::Ref(_) => panic!("Type `{}` schema for application/json is ref", stringify!(#extract_ty)),
+                    })
                     .build()
             )
         });

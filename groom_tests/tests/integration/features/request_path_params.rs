@@ -18,8 +18,8 @@ mod controller {
 
     // ---
 
+    /// TODO: this should be put under #/components/parameters
     #[DTO(request)]
-    #[serde(rename="RqConsPathStructRenamed")]
     pub struct PathParams {
         pub team_id: String,
         pub user_id: i32,

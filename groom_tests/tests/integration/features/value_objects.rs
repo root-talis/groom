@@ -19,8 +19,6 @@ mod controller {
         Response
     };
 
-    use utoipa::PartialSchema; // required for String type in response
-
     #[DTO(response)]
     pub enum EnumValueObject {
         UnitVariant,
