@@ -18,6 +18,7 @@ mod controller {
 
     // ---
 
+    /// TODO: this should be put under #/components/parameters
     #[DTO(request)]
     pub struct Params {
         #[serde(rename="first_name_renamed")]
@@ -25,6 +26,7 @@ mod controller {
         last_name: Option<String>,
     }
 
+    /// TODO: this should be put under #/components/parameters
     #[DTO(request)]
     pub struct Params2 {
         title: Option<String>,
@@ -113,6 +115,40 @@ pub async fn test_openapi() {
                 "version": "0.0.0",
             },
             "openapi": "3.1.0",
+            "components": {
+                "schemas": {
+                    "Params": {
+                        "description": ("TODO: this should be put under #/components/parameters"),
+                        "properties": {
+                            "first_name_renamed": {
+                                "type": ("string"),
+                            },
+                            "last_name": {
+                                "type": [
+                                    ("string"),
+                                    ("null"),
+                                ],
+                            },
+                        },
+                        "required": [
+                            ("first_name_renamed"),
+                        ],
+                        "type": ("object"),
+                    },
+                    "Params2": {
+                        "description": ("TODO: this should be put under #/components/parameters"),
+                        "properties": {
+                            "title": {
+                                "type": [
+                                    ("string"),
+                                    ("null"),
+                                ],
+                            },
+                        },
+                        "type": ("object"),
+                    },
+                },
+            },
             "paths": {
                 "/two_query_inputs": {
                     "get": {
@@ -181,7 +217,6 @@ pub async fn test_openapi() {
                     },
                 },
             },
-            "components": {},
         })
     );
 }

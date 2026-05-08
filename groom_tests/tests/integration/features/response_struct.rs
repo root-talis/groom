@@ -397,6 +397,34 @@ pub async fn test_openapi() {
                 "version": ("0.0.0"),
             },
             "openapi": ("3.1.0"),
+            "components": {
+                "schemas": {
+                    "NamedStructResult": {
+                        "description":("Named struct as a response"),
+                        "properties": {
+                            "is_alive": {
+                                "type": ("boolean"),
+                            },
+                        },
+                        "required": [
+                            ("is_alive"),
+                        ],
+                        "type": ("object"),
+                    },
+                    "UnnamedStructDto": {
+                        "description": ("Unnamed struct DTO"),
+                        "properties": {
+                            "v": {
+                                "type": ("string"),
+                            },
+                        },
+                        "required": [
+                            ("v"),
+                        ],
+                        "type": ("object"),
+                    },
+                },
+            },
             "paths": {
                 "/named-struct": {
                     "get": {
@@ -405,16 +433,7 @@ pub async fn test_openapi() {
                                 "content": {
                                     "application/json": {
                                         "schema": {
-                                            "description": ("Named struct as a response"),
-                                            "properties": {
-                                                "is_alive": {
-                                                    "type": ("boolean"),
-                                                },
-                                            },
-                                            "required": [
-                                                ("is_alive"),
-                                            ],
-                                            "type": ("object"),
+                                            "$ref": ("#/components/schemas/NamedStructResult"),
                                         },
                                     },
                                     "text/html; charset=utf-8": {
@@ -465,7 +484,7 @@ pub async fn test_openapi() {
                                 "content": {
                                     "application/json": {
                                         "schema": {
-                                            "type": "string",
+                                            "type": "string", // todo: dont extract into schemas
                                         },
                                     },
                                     "text/html; charset=utf-8": {
@@ -491,16 +510,7 @@ pub async fn test_openapi() {
                                 "content": {
                                     "application/json": {
                                         "schema": {
-                                            "description": ("Unnamed struct DTO"),
-                                            "properties": {
-                                                "v": {
-                                                    "type": "string",
-                                                },
-                                            },
-                                            "required": [
-                                                "v",
-                                            ],
-                                            "type": ("object"),
+                                            "$ref": ("#/components/schemas/UnnamedStructDto"),
                                         },
                                     },
                                 },
@@ -526,7 +536,6 @@ pub async fn test_openapi() {
                     },
                 },
             },
-            "components": {},
         })
     );
 }

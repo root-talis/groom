@@ -188,6 +188,27 @@ pub async fn test_openapi() {
                 "version": "0.0.0",
             },
             "openapi": "3.1.0",
+            "components": {
+                "schemas": {
+                    "DataObject": {
+                        "properties": {
+                            "status": {
+                                "type":("string"),
+                            },
+                            "status_timestamp": {
+                                "format":("int64"),
+                                "minimum": (0),
+                                "type": ("integer"),
+                            },
+                        },
+                        "required":  [
+                            ("status"),
+                            ("status_timestamp"),
+                        ],
+                        "type": ("object"),
+                    },
+                },
+            },
             "paths": {
                 "/no-content": {
                     "put": {
@@ -208,21 +229,7 @@ pub async fn test_openapi() {
                                 "content": {
                                     "application/json": {
                                         "schema": {
-                                            "properties": {
-                                                "status": {
-                                                    "type": "string",
-                                                },
-                                                "status_timestamp": {
-                                                    "format": "int64",
-                                                    "minimum": 0,
-                                                    "type": "integer"
-                                                }
-                                            },
-                                            "required": [
-                                                "status",
-                                                "status_timestamp",
-                                            ],
-                                            "type": "object"
+                                            "$ref": ("#/components/schemas/DataObject"),
                                         },
                                     },
                                     "text/html; charset=utf-8": {
@@ -243,21 +250,7 @@ pub async fn test_openapi() {
                                 "content": {
                                     "application/json": {
                                         "schema": {
-                                            "properties": {
-                                                "status": {
-                                                    "type": "string",
-                                                },
-                                                "status_timestamp": {
-                                                    "format": "int64",
-                                                    "minimum": 0,
-                                                    "type": "integer"
-                                                }
-                                            },
-                                            "required": [
-                                                "status",
-                                                "status_timestamp",
-                                            ],
-                                            "type": "object"
+                                            "$ref": ("#/components/schemas/DataObject"),
                                         },
                                     },
                                     "text/html; charset=utf-8": {
@@ -272,7 +265,6 @@ pub async fn test_openapi() {
                     },
                 },
             },
-            "components": {},
         })
     );
 }

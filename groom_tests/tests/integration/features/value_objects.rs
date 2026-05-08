@@ -205,43 +205,6 @@ pub async fn test_openapi() {
                             },
                         ],
                     },
-                    "Resp": {
-                        "oneOf": [
-                            {
-                                "properties": {
-                                    "Enum": {
-                                        "$ref": ("#/components/schemas/EnumValueObject"),
-                                    },
-                                },
-                                "required": [
-                                    ("Enum"),
-                                ],
-                                "type": ("object"),
-                            },
-                            {
-                                "properties": {
-                                    "StructWithEnum": {
-                                        "$ref": ("#/components/schemas/WrapperStruct"),
-                                    },
-                                },
-                                "required": [
-                                    ("StructWithEnum"),
-                                ],
-                                "type": ("object"),
-                            },
-                            {
-                                "properties": {
-                                    "StructWithEnumWithConflict": {
-                                        "$ref": ("#/components/schemas/WrapperStructWithConflict"),
-                                    },
-                                },
-                                "required": [
-                                    ("StructWithEnumWithConflict"),
-                                ],
-                                "type": ("object"),
-                            },
-                        ],
-                    },
                     "WrapperStruct": {
                         "properties": {
                             "v": {
@@ -291,44 +254,7 @@ pub async fn test_openapi() {
                                 "content": {
                                     "application/json": {
                                         "schema": {
-                                            "oneOf": [
-                                                {
-                                                    "enum": [
-                                                        ("UnitVariant"),
-                                                    ],
-                                                    "type": ("string"),
-                                                },
-                                                {
-                                                    "properties": {
-                                                        "UnnamedStructVariant": {
-                                                            "type": ("string"),
-                                                        },
-                                                    },
-                                                    "required": [
-                                                        ("UnnamedStructVariant"),
-                                                    ],
-                                                    "type": ("object"),
-                                                },
-                                                {
-                                                    "properties": {
-                                                        "NamedStructVariant": {
-                                                            "properties": {
-                                                                "value": {
-                                                                    "type": ("string"),
-                                                                },
-                                                            },
-                                                            "required": [
-                                                                ("value"),
-                                                            ],
-                                                            "type": ("object"),
-                                                        },
-                                                    },
-                                                    "required": [
-                                                        ("NamedStructVariant"),
-                                                    ],
-                                                    "type": ("object"),
-                                                },
-                                            ],
+                                            "$ref": ("#/components/schemas/EnumValueObject")
                                         },
                                     },
                                 },
@@ -338,15 +264,7 @@ pub async fn test_openapi() {
                                 "content": {
                                     "application/json": {
                                         "schema": {
-                                            "properties": {
-                                                "v": {
-                                                    "$ref": ("#/components/schemas/EnumValueObject"),
-                                                },
-                                            },
-                                            "required": [
-                                                ("v"),
-                                            ],
-                                            "type": ("object"),
+                                            "$ref": ("#/components/schemas/WrapperStruct")
                                         },
                                     },
                                 },
@@ -356,19 +274,7 @@ pub async fn test_openapi() {
                                 "content": {
                                     "application/json": {
                                         "schema": {
-                                            "properties": {
-                                                "v": {
-                                                    "$ref": ("#/components/schemas/EnumValueObject"),
-                                                },
-                                                "v2": {
-                                                    "$ref": ("#/components/schemas/EnumValueObject"),
-                                                },
-                                            },
-                                            "required": [
-                                                ("v"),
-                                                ("v2"),
-                                            ],
-                                            "type": ("object"),
+                                            "$ref": ("#/components/schemas/WrapperStructWithConflict")
                                         },
                                     },
                                 },
@@ -384,44 +290,7 @@ pub async fn test_openapi() {
                                 "content": {
                                     "application/json": {
                                         "schema": {
-                                            "oneOf": [
-                                                {
-                                                    "enum": [
-                                                        ("UnitVariant"),
-                                                    ],
-                                                    "type": ("string"),
-                                                },
-                                                {
-                                                    "properties": {
-                                                        "UnnamedStructVariant": {
-                                                            "type": ("string"),
-                                                        },
-                                                    },
-                                                    "required": [
-                                                        ("UnnamedStructVariant"),
-                                                    ],
-                                                    "type": ("object"),
-                                                },
-                                                {
-                                                    "properties": {
-                                                        "NamedStructVariant": {
-                                                            "properties": {
-                                                                "value": {
-                                                                    "type": ("string"),
-                                                                },
-                                                            },
-                                                            "required": [
-                                                                ("value"),
-                                                            ],
-                                                            "type": ("object"),
-                                                        },
-                                                    },
-                                                    "required": [
-                                                        ("NamedStructVariant"),
-                                                    ],
-                                                    "type": ("object"),
-                                                },
-                                            ],
+                                            "$ref": ("#/components/schemas/EnumValueObject")
                                         },
                                     },
                                 },
@@ -431,15 +300,7 @@ pub async fn test_openapi() {
                                 "content": {
                                     "application/json": {
                                         "schema": {
-                                            "properties": {
-                                                "v": {
-                                                    "$ref": ("#/components/schemas/EnumValueObject"),
-                                                },
-                                            },
-                                            "required": [
-                                                ("v"),
-                                            ],
-                                            "type": ("object"),
+                                            "$ref": ("#/components/schemas/WrapperStruct")
                                         },
                                     },
                                 },
@@ -449,19 +310,7 @@ pub async fn test_openapi() {
                                 "content": {
                                     "application/json": {
                                         "schema": {
-                                            "properties": {
-                                                "v": {
-                                                    "$ref": ("#/components/schemas/EnumValueObject"),
-                                                },
-                                                "v2": {
-                                                    "$ref": ("#/components/schemas/EnumValueObject"),
-                                                },
-                                            },
-                                            "required": [
-                                                ("v"),
-                                                ("v2"),
-                                            ],
-                                            "type": ("object"),
+                                            "$ref": ("#/components/schemas/WrapperStructWithConflict")
                                         },
                                     },
                                 },
@@ -477,44 +326,7 @@ pub async fn test_openapi() {
                                 "content": {
                                     "application/json": {
                                         "schema": {
-                                            "oneOf": [
-                                                {
-                                                    "enum": [
-                                                        ("UnitVariant"),
-                                                    ],
-                                                    "type": ("string"),
-                                                },
-                                                {
-                                                    "properties": {
-                                                        "UnnamedStructVariant": {
-                                                            "type": ("string"),
-                                                        },
-                                                    },
-                                                    "required": [
-                                                        ("UnnamedStructVariant"),
-                                                    ],
-                                                    "type": ("object"),
-                                                },
-                                                {
-                                                    "properties": {
-                                                        "NamedStructVariant": {
-                                                            "properties": {
-                                                                "value": {
-                                                                    "type": ("string"),
-                                                                },
-                                                            },
-                                                            "required": [
-                                                                ("value"),
-                                                            ],
-                                                            "type": ("object"),
-                                                        },
-                                                    },
-                                                    "required": [
-                                                        ("NamedStructVariant"),
-                                                    ],
-                                                    "type": ("object"),
-                                                },
-                                            ],
+                                            "$ref": ("#/components/schemas/EnumValueObject")
                                         },
                                     },
                                 },
@@ -524,15 +336,7 @@ pub async fn test_openapi() {
                                 "content": {
                                     "application/json": {
                                         "schema": {
-                                            "properties": {
-                                                "v": {
-                                                    "$ref": ("#/components/schemas/EnumValueObject"),
-                                                },
-                                            },
-                                            "required": [
-                                                ("v"),
-                                            ],
-                                            "type": ("object"),
+                                            "$ref": ("#/components/schemas/WrapperStruct")
                                         },
                                     },
                                 },
@@ -542,19 +346,7 @@ pub async fn test_openapi() {
                                 "content": {
                                     "application/json": {
                                         "schema": {
-                                            "properties": {
-                                                "v": {
-                                                    "$ref": ("#/components/schemas/EnumValueObject"),
-                                                },
-                                                "v2": {
-                                                    "$ref": ("#/components/schemas/EnumValueObject"),
-                                                },
-                                            },
-                                            "required": [
-                                                ("v"),
-                                                ("v2"),
-                                            ],
-                                            "type": ("object"),
+                                            "$ref": ("#/components/schemas/WrapperStructWithConflict")
                                         },
                                     },
                                 },
@@ -570,44 +362,7 @@ pub async fn test_openapi() {
                                 "content": {
                                     "application/json": {
                                         "schema": {
-                                            "oneOf": [
-                                                {
-                                                    "enum": [
-                                                        ("UnitVariant"),
-                                                    ],
-                                                    "type": ("string"),
-                                                },
-                                                {
-                                                    "properties": {
-                                                        "UnnamedStructVariant": {
-                                                            "type": ("string"),
-                                                        },
-                                                    },
-                                                    "required": [
-                                                        ("UnnamedStructVariant"),
-                                                    ],
-                                                    "type": ("object"),
-                                                },
-                                                {
-                                                    "properties": {
-                                                        "NamedStructVariant": {
-                                                            "properties": {
-                                                                "value": {
-                                                                    "type": ("string"),
-                                                                },
-                                                            },
-                                                            "required": [
-                                                                ("value"),
-                                                            ],
-                                                            "type": ("object"),
-                                                        },
-                                                    },
-                                                    "required": [
-                                                        ("NamedStructVariant"),
-                                                    ],
-                                                    "type": ("object"),
-                                                },
-                                            ],
+                                            "$ref": ("#/components/schemas/EnumValueObject"),
                                         },
                                     },
                                 },
@@ -617,15 +372,7 @@ pub async fn test_openapi() {
                                 "content": {
                                     "application/json": {
                                         "schema": {
-                                            "properties": {
-                                                "v": {
-                                                    "$ref": ("#/components/schemas/EnumValueObject"),
-                                                },
-                                            },
-                                            "required": [
-                                                ("v"),
-                                            ],
-                                            "type": ("object"),
+                                            "$ref": ("#/components/schemas/WrapperStruct"),
                                         },
                                     },
                                 },
@@ -635,19 +382,7 @@ pub async fn test_openapi() {
                                 "content": {
                                     "application/json": {
                                         "schema": {
-                                            "properties": {
-                                                "v": {
-                                                    "$ref": ("#/components/schemas/EnumValueObject"),
-                                                },
-                                                "v2": {
-                                                    "$ref": ("#/components/schemas/EnumValueObject"),
-                                                },
-                                            },
-                                            "required": [
-                                                ("v"),
-                                                ("v2"),
-                                            ],
-                                            "type": ("object"),
+                                            "$ref": ("#/components/schemas/WrapperStructWithConflict")
                                         },
                                     },
                                 },
@@ -663,44 +398,7 @@ pub async fn test_openapi() {
                                 "content": {
                                     "application/json": {
                                         "schema": {
-                                            "oneOf": [
-                                                {
-                                                    "enum": [
-                                                        ("UnitVariant"),
-                                                    ],
-                                                    "type": ("string"),
-                                                },
-                                                {
-                                                    "properties": {
-                                                        "UnnamedStructVariant": {
-                                                            "type": ("string"),
-                                                        },
-                                                    },
-                                                    "required": [
-                                                        ("UnnamedStructVariant"),
-                                                    ],
-                                                    "type": ("object"),
-                                                },
-                                                {
-                                                    "properties": {
-                                                        "NamedStructVariant": {
-                                                            "properties": {
-                                                                "value": {
-                                                                    "type": ("string"),
-                                                                },
-                                                            },
-                                                            "required": [
-                                                                ("value"),
-                                                            ],
-                                                            "type": ("object"),
-                                                        },
-                                                    },
-                                                    "required": [
-                                                        ("NamedStructVariant"),
-                                                    ],
-                                                    "type": ("object"),
-                                                },
-                                            ],
+                                            "$ref": ("#/components/schemas/EnumValueObject")
                                         },
                                     },
                                 },
@@ -710,15 +408,7 @@ pub async fn test_openapi() {
                                 "content": {
                                     "application/json": {
                                         "schema": {
-                                            "properties": {
-                                                "v": {
-                                                    "$ref": ("#/components/schemas/EnumValueObject"),
-                                                },
-                                            },
-                                            "required": [
-                                                ("v"),
-                                            ],
-                                            "type": ("object"),
+                                            "$ref": ("#/components/schemas/WrapperStruct")
                                         },
                                     },
                                 },
@@ -728,19 +418,7 @@ pub async fn test_openapi() {
                                 "content": {
                                     "application/json": {
                                         "schema": {
-                                            "properties": {
-                                                "v": {
-                                                    "$ref": ("#/components/schemas/EnumValueObject"),
-                                                },
-                                                "v2": {
-                                                    "$ref": ("#/components/schemas/EnumValueObject"),
-                                                },
-                                            },
-                                            "required": [
-                                                ("v"),
-                                                ("v2"),
-                                            ],
-                                            "type": ("object"),
+                                            "$ref": ("#/components/schemas/WrapperStructWithConflict")
                                         },
                                     },
                                 },
@@ -756,44 +434,7 @@ pub async fn test_openapi() {
                                 "content": {
                                     "application/json": {
                                         "schema": {
-                                            "oneOf": [
-                                                {
-                                                    "enum": [
-                                                        ("UnitVariant"),
-                                                    ],
-                                                    "type": ("string"),
-                                                },
-                                                {
-                                                    "properties": {
-                                                        "UnnamedStructVariant": {
-                                                            "type": ("string"),
-                                                        },
-                                                    },
-                                                    "required": [
-                                                        ("UnnamedStructVariant"),
-                                                    ],
-                                                    "type": ("object"),
-                                                },
-                                                {
-                                                    "properties": {
-                                                        "NamedStructVariant": {
-                                                            "properties": {
-                                                                "value": {
-                                                                    "type": ("string"),
-                                                                },
-                                                            },
-                                                            "required": [
-                                                                ("value"),
-                                                            ],
-                                                            "type": ("object"),
-                                                        },
-                                                    },
-                                                    "required": [
-                                                        ("NamedStructVariant"),
-                                                    ],
-                                                    "type": ("object"),
-                                                },
-                                            ],
+                                            "$ref": ("#/components/schemas/EnumValueObject")
                                         },
                                     },
                                 },
@@ -803,15 +444,7 @@ pub async fn test_openapi() {
                                 "content": {
                                     "application/json": {
                                         "schema": {
-                                            "properties": {
-                                                "v": {
-                                                    "$ref": ("#/components/schemas/EnumValueObject"),
-                                                },
-                                            },
-                                            "required": [
-                                                ("v"),
-                                            ],
-                                            "type": ("object"),
+                                            "$ref": ("#/components/schemas/WrapperStruct")
                                         },
                                     },
                                 },
@@ -821,19 +454,7 @@ pub async fn test_openapi() {
                                 "content": {
                                     "application/json": {
                                         "schema": {
-                                            "properties": {
-                                                "v": {
-                                                    "$ref": ("#/components/schemas/EnumValueObject"),
-                                                },
-                                                "v2": {
-                                                    "$ref": ("#/components/schemas/EnumValueObject"),
-                                                },
-                                            },
-                                            "required": [
-                                                ("v"),
-                                                ("v2"),
-                                            ],
-                                            "type": ("object"),
+                                            "$ref": ("#/components/schemas/WrapperStructWithConflict")
                                         },
                                     },
                                 },
@@ -849,44 +470,7 @@ pub async fn test_openapi() {
                                 "content": {
                                     "application/json": {
                                         "schema": {
-                                            "oneOf": [
-                                                {
-                                                    "enum": [
-                                                        ("UnitVariant"),
-                                                    ],
-                                                    "type": ("string"),
-                                                },
-                                                {
-                                                    "properties": {
-                                                        "UnnamedStructVariant": {
-                                                            "type": ("string"),
-                                                        },
-                                                    },
-                                                    "required": [
-                                                        ("UnnamedStructVariant"),
-                                                    ],
-                                                    "type": ("object"),
-                                                },
-                                                {
-                                                    "properties": {
-                                                        "NamedStructVariant": {
-                                                            "properties": {
-                                                                "value": {
-                                                                    "type": ("string"),
-                                                                },
-                                                            },
-                                                            "required": [
-                                                                ("value"),
-                                                            ],
-                                                            "type": ("object"),
-                                                        },
-                                                    },
-                                                    "required": [
-                                                        ("NamedStructVariant"),
-                                                    ],
-                                                    "type": ("object"),
-                                                },
-                                            ],
+                                            "$ref": ("#/components/schemas/EnumValueObject"),
                                         },
                                     },
                                 },
@@ -896,15 +480,7 @@ pub async fn test_openapi() {
                                 "content": {
                                     "application/json": {
                                         "schema": {
-                                            "properties": {
-                                                "v": {
-                                                    "$ref": ("#/components/schemas/EnumValueObject"),
-                                                },
-                                            },
-                                            "required": [
-                                                ("v"),
-                                            ],
-                                            "type": ("object"),
+                                            "$ref": ("#/components/schemas/WrapperStruct")
                                         },
                                     },
                                 },
@@ -914,19 +490,7 @@ pub async fn test_openapi() {
                                 "content": {
                                     "application/json": {
                                         "schema": {
-                                            "properties": {
-                                                "v": {
-                                                    "$ref": ("#/components/schemas/EnumValueObject"),
-                                                },
-                                                "v2": {
-                                                    "$ref": ("#/components/schemas/EnumValueObject"),
-                                                },
-                                            },
-                                            "required": [
-                                                ("v"),
-                                                ("v2"),
-                                            ],
-                                            "type": ("object"),
+                                            "$ref": ("#/components/schemas/WrapperStructWithConflict"),
                                         },
                                     },
                                 },
