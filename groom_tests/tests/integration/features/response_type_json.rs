@@ -16,7 +16,7 @@ mod controller {
         Response
     };
 
-    use utoipa::PartialSchema; // required to send unnamed struct or enum variant with unnamed contents as JSON
+    use utoipa::{PartialSchema, openapi::RefOr}; // required to send unnamed struct or enum variant with unnamed contents as JSON
 
     // ---
 

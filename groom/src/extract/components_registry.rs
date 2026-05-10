@@ -1,45 +1,56 @@
-use std::{any::TypeId, collections::{BTreeSet, HashMap, HashSet, hash_map}};
+use std::{any::TypeId, collections::{BTreeSet, HashMap, HashSet, hash_map}, sync::OnceLock};
 
-use utoipa::{ToSchema, openapi::{Components, ComponentsBuilder, ContentBuilder, OpenApiBuilder, RefOr, Schema}};
+use ::utoipa::openapi::{Ref, RefOr, schema::RefBuilder};
+use utoipa::{PartialSchema, ToSchema, openapi::{Components, ComponentsBuilder, Schema}};
 
 #[derive(Clone, PartialEq)]
 pub struct ComponentEntry {
-    pub ref_location: String,
     pub schema: Schema,
+    pub reference: Ref,
 }
 
 #[derive(Default)]
 pub struct ComponentsRegistry {
     components: HashMap<String, ComponentEntry>,
-    seen_types: HashSet<TypeId>,
+    seen_types: HashSet<TypeId>
 }
+
+// these schemas will not be put under components.
+// should be some kind of Set, but Schema doesn't implement Hash, Eq or Ord :(
+static STD_TYPES_SCHEMAS: OnceLock<Vec<Schema>> = OnceLock::new();
 
 impl ComponentsRegistry {
     pub fn new() -> Self {
         Self::default()
     }
 
-    pub fn add_components<T: ToSchema + 'static>(&mut self) {
+    pub fn add_components<T: ToSchema + 'static>(&mut self) -> RefOr<Schema> {
         let tid = TypeId::of::<T>();
-        let is_new_type = self.seen_types.insert(tid);
-        if !is_new_type {
-            return
+        let name: String = T::name().into();
+
+        if self.seen_types.contains(&tid) {
+            return RefOr::Ref(
+                self.components.get(&name)
+                    .expect("component for a type that is already seen is expected to exist")
+                    .reference
+                    .clone()
+            )
         }
 
         let mut schemas = Vec::<(String, RefOr<Schema>)>::new();
         T::schemas(&mut schemas);
 
         for (name, schema) in schemas {
-            self.add_component(name.clone(), schema);
+            self.add_component(name.clone(), schema, None);
         }
 
-        self.add_component(T::name().into(), T::schema());
+        self.add_component(name, T::schema(), Some(tid))
     }
 
-    fn add_component(&mut self, name: String, schema: RefOr<Schema>) {
+    fn add_component(&mut self, name: String, schema: RefOr<Schema>, tid: Option<TypeId>) -> RefOr<Schema> {
         let schema = match schema {
             RefOr::T(s) => s,
-            RefOr::Ref(r) => return,
+            RefOr::Ref(r) => return RefOr::Ref(r.clone()),
                 // panic!(
                 //     "ComponentsRegistry::add_component: schema for `{}` is a ref to `{}`, expected to be a schema!",
                 //     name,
@@ -47,22 +58,56 @@ impl ComponentsRegistry {
                 // ),
         };
 
-        match self.components.entry(name.clone()) {
-            hash_map::Entry::Occupied(_occupied_entry) => {
-                if _occupied_entry.get().schema != schema {
+        if !Self::is_component(&schema) {
+            return RefOr::T(schema.clone());
+        }
+
+        let entry = match self.components.entry(name.clone()) {
+            hash_map::Entry::Occupied(e) => {
+                if e.get().schema != schema {
                     panic!(
                         "ComponentsRegistry::add_component: schema with name `{}` is already defined for another type!",
                         name
                     );
                 }
+                e.get().reference.clone()
             },
             hash_map::Entry::Vacant(vacant_entry) => {
-                vacant_entry.insert(ComponentEntry{ 
-                    ref_location: name.clone(),
+                let e = vacant_entry.insert(ComponentEntry{ 
+                    reference: RefBuilder::new()
+                        .ref_location(format!(
+                            "#/components/schemas/{}",
+                            crate::json_ptr::escape_json_pointer(
+                                name.as_ref()
+                            )
+                        ))
+                        .build(),
                     schema: schema.clone()
                 });
+
+                if let Some(tid) = tid {
+                    self.seen_types.insert(tid);
+                }
+
+                e.reference.clone()
             },
         };
+
+        return RefOr::<Schema>::Ref(entry)
+    }
+
+    fn is_component(schema: &Schema) -> bool {
+        let std_types_schemas = STD_TYPES_SCHEMAS.get_or_init(|| {
+            let mut set: Vec<Schema> = Vec::new();
+
+            if let RefOr::T(s) = <String as PartialSchema>::schema() {
+                set.push(s)
+            };
+
+            set
+        });
+
+        !std_types_schemas.contains(schema)
     }
 
     pub fn into_components(&self, c: Components) -> Components {

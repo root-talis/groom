@@ -280,7 +280,6 @@ fn extract_response_code<T: ToTokens>(response_code: HTTPStatusCode, span: T) ->
     Ok((response_code_u16, response_code_ts))
 }
 
-
 fn make_openapi_fragments_for_type(
     ty: TokenStream,
     description_tk: TokenStream,
@@ -291,6 +290,8 @@ fn make_openapi_fragments_for_type(
     let content_types = &fragments.response_args.format;
 
     let mut component_init: Option<TokenStream> = None;
+
+    let mut add_component = false;
 
     if content_types.plain_text {
         response_impls.push(quote! {
@@ -307,6 +308,8 @@ fn make_openapi_fragments_for_type(
                     .build()
             )
         });
+        
+        add_component = true;
     }
     if content_types.html {
         response_impls.push(quote! {
@@ -323,7 +326,10 @@ fn make_openapi_fragments_for_type(
                     .build()
             )
         });
+        
+        add_component = true;
     }
+
     if content_types.json {
         let type_name = ty.to_string();
         response_impls.push(quote! {
@@ -332,23 +338,16 @@ fn make_openapi_fragments_for_type(
                 ::utoipa::openapi::ContentBuilder::new()
                     .schema(match <#ty as ::utoipa::PartialSchema>::schema() {
                         ::utoipa::openapi::RefOr::T(s) => Some(
-                            ::utoipa::openapi::RefOr::<utoipa::openapi::Schema>::Ref(
-                                ::utoipa::openapi::schema::RefBuilder::new()
-                                    .ref_location(format!(
-                                        "#/components/schemas/{}",
-                                        ::groom::json_ptr::escape_json_pointer(
-                                            <#ty as ::utoipa::ToSchema>::name().as_ref()
-                                        )
-                                    ))
-                                    .build()
-                            )
+                            components.add_components::<#ty>()
                         ),
                         ::utoipa::openapi::RefOr::Ref(_) => panic!("Type `{}` schema for application/json is ref", #type_name),
                     })
                     .build()
             )
         });
-        
+    }
+
+    if add_component {
         component_init = Some(quote! {
             components.add_components::<#ty>();
         });
