@@ -67,8 +67,13 @@ mod controller {
     /// Greeting. Personalized or generalized.
     #[Response(format(plain_text))]
     pub enum HelloResponse {
+        /// Returned if greeting is formed successfully.
         #[Response(code = 200)]
         Hello(String),
+
+        /// Returned if request was somehow malformed. Contains a human-readable error description.
+        #[Response(code = 400)]
+        BadRequest(&'static str),
     }
 
     /// Greets client. 
@@ -76,9 +81,13 @@ mod controller {
     /// Uses `name` for personalization. If `name` is omitted, then greets the whole World.
     #[Route(method="get", path="/hello")]
     pub async fn greet(Query(p): Query<GreetParams>) -> HelloResponse {
-        HelloResponse::Hello(
-            format!("Hello, {}!", p.name.unwrap_or(String::from("world")))
-        )
+        let name = p.name.unwrap_or(String::from("world")).trim().to_owned();
+
+        if name.is_empty() {
+            HelloResponse::BadRequest("`name` should be ommited or not empty")
+        } else {
+            HelloResponse::Hello(format!("Hello, {}!", name))
+        }
     }
 }
 
