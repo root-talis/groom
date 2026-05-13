@@ -1,0 +1,66 @@
+# Shows list of recepies
+default:
+    just --list
+
+# Cleans everything
+clean:
+    rm -rf backend/target
+
+#
+# Backend
+#
+
+# Builds backend
+[group('backend')]
+[working-directory('backend')]
+build-backend:
+    CARGO_TARGET_DIR=./target cargo build --bin backend --release
+
+# Runs backend tests
+[group('backend')]
+[working-directory('backend')]
+test-backend:
+    cargo test
+
+#
+# Frontend
+#
+
+# Generates API client from spec
+[group('frontend')]
+[working-directory('frontend')]
+build-client: frontend-deps build-spec
+    npx orval
+
+# Runs a backend helper and saves spec into spec.yaml
+[group('frontend')]
+build-spec:
+    cargo run --bin spec > spec.yaml
+
+[group('frontend')]
+[working-directory('frontend')]
+frontend-deps:
+    #!/usr/bin/env sh
+    if command -v npm > /dev/null 2>&1; then
+        echo 'npm found'
+    else
+        echo 'Error: npm is not installed'
+        exit 1
+    fi
+
+    if command -v npx > /dev/null 2>&1; then
+        echo 'npx found'
+    else
+        echo 'Error: npx is not available'
+        exit 1
+    fi
+
+    npm install
+    
+    ORVAL=$(npm list --depth=0 | grep orval)
+    if [ -n "$ORVAL" ]; then
+        echo 'Orval found'
+    else
+        echo 'Orval is not installed; installing now.'
+        npm install orval -D
+    fi

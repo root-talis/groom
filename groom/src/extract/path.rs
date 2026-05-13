@@ -1,5 +1,5 @@
 use axum::extract::Path;
-use utoipa::openapi::{RefOr, path::{OperationBuilder, ParameterBuilder}};
+use utoipa::openapi::path::{OperationBuilder, ParameterBuilder};
 
 use crate::{DTO, extract::{ComponentsRegistry, GroomExtractor}};
 

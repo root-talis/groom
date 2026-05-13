@@ -9,6 +9,9 @@ repository.workspace = true
 documentation.workspace = true
 license.workspace = true
 
+[[bin]]
+name = "backend"
+
 [dependencies]
 accept-header = "0.2.3"
 async-trait = "0.1.89"

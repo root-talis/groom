@@ -1,9 +1,12 @@
 [workspace]
-resolver = "2"
-members = ["examples/hello-world", "examples/todo/backend",
+resolver = "3"
+members = [
     "groom",
     "groom_macros",
-    "groom_tests"
+    "groom_tests",
+
+    "examples/hello-world",
+    "examples/todo/backend"
 ]
 
 [workspace.package]

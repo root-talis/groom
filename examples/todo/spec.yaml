@@ -1,0 +1,278 @@
+openapi: 3.1.0
+info:
+  title: TODO example (Groom)
+  description: Shows how to structure backend with three-layer architecture and generate spec for frontend.
+  contact:
+    name: name
+    email: mail@example.com
+  license:
+    name: MIT OR Apache-2.0
+    identifier: MIT OR Apache-2.0
+  version: 0.0.1
+paths:
+  /task:
+    get:
+      summary: Lists tasks
+      parameters:
+      - name: TaskListFilters
+        in: query
+        required: true
+        schema:
+          $ref: '#/components/schemas/TaskListFilters'
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Vec'
+        '500':
+          description: ''
+    post:
+      summary: Adds a new task.
+      requestBody:
+        description: Request body
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddTaskRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/AddTaskRequest'
+        required: true
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskViewModel'
+        '400':
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: string
+        '409':
+          description: ''
+        '500':
+          description: ''
+  /task/{task_id}:
+    get:
+      summary: Gets a single task.
+      parameters:
+      - name: TaskIdentifier
+        in: path
+        required: true
+        schema:
+          $ref: '#/components/schemas/TaskIdentifier'
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskViewModel'
+        '404':
+          description: ''
+        '500':
+          description: ''
+  /task/{task_id}/name:
+    put:
+      summary: Renames a task.
+      parameters:
+      - name: TaskIdentifier
+        in: path
+        required: true
+        schema:
+          $ref: '#/components/schemas/TaskIdentifier'
+      requestBody:
+        description: Request body
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RenameTaskRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/RenameTaskRequest'
+        required: true
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskViewModel'
+        '400':
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: string
+        '404':
+          description: ''
+        '409':
+          description: ''
+        '500':
+          description: ''
+  /task/{task_id}/status/cancel:
+    put:
+      summary: Mark the task as cancelled.
+      parameters:
+      - name: TaskIdentifier
+        in: path
+        required: true
+        schema:
+          $ref: '#/components/schemas/TaskIdentifier'
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskViewModel'
+        '404':
+          description: ''
+        '409':
+          description: ''
+        '500':
+          description: ''
+  /task/{task_id}/status/done:
+    put:
+      summary: Mark the task as done.
+      parameters:
+      - name: TaskIdentifier
+        in: path
+        required: true
+        schema:
+          $ref: '#/components/schemas/TaskIdentifier'
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskViewModel'
+        '404':
+          description: ''
+        '409':
+          description: ''
+        '500':
+          description: ''
+  /task/{task_id}/status/pending:
+    put:
+      summary: Mark the task as pending.
+      parameters:
+      - name: TaskIdentifier
+        in: path
+        required: true
+        schema:
+          $ref: '#/components/schemas/TaskIdentifier'
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskViewModel'
+        '404':
+          description: ''
+        '409':
+          description: ''
+        '500':
+          description: ''
+components:
+  schemas:
+    AddTaskRequest:
+      type: object
+      description: Request body
+      required:
+      - title
+      properties:
+        title:
+          type: string
+    OrderDirection:
+      type: string
+      enum:
+      - Asc
+      - Desc
+    RenameTaskRequest:
+      type: object
+      description: Request body
+      required:
+      - title
+      properties:
+        title:
+          type: string
+    Status:
+      type: string
+      enum:
+      - Pending
+      - Done
+      - Cancelled
+    TaskIdentifier:
+      type: object
+      description: Params to get a single task
+      required:
+      - task_id
+      properties:
+        task_id:
+          type: integer
+          format: int64
+          minimum: 0
+    TaskListFilters:
+      type: object
+      description: Task list filters
+      properties:
+        order:
+          $ref: '#/components/schemas/OrderDirection'
+        sort_by:
+          $ref: '#/components/schemas/TaskOrderBy'
+        status:
+          type:
+          - array
+          - 'null'
+          items:
+            $ref: '#/components/schemas/Status'
+        title:
+          type:
+          - string
+          - 'null'
+    TaskOrderBy:
+      type: string
+      enum:
+      - Id
+      - Title
+      - Status
+    TaskViewModel:
+      type: object
+      required:
+      - id
+      - title
+      - status
+      properties:
+        id:
+          type: integer
+          format: int64
+          minimum: 0
+        status:
+          $ref: '#/components/schemas/Status'
+        title:
+          type: string
+    Vec:
+      type: array
+      items:
+        type: object
+        required:
+        - id
+        - title
+        - status
+        properties:
+          id:
+            type: integer
+            format: int64
+            minimum: 0
+          status:
+            $ref: '#/components/schemas/Status'
+          title:
+            type: string

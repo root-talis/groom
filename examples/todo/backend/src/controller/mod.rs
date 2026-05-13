@@ -30,6 +30,12 @@ async fn get_spec(Extension(Spec(spec)): Extension<Spec>) -> impl IntoResponse {
 #[derive(Clone)]
 pub struct Spec(String);
 
+impl Spec {
+    pub fn get(self) -> String {
+        self.0
+    }
+}
+
 pub fn make_spec() -> Result<Spec> {
     #[derive(utoipa::OpenApi)]
     #[openapi(

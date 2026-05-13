@@ -1,17 +1,9 @@
 use color_eyre::eyre::Result;
 
-use tower_http::trace::TraceLayer;
+use groom_example_todo_backend::make_router;
 use tokio::signal;
-use axum::{Extension, Router};
 
-use crate::{bootstrap::Bootstrap, server::run_server};
-
-mod bootstrap;
-mod server;
-
-mod controller;
-mod service;
-mod repository;
+use groom_example_todo_backend::{bootstrap::Bootstrap, server::run_server};
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -28,14 +20,6 @@ async fn main() -> Result<()> {
         make_router(app)?,
         shutdown_signal()
     ).await
-}
-
-fn make_router(app: Bootstrap) -> Result<Router> {
-    Ok(
-        controller::setup_router(Router::new(), true)?
-            .layer(Extension(app.task_service))
-            .layer(TraceLayer::new_for_http())
-    )
 }
 
 async fn shutdown_signal() {
