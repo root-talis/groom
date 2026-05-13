@@ -18,7 +18,6 @@ mod controller {
 
     // ---
 
-    /// TODO: this should be put under #/components/parameters
     #[DTO(request)]
     pub struct Params {
         #[serde(rename="first_name_renamed")]
@@ -26,7 +25,6 @@ mod controller {
         last_name: Option<String>,
     }
 
-    /// TODO: this should be put under #/components/parameters
     #[DTO(request)]
     pub struct Params2 {
         title: Option<String>,
@@ -44,7 +42,13 @@ mod controller {
     // ---
 
     #[Route(method = "get", path = "/two_query_inputs")]
-    pub async fn two_query_inputs(query: Query<Params>, query2: Query<Params2>) -> Resp {
+    pub async fn two_query_inputs(
+        // TODO: this should be put under #/components/parameters
+        query: Query<Params>,
+        
+        // TODO: this should be put under #/components/parameters
+        query2: Query<Params2>
+    ) -> Resp {
         if query.first_name.is_empty() {
             Resp::BadRequest("Empty name".into())
         } else {
@@ -118,7 +122,6 @@ pub async fn test_openapi() {
             "components": {
                 "schemas": {
                     "Params": {
-                        "description": ("TODO: this should be put under #/components/parameters"),
                         "properties": {
                             "first_name_renamed": {
                                 "type": ("string"),
@@ -136,7 +139,6 @@ pub async fn test_openapi() {
                         "type": ("object"),
                     },
                     "Params2": {
-                        "description": ("TODO: this should be put under #/components/parameters"),
                         "properties": {
                             "title": {
                                 "type": [
@@ -158,21 +160,7 @@ pub async fn test_openapi() {
                                 "name": "Params",
                                 "required": true,
                                 "schema": {
-                                    "properties": {
-                                        "first_name_renamed": {
-                                            "type": "string",
-                                        },
-                                        "last_name": {
-                                            "type": [
-                                                "string",
-                                                "null",
-                                            ],
-                                        },
-                                    },
-                                    "required": [
-                                        "first_name_renamed",
-                                    ],
-                                    "type": "object",
+                                    "$ref": ("#/components/schemas/Params"),
                                 },
                             },
                             {
@@ -180,15 +168,7 @@ pub async fn test_openapi() {
                                 "name": "Params2",
                                 "required": true,
                                 "schema": {
-                                    "properties": {
-                                        "title": {
-                                            "type": [
-                                                "string",
-                                                "null",
-                                            ],
-                                        },
-                                    },
-                                    "type": "object",
+                                    "$ref": ("#/components/schemas/Params2"),
                                 },
                             },
                         ],

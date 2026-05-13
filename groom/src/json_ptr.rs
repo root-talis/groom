@@ -7,6 +7,8 @@
 /// # Examples
 ///
 /// ```
+/// use groom::json_ptr::escape_json_pointer;
+/// 
 /// let escaped = escape_json_pointer("users/~/test");
 /// assert_eq!(escaped, "users~1~0~1test");
 ///

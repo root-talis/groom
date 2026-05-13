@@ -30,9 +30,8 @@ mod no_content_type {
         }
         fn __openapi_modify_operation(
             op: ::utoipa::openapi::path::OperationBuilder,
-            c: &mut ::groom::extract::ComponentsRegistry,
+            components: &mut ::groom::extract::ComponentsRegistry,
         ) -> ::utoipa::openapi::path::OperationBuilder {
-            c.add_components::<RespJsonResponse>();
             let op = op
                 .response(
                     "202",
@@ -140,9 +139,8 @@ mod plaintext_only {
         }
         fn __openapi_modify_operation(
             op: ::utoipa::openapi::path::OperationBuilder,
-            c: &mut ::groom::extract::ComponentsRegistry,
+            components: &mut ::groom::extract::ComponentsRegistry,
         ) -> ::utoipa::openapi::path::OperationBuilder {
-            c.add_components::<RespPlaintextResponse>();
             let op = op
                 .response(
                     "200",
@@ -165,6 +163,7 @@ mod plaintext_only {
                         )
                         .build(),
                 );
+            components.add_components::<String>();
             let op = op
                 .response(
                     "404",
@@ -313,9 +312,8 @@ mod html_only {
         }
         fn __openapi_modify_operation(
             op: ::utoipa::openapi::path::OperationBuilder,
-            c: &mut ::groom::extract::ComponentsRegistry,
+            components: &mut ::groom::extract::ComponentsRegistry,
         ) -> ::utoipa::openapi::path::OperationBuilder {
-            c.add_components::<RespHtmlResponse>();
             let op = op
                 .response(
                     "200",
@@ -338,6 +336,7 @@ mod html_only {
                         )
                         .build(),
                 );
+            components.add_components::<Struct>();
             let op = op
                 .response(
                     "404",
@@ -474,9 +473,8 @@ mod json_only {
         }
         fn __openapi_modify_operation(
             op: ::utoipa::openapi::path::OperationBuilder,
-            c: &mut ::groom::extract::ComponentsRegistry,
+            components: &mut ::groom::extract::ComponentsRegistry,
         ) -> ::utoipa::openapi::path::OperationBuilder {
-            c.add_components::<RespJsonResponse>();
             let op = op
                 .response(
                     "200",
@@ -486,8 +484,10 @@ mod json_only {
                             ::mime::APPLICATION_JSON.as_ref(),
                             ::utoipa::openapi::ContentBuilder::new()
                                 .schema(
-                                    match StructJson::schema() {
-                                        ::utoipa::openapi::RefOr::T(s) => Some(s),
+                                    match <StructJson as ::utoipa::PartialSchema>::schema() {
+                                        ::utoipa::openapi::RefOr::T(s) => {
+                                            Some(components.add_components::<StructJson>())
+                                        }
                                         ::utoipa::openapi::RefOr::Ref(_) => {
                                             ::core::panicking::panic_fmt(
                                                 format_args!(
@@ -688,9 +688,8 @@ mod multiple_content_types {
         }
         fn __openapi_modify_operation(
             op: ::utoipa::openapi::path::OperationBuilder,
-            c: &mut ::groom::extract::ComponentsRegistry,
+            components: &mut ::groom::extract::ComponentsRegistry,
         ) -> ::utoipa::openapi::path::OperationBuilder {
-            c.add_components::<RespMultipleTypesResponse>();
             let op = op
                 .response(
                     "200",
@@ -730,8 +729,10 @@ mod multiple_content_types {
                             ::mime::APPLICATION_JSON.as_ref(),
                             ::utoipa::openapi::ContentBuilder::new()
                                 .schema(
-                                    match Struct::schema() {
-                                        ::utoipa::openapi::RefOr::T(s) => Some(s),
+                                    match <Struct as ::utoipa::PartialSchema>::schema() {
+                                        ::utoipa::openapi::RefOr::T(s) => {
+                                            Some(components.add_components::<Struct>())
+                                        }
                                         ::utoipa::openapi::RefOr::Ref(_) => {
                                             ::core::panicking::panic_fmt(
                                                 format_args!(
@@ -745,6 +746,7 @@ mod multiple_content_types {
                         )
                         .build(),
                 );
+            components.add_components::<Struct>();
             let op = op
                 .response(
                     "404",
@@ -876,9 +878,8 @@ mod named_struct_response {
         }
         fn __openapi_modify_operation(
             op: ::utoipa::openapi::path::OperationBuilder,
-            c: &mut ::groom::extract::ComponentsRegistry,
+            components: &mut ::groom::extract::ComponentsRegistry,
         ) -> ::utoipa::openapi::path::OperationBuilder {
-            c.add_components::<Named>();
             let op = op
                 .response(
                     "200",
@@ -903,8 +904,10 @@ mod named_struct_response {
                             ::mime::APPLICATION_JSON.as_ref(),
                             ::utoipa::openapi::ContentBuilder::new()
                                 .schema(
-                                    match Named::schema() {
-                                        ::utoipa::openapi::RefOr::T(s) => Some(s),
+                                    match <Named as ::utoipa::PartialSchema>::schema() {
+                                        ::utoipa::openapi::RefOr::T(s) => {
+                                            Some(components.add_components::<Named>())
+                                        }
                                         ::utoipa::openapi::RefOr::Ref(_) => {
                                             ::core::panicking::panic_fmt(
                                                 format_args!(
@@ -918,6 +921,7 @@ mod named_struct_response {
                         )
                         .build(),
                 );
+            components.add_components::<Named>();
             op
         }
         fn __groom_check_response_codes(
@@ -1036,9 +1040,8 @@ mod unnamed_struct_response {
         }
         fn __openapi_modify_operation(
             op: ::utoipa::openapi::path::OperationBuilder,
-            c: &mut ::groom::extract::ComponentsRegistry,
+            components: &mut ::groom::extract::ComponentsRegistry,
         ) -> ::utoipa::openapi::path::OperationBuilder {
-            c.add_components::<Unnamed>();
             let op = op
                 .response(
                     "200",
@@ -1063,8 +1066,10 @@ mod unnamed_struct_response {
                             ::mime::APPLICATION_JSON.as_ref(),
                             ::utoipa::openapi::ContentBuilder::new()
                                 .schema(
-                                    match String::schema() {
-                                        ::utoipa::openapi::RefOr::T(s) => Some(s),
+                                    match <String as ::utoipa::PartialSchema>::schema() {
+                                        ::utoipa::openapi::RefOr::T(s) => {
+                                            Some(components.add_components::<String>())
+                                        }
                                         ::utoipa::openapi::RefOr::Ref(_) => {
                                             ::core::panicking::panic_fmt(
                                                 format_args!(
@@ -1078,6 +1083,7 @@ mod unnamed_struct_response {
                         )
                         .build(),
                 );
+            components.add_components::<String>();
             op
         }
         fn __groom_check_response_codes(
@@ -1153,9 +1159,8 @@ mod unit_struct_response {
         }
         fn __openapi_modify_operation(
             op: ::utoipa::openapi::path::OperationBuilder,
-            c: &mut ::groom::extract::ComponentsRegistry,
+            components: &mut ::groom::extract::ComponentsRegistry,
         ) -> ::utoipa::openapi::path::OperationBuilder {
-            c.add_components::<Unit>();
             let op = op
                 .response(
                     "200",
@@ -1223,9 +1228,8 @@ mod result_struct_struct {
         }
         fn __openapi_modify_operation(
             op: ::utoipa::openapi::path::OperationBuilder,
-            c: &mut ::groom::extract::ComponentsRegistry,
+            components: &mut ::groom::extract::ComponentsRegistry,
         ) -> ::utoipa::openapi::path::OperationBuilder {
-            c.add_components::<Success>();
             let op = op
                 .response(
                     "200",
@@ -1290,9 +1294,8 @@ mod result_struct_struct {
         }
         fn __openapi_modify_operation(
             op: ::utoipa::openapi::path::OperationBuilder,
-            c: &mut ::groom::extract::ComponentsRegistry,
+            components: &mut ::groom::extract::ComponentsRegistry,
         ) -> ::utoipa::openapi::path::OperationBuilder {
-            c.add_components::<Error>();
             let op = op
                 .response(
                     "404",
@@ -1369,10 +1372,13 @@ mod result_struct_struct {
                         .build()
                 },
             );
-        let c = components
-            .into_components(utoipa::openapi::ComponentsBuilder::new())
-            .build();
         let mut b = other.build();
+        let c = b
+            .components
+            .as_ref()
+            .map(|v| v.clone())
+            .unwrap_or(utoipa::openapi::Components::new());
+        let c = components.into_components(c);
         b.merge(
             ::utoipa::openapi::OpenApiBuilder::new()
                 .components(Some(c))
@@ -1430,9 +1436,8 @@ mod result_struct_enum {
         }
         fn __openapi_modify_operation(
             op: ::utoipa::openapi::path::OperationBuilder,
-            c: &mut ::groom::extract::ComponentsRegistry,
+            components: &mut ::groom::extract::ComponentsRegistry,
         ) -> ::utoipa::openapi::path::OperationBuilder {
-            c.add_components::<Success>();
             let op = op
                 .response(
                     "200",
@@ -1515,9 +1520,8 @@ mod result_struct_enum {
         }
         fn __openapi_modify_operation(
             op: ::utoipa::openapi::path::OperationBuilder,
-            c: &mut ::groom::extract::ComponentsRegistry,
+            components: &mut ::groom::extract::ComponentsRegistry,
         ) -> ::utoipa::openapi::path::OperationBuilder {
-            c.add_components::<Error>();
             let op = op
                 .response(
                     "404",
@@ -1545,6 +1549,7 @@ mod result_struct_enum {
                         )
                         .build(),
                 );
+            components.add_components::<String>();
             op
         }
         fn __groom_check_response_codes(
@@ -1669,10 +1674,13 @@ mod result_struct_enum {
                         .build()
                 },
             );
-        let c = components
-            .into_components(utoipa::openapi::ComponentsBuilder::new())
-            .build();
         let mut b = other.build();
+        let c = b
+            .components
+            .as_ref()
+            .map(|v| v.clone())
+            .unwrap_or(utoipa::openapi::Components::new());
+        let c = components.into_components(c);
         b.merge(
             ::utoipa::openapi::OpenApiBuilder::new()
                 .components(Some(c))
@@ -1853,9 +1861,8 @@ mod wrapped_enum {
         }
         fn __openapi_modify_operation(
             op: ::utoipa::openapi::path::OperationBuilder,
-            c: &mut ::groom::extract::ComponentsRegistry,
+            components: &mut ::groom::extract::ComponentsRegistry,
         ) -> ::utoipa::openapi::path::OperationBuilder {
-            c.add_components::<Resp>();
             let op = op
                 .response(
                     "200",
@@ -1865,8 +1872,10 @@ mod wrapped_enum {
                             ::mime::APPLICATION_JSON.as_ref(),
                             ::utoipa::openapi::ContentBuilder::new()
                                 .schema(
-                                    match EnumValueObject::schema() {
-                                        ::utoipa::openapi::RefOr::T(s) => Some(s),
+                                    match <EnumValueObject as ::utoipa::PartialSchema>::schema() {
+                                        ::utoipa::openapi::RefOr::T(s) => {
+                                            Some(components.add_components::<EnumValueObject>())
+                                        }
                                         ::utoipa::openapi::RefOr::Ref(_) => {
                                             ::core::panicking::panic_fmt(
                                                 format_args!(
@@ -1890,8 +1899,10 @@ mod wrapped_enum {
                             ::mime::APPLICATION_JSON.as_ref(),
                             ::utoipa::openapi::ContentBuilder::new()
                                 .schema(
-                                    match WrapperStruct::schema() {
-                                        ::utoipa::openapi::RefOr::T(s) => Some(s),
+                                    match <WrapperStruct as ::utoipa::PartialSchema>::schema() {
+                                        ::utoipa::openapi::RefOr::T(s) => {
+                                            Some(components.add_components::<WrapperStruct>())
+                                        }
                                         ::utoipa::openapi::RefOr::Ref(_) => {
                                             ::core::panicking::panic_fmt(
                                                 format_args!(
@@ -2059,9 +2070,8 @@ mod wrapped_enum {
         }
         fn __openapi_modify_operation(
             op: ::utoipa::openapi::path::OperationBuilder,
-            c: &mut ::groom::extract::ComponentsRegistry,
+            components: &mut ::groom::extract::ComponentsRegistry,
         ) -> ::utoipa::openapi::path::OperationBuilder {
-            c.add_components::<Error>();
             let op = op
                 .response(
                     "404",
@@ -2144,10 +2154,13 @@ mod wrapped_enum {
                         .build()
                 },
             );
-        let c = components
-            .into_components(utoipa::openapi::ComponentsBuilder::new())
-            .build();
         let mut b = other.build();
+        let c = b
+            .components
+            .as_ref()
+            .map(|v| v.clone())
+            .unwrap_or(utoipa::openapi::Components::new());
+        let c = components.into_components(c);
         b.merge(
             ::utoipa::openapi::OpenApiBuilder::new()
                 .components(Some(c))

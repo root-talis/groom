@@ -72,6 +72,27 @@ pub async fn test_openapi() {
                 "version": "0.0.0",
             },
             "openapi": "3.1.0",
+            "components": {
+                 "schemas": {
+                     "PathParams": {
+                         "description":("TODO: this should be put under #/components/parameters"),
+                         "properties": {
+                             "team_id": {
+                                 "type": ("string"),
+                             },
+                             "user_id": {
+                                 "format": ("int32"),
+                                 "type": ("integer"),
+                             },
+                         },
+                         "required": [
+                            ("team_id"),
+                            ("user_id"),
+                         ],
+                         "type": ("object"),
+                     },
+                 },
+             },
             "paths": {
                 "/team/{team_id}/user/{user_id}": {
                     "get": {
@@ -81,20 +102,7 @@ pub async fn test_openapi() {
                                 "name": "PathParams",
                                 "required": true,
                                 "schema": {
-                                    "properties": {
-                                        "team_id": {
-                                            "type": "string",
-                                        },
-                                        "user_id": {
-                                            "format": "int32",
-                                            "type": "integer",
-                                        },
-                                    },
-                                    "required": [
-                                        "team_id",
-                                        "user_id",
-                                    ],
-                                    "type": "object",
+                                    "$ref": ("#/components/schemas/PathParams"),
                                 },
                             },
                         ],
@@ -113,7 +121,6 @@ pub async fn test_openapi() {
                     },
                 },
             },
-            "components": {},
         })
     );
 }

@@ -131,8 +131,16 @@ impl ComponentsRegistry {
 
 #[cfg(test)]
 mod tests {
+    use utoipa::openapi::{Ref, RefOr, Schema};
+
+    fn reference_to(ref_location: &str) -> RefOr<Schema> {
+        RefOr::Ref(Ref::new(ref_location))
+    }
+
     mod add_components {
-        use crate::extract::ComponentsRegistry;
+        use pretty_assertions::assert_eq;
+
+        use crate::extract::{ComponentsRegistry, components_registry::tests::reference_to};
 
         mod submod1 {
             #[derive(utoipa::ToSchema)]
@@ -169,7 +177,7 @@ mod tests {
         fn detect_overlap_in_neighbours() {
             let mut reg = ComponentsRegistry::new();
 
-            reg.add_components::<submod1::SubStruct>();
+            assert_eq!(reg.add_components::<submod1::SubStruct>(), reference_to("#/components/schemas/SubStruct"));
             reg.add_components::<submod2::SubStruct>();
         }
 
@@ -195,7 +203,7 @@ mod tests {
         mod shared_components {
             use utoipa::openapi::ComponentsBuilder;
 
-            use crate::extract::ComponentsRegistry;
+            use crate::extract::{ComponentsRegistry, components_registry::tests::reference_to};
 
             #[derive(utoipa::ToSchema)]
             pub struct Struct1 {
@@ -205,10 +213,10 @@ mod tests {
             #[test]
             fn allow_shared_components() {
                 let mut reg1 = ComponentsRegistry::new();
-                reg1.add_components::<Struct1>();
+                assert_eq!(reg1.add_components::<Struct1>(), reference_to("#/components/schemas/Struct1"));
 
                 let mut reg2 = ComponentsRegistry::new();
-                reg2.add_components::<Struct1>();
+                assert_eq!(reg2.add_components::<Struct1>(), reference_to("#/components/schemas/Struct1"));
 
                 let c = ComponentsBuilder::new().build();
                 let c = reg1.into_components(c);
@@ -219,7 +227,7 @@ mod tests {
         mod overlapping_components {
             use utoipa::openapi::ComponentsBuilder;
 
-            use crate::extract::ComponentsRegistry;
+            use crate::extract::{ComponentsRegistry, components_registry::tests::reference_to};
 
             mod sub1 {
                 #[derive(utoipa::ToSchema)]
@@ -239,21 +247,21 @@ mod tests {
             #[should_panic(expected = "Component `Struct1` is defined more then once.")]
             fn disallow_different_components_with_same_name() {
                 let mut reg1 = ComponentsRegistry::new();
-                reg1.add_components::<sub1::Struct1>();
+                assert_eq!(reg1.add_components::<sub1::Struct1>(), reference_to("#/components/schemas/Struct1"));
 
                 let mut reg2 = ComponentsRegistry::new();
-                reg2.add_components::<sub2::Struct1>();
+                assert_eq!(reg2.add_components::<sub2::Struct1>(), reference_to("#/components/schemas/Struct1"));
 
                 let c = ComponentsBuilder::new().build();
                 let c = reg1.into_components(c);
-                let c = reg2.into_components(c);
+                let _ = reg2.into_components(c);
             }
         }
 
         mod identical_components {
             use utoipa::openapi::ComponentsBuilder;
 
-            use crate::extract::ComponentsRegistry;
+            use crate::extract::{ComponentsRegistry, components_registry::tests::reference_to};
 
             #[derive(utoipa::ToSchema)]
             pub struct Struct1 {
@@ -271,8 +279,8 @@ mod tests {
             #[test]
             fn allow_identical_components() {
                 let mut reg = ComponentsRegistry::new();
-                reg.add_components::<Struct1>();
-                reg.add_components::<submod::Struct1>();
+                assert_eq!(reg.add_components::<Struct1>(), reference_to("#/components/schemas/Struct1"));
+                assert_eq!(reg.add_components::<submod::Struct1>(), reference_to("#/components/schemas/Struct1"));
 
                 let c = ComponentsBuilder::new().build();
                 let c = reg.into_components(c);
