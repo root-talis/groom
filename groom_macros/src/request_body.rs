@@ -210,6 +210,7 @@ mod struct_impl {
         let rejections_into_response = &context.rejections_into_response;
         let type_assertions = &context.type_assertions;
         let description_tk = &context.description_tk;
+        let extract_ty = &context.dto_fragments.extract_ty;
 
         quote! {
             #[derive(::serde::Deserialize)]
@@ -221,7 +222,7 @@ mod struct_impl {
                     op: ::utoipa::openapi::path::OperationBuilder,
                     c: &mut ::groom::extract::ComponentsRegistry
                 ) -> ::utoipa::openapi::path::OperationBuilder {
-                    c.add_components::<#ident>();
+                    c.add_components::<#extract_ty>();
 
                     op.request_body(Some(
                         ::utoipa::openapi::request_body::RequestBodyBuilder::new()

@@ -15,17 +15,19 @@ mod controller {
         extract::GroomExtractor
     };
     use groom_macros::{DTO,Response};
+use serde::Deserialize;
+use utoipa::ToSchema;
 
     // ---
 
-    #[DTO(request)]
+    #[DTO(parameters)]
     pub struct Params {
         #[serde(rename="first_name_renamed")]
         first_name: String,
         last_name: Option<String>,
     }
 
-    #[DTO(request)]
+    #[DTO(parameters)]
     pub struct Params2 {
         title: Option<String>,
     }
@@ -37,6 +39,20 @@ mod controller {
 
         #[Response(code = 400)]
         BadRequest(String),
+    }
+
+    #[DTO(parameters)]
+    pub struct Filters {
+        #[serde(default)]
+        pub sort_by: SortBy,
+    }
+
+    #[derive(Default, Deserialize, ToSchema)]
+    pub enum SortBy {
+        #[default]
+        Id,
+        Title,
+        Status
     }
 
     // ---
@@ -64,6 +80,20 @@ mod controller {
                 )
             ))
         }
+    }
+
+    #[Route(method = "get", path = "/enum_parameter")]
+    pub async fn enum_parameter(
+        query: Query<Filters>,
+    ) -> Resp {
+        Resp::Ok(format!(
+            "Sort by {}",
+            match query.sort_by {
+                SortBy::Id     => "default",
+                SortBy::Title  => "text",
+                SortBy::Status => "status",
+            }
+        ))
     }
 }
 
@@ -103,11 +133,42 @@ pub async fn test_query_multiple_structs() {
     ;
 }
 
+
+/// Test that enum Query parameters are correctly read
+#[tokio::test]
+pub async fn test_query_enum() {
+    let r = controller::merge_into_router(Router::new());
+
+    Req::get("/enum_parameter").call(&r).await
+        .assert_status(200)
+        .assert_body("Sort by default")
+        .assert_content_type("text/plain; charset=utf-8")
+    ;
+
+    Req::get("/enum_parameter?sort_by=Id").call(&r).await
+        .assert_status(200)
+        .assert_body("Sort by default")
+        .assert_content_type("text/plain; charset=utf-8")
+    ;
+
+    Req::get("/enum_parameter?sort_by=Title").call(&r).await
+        .assert_status(200)
+        .assert_body("Sort by text")
+        .assert_content_type("text/plain; charset=utf-8")
+    ;
+
+    Req::get("/enum_parameter?sort_by=Status").call(&r).await
+        .assert_status(200)
+        .assert_body("Sort by status")
+        .assert_content_type("text/plain; charset=utf-8")
+    ;
+}
+
 // Todo: HashMap in query
 
 /// Tests that openapi definition is correctly generated
-#[tokio::test]
-pub async fn test_openapi() {
+#[test]
+pub fn test_openapi() {
     assert_openapi_doc(
         |b| controller::merge_into_openapi_builder(b),
         json!({
@@ -121,33 +182,13 @@ pub async fn test_openapi() {
             "openapi": "3.1.0",
             "components": {
                 "schemas": {
-                    "Params": {
-                        "properties": {
-                            "first_name_renamed": {
-                                "type": ("string"),
-                            },
-                            "last_name": {
-                                "type": [
-                                    ("string"),
-                                    ("null"),
-                                ],
-                            },
-                        },
-                        "required": [
-                            ("first_name_renamed"),
+                    "SortBy": {
+                        "enum": [
+                            ("Id"),
+                            ("Title"),
+                            ("Status"),
                         ],
-                        "type": ("object"),
-                    },
-                    "Params2": {
-                        "properties": {
-                            "title": {
-                                "type": [
-                                    ("string"),
-                                    ("null"),
-                                ],
-                            },
-                        },
-                        "type": ("object"),
+                        "type": ("string"),
                     },
                 },
             },
@@ -157,20 +198,34 @@ pub async fn test_openapi() {
                         "parameters": [
                             {
                                 "in": "query",
-                                "name": "Params",
+                                "name": "first_name_renamed",
                                 "required": true,
                                 "schema": {
-                                    "$ref": ("#/components/schemas/Params"),
+                                    "type": "string",
                                 },
                             },
                             {
                                 "in": "query",
-                                "name": "Params2",
-                                "required": true,
+                                "name": "last_name",
+                                "required": false,
                                 "schema": {
-                                    "$ref": ("#/components/schemas/Params2"),
+                                    "type": [
+                                        "string",
+                                        "null",
+                                    ],
                                 },
                             },
+                            {
+                                "in": "query",
+                                "name": "title",
+                                "required": false,
+                                "schema": {
+                                    "type": [
+                                        "string",
+                                        "null",
+                                    ],
+                                }
+                            }
                         ],
                         "responses": {
                             "200": {
@@ -196,6 +251,42 @@ pub async fn test_openapi() {
                         },
                     },
                 },
+                "/enum_parameter": {
+                     "get": {
+                         "parameters": [
+                             {
+                                 "in": ("query"),
+                                 "name": ("sort_by"),
+                                 "required": (false),
+                                 "schema":  {
+                                     "$ref": ("#/components/schemas/SortBy"),
+                                 },
+                             },
+                         ],
+                         "responses": {
+                             "200": {
+                                 "content": {
+                                     "text/plain; charset=utf-8": {
+                                         "schema": {
+                                             "type": ("string"),
+                                         },
+                                     },
+                                 },
+                                 "description": (""),
+                             },
+                             "400": {
+                                 "content": {
+                                     "text/plain; charset=utf-8": {
+                                         "schema": {
+                                             "type": ("string"),
+                                         },
+                                     },
+                                 },
+                                 "description": (""),
+                             },
+                         },
+                     },
+                 },
             },
         })
     );

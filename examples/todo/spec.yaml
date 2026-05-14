@@ -14,11 +14,32 @@ paths:
     get:
       summary: Lists tasks
       parameters:
-      - name: TaskListFilters
+      - name: title
         in: query
-        required: true
+        required: false
         schema:
-          $ref: '#/components/schemas/TaskListFilters'
+          type:
+          - string
+          - 'null'
+      - name: status
+        in: query
+        required: false
+        schema:
+          type:
+          - array
+          - 'null'
+          items:
+            $ref: '#/components/schemas/Status'
+      - name: sort_by
+        in: query
+        required: false
+        schema:
+          $ref: '#/components/schemas/TaskOrderBy'
+      - name: order
+        in: query
+        required: false
+        schema:
+          $ref: '#/components/schemas/OrderDirection'
       responses:
         '200':
           description: ''
@@ -61,11 +82,13 @@ paths:
     get:
       summary: Gets a single task.
       parameters:
-      - name: TaskIdentifier
+      - name: task_id
         in: path
         required: true
         schema:
-          $ref: '#/components/schemas/TaskIdentifier'
+          type: integer
+          format: int64
+          minimum: 0
       responses:
         '200':
           description: ''
@@ -81,11 +104,13 @@ paths:
     put:
       summary: Renames a task.
       parameters:
-      - name: TaskIdentifier
+      - name: task_id
         in: path
         required: true
         schema:
-          $ref: '#/components/schemas/TaskIdentifier'
+          type: integer
+          format: int64
+          minimum: 0
       requestBody:
         description: Request body
         content:
@@ -119,11 +144,13 @@ paths:
     put:
       summary: Mark the task as cancelled.
       parameters:
-      - name: TaskIdentifier
+      - name: task_id
         in: path
         required: true
         schema:
-          $ref: '#/components/schemas/TaskIdentifier'
+          type: integer
+          format: int64
+          minimum: 0
       responses:
         '200':
           description: ''
@@ -141,11 +168,13 @@ paths:
     put:
       summary: Mark the task as done.
       parameters:
-      - name: TaskIdentifier
+      - name: task_id
         in: path
         required: true
         schema:
-          $ref: '#/components/schemas/TaskIdentifier'
+          type: integer
+          format: int64
+          minimum: 0
       responses:
         '200':
           description: ''
@@ -163,11 +192,13 @@ paths:
     put:
       summary: Mark the task as pending.
       parameters:
-      - name: TaskIdentifier
+      - name: task_id
         in: path
         required: true
         schema:
-          $ref: '#/components/schemas/TaskIdentifier'
+          type: integer
+          format: int64
+          minimum: 0
       responses:
         '200':
           description: ''
@@ -210,34 +241,6 @@ components:
       - Pending
       - Done
       - Cancelled
-    TaskIdentifier:
-      type: object
-      description: Params to get a single task
-      required:
-      - task_id
-      properties:
-        task_id:
-          type: integer
-          format: int64
-          minimum: 0
-    TaskListFilters:
-      type: object
-      description: Task list filters
-      properties:
-        order:
-          $ref: '#/components/schemas/OrderDirection'
-        sort_by:
-          $ref: '#/components/schemas/TaskOrderBy'
-        status:
-          type:
-          - array
-          - 'null'
-          items:
-            $ref: '#/components/schemas/Status'
-        title:
-          type:
-          - string
-          - 'null'
     TaskOrderBy:
       type: string
       enum:

@@ -132,8 +132,8 @@ pub async fn test_merge_routers() {
 }
 
 /// Tests that openapi definition is correctly generated
-#[tokio::test]
-pub async fn test_openapi() {
+#[test]
+pub fn test_openapi() {
     assert_openapi_doc(
         |b| {
             let b = namespace_a::merge_api_spec(b);

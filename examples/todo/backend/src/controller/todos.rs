@@ -45,7 +45,7 @@ mod controller {
     use serde::Deserialize;
 
     // PartialSchema is used to get schema of some types within RequestBody DTO and Response.
-    use utoipa::{PartialSchema, ToSchema};
+    use utoipa::ToSchema;
 
     use crate::service::{
         model::{Status, Task, TaskID},
@@ -81,7 +81,7 @@ mod controller {
     //
 
     /// Task list filters
-    #[DTO(request)]
+    #[DTO(parameters)]
     pub struct TaskListFilters {
         pub title:  Option<String>,
         pub status: Option<Vec<Status>>,
@@ -177,7 +177,7 @@ mod controller {
     //
 
     /// Params to get a single task
-    #[DTO(request)]
+    #[DTO(parameters)]
     pub struct TaskIdentifier {
         pub task_id: u64,
     }

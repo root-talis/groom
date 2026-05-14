@@ -89,7 +89,7 @@ pub fn Response(args: TokenStream, input: TokenStream) -> TokenStream {
 pub fn DTO(args: TokenStream, input: TokenStream) -> TokenStream {
     let args: proc_macro2::TokenStream = args.into();
     if args.is_empty() {
-        abort!(args, "error in `#[DTO]` annotation: specify `request`, `response`, or both as DTO arguments (e.g. `#[DTO(request, response)`])")
+        abort!(args, "error in `#[DTO]` annotation: specify `request`, `response`, `parameters`, or all as DTO arguments (e.g. `#[DTO(request, response)`])")
     }
 
     let dto_args = match parse_nested_meta!(dto::DtoArgs, &args) {

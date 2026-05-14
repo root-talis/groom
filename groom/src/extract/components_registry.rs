@@ -5,14 +5,24 @@ use utoipa::{PartialSchema, ToSchema, openapi::{Components, ComponentsBuilder, S
 
 #[derive(Clone, PartialEq)]
 pub struct ComponentEntry {
-    pub schema: Schema,
-    pub reference: Ref,
+    pub schema:    Schema,
+    pub reference: Option<Ref>,
+}
+
+impl Into<RefOr<Schema>> for ComponentEntry {
+    fn into(self) -> RefOr<Schema> {
+        if let Some(r) = self.reference {
+            RefOr::Ref(r)
+        } else {
+            RefOr::T(self.schema)
+        }
+    }
 }
 
 #[derive(Default)]
 pub struct ComponentsRegistry {
+    seen_types: HashSet<TypeId>,
     components: HashMap<String, ComponentEntry>,
-    seen_types: HashSet<TypeId>
 }
 
 // these schemas will not be put under components.
@@ -24,45 +34,56 @@ impl ComponentsRegistry {
         Self::default()
     }
 
-    pub fn add_components<T: ToSchema + 'static>(&mut self) -> RefOr<Schema> {
+    pub fn add_components<T: ToSchema + 'static>(&mut self) -> ComponentEntry {
         let tid = TypeId::of::<T>();
         let name: String = T::name().into();
 
         if self.seen_types.contains(&tid) {
-            return RefOr::Ref(
-                self.components.get(&name)
-                    .expect("component for a type that is already seen is expected to exist")
-                    .reference
-                    .clone()
-            )
+            return self.components.get(&name)
+                .expect("component for a type that is already seen is expected to exist")
+                .clone()
         }
 
+        self.add_subcomponents::<T>();
+        self.add_component(name, T::schema(), Some(tid))
+    }
+
+    pub fn add_subcomponents<T: ToSchema + 'static>(&mut self) {
         let mut schemas = Vec::<(String, RefOr<Schema>)>::new();
         T::schemas(&mut schemas);
 
         for (name, schema) in schemas {
             self.add_component(name.clone(), schema, None);
         }
-
-        self.add_component(name, T::schema(), Some(tid))
     }
 
-    fn add_component(&mut self, name: String, schema: RefOr<Schema>, tid: Option<TypeId>) -> RefOr<Schema> {
+    pub fn add_component(&mut self, name: String, schema: RefOr<Schema>, tid: Option<TypeId>) -> ComponentEntry {
         let schema = match schema {
-            RefOr::T(s) => s,
-            RefOr::Ref(r) => return RefOr::Ref(r.clone()),
-                // panic!(
-                //     "ComponentsRegistry::add_component: schema for `{}` is a ref to `{}`, expected to be a schema!",
-                //     name,
-                //     r.ref_location
-                // ),
+            RefOr::T(s)   => s,
+            RefOr::Ref(r) => 
+                // { 
+                //     return self.components
+                //         .values()
+                //         .find(|e| e.reference.is_some() && *e.reference.as_ref().unwrap() == r)
+                //         .expect(format!(
+                //             "ComponentsRegistry::add_component: schema for `{}` is a ref to `{}`, which hasn't been seen yet!",
+                //             name,
+                //             r.ref_location
+                //         ).as_str())
+                //         .clone();
+                // },
+                panic!(
+                    "ComponentsRegistry::add_component: schema for `{}` is a ref to `{}`, expected to be a schema!",
+                    name,
+                    r.ref_location
+                ),
         };
 
         if !Self::is_component(&schema) {
-            return RefOr::T(schema.clone());
+            return ComponentEntry{ schema, reference: None };
         }
 
-        let entry = match self.components.entry(name.clone()) {
+        match self.components.entry(name.clone()) {
             hash_map::Entry::Occupied(e) => {
                 if e.get().schema != schema {
                     panic!(
@@ -70,18 +91,18 @@ impl ComponentsRegistry {
                         name
                     );
                 }
-                e.get().reference.clone()
+                e.get().clone()
             },
             hash_map::Entry::Vacant(vacant_entry) => {
                 let e = vacant_entry.insert(ComponentEntry{ 
-                    reference: RefBuilder::new()
-                        .ref_location(format!(
-                            "#/components/schemas/{}",
-                            crate::json_ptr::escape_json_pointer(
-                                name.as_ref()
-                            )
-                        ))
-                        .build(),
+                    reference: Some(
+                        RefBuilder::new()
+                            .ref_location(format!(
+                                "#/components/schemas/{}",
+                                crate::json_ptr::escape_json_pointer(name.as_ref())
+                            ))
+                            .build()
+                    ),
                     schema: schema.clone()
                 });
 
@@ -89,11 +110,9 @@ impl ComponentsRegistry {
                     self.seen_types.insert(tid);
                 }
 
-                e.reference.clone()
+                e.clone()
             },
-        };
-
-        return RefOr::<Schema>::Ref(entry)
+        }
     }
 
     fn is_component(schema: &Schema) -> bool {
@@ -133,8 +152,8 @@ impl ComponentsRegistry {
 mod tests {
     use utoipa::openapi::{Ref, RefOr, Schema};
 
-    fn reference_to(ref_location: &str) -> RefOr<Schema> {
-        RefOr::Ref(Ref::new(ref_location))
+    fn reference_to(ref_location: &str) -> Ref {
+        Ref::new(ref_location)
     }
 
     mod add_components {
@@ -177,7 +196,7 @@ mod tests {
         fn detect_overlap_in_neighbours() {
             let mut reg = ComponentsRegistry::new();
 
-            assert_eq!(reg.add_components::<submod1::SubStruct>(), reference_to("#/components/schemas/SubStruct"));
+            assert_eq!(reg.add_components::<submod1::SubStruct>().reference.unwrap(), reference_to("#/components/schemas/SubStruct"));
             reg.add_components::<submod2::SubStruct>();
         }
 
@@ -213,10 +232,10 @@ mod tests {
             #[test]
             fn allow_shared_components() {
                 let mut reg1 = ComponentsRegistry::new();
-                assert_eq!(reg1.add_components::<Struct1>(), reference_to("#/components/schemas/Struct1"));
+                assert_eq!(reg1.add_components::<Struct1>().reference.unwrap(), reference_to("#/components/schemas/Struct1"));
 
                 let mut reg2 = ComponentsRegistry::new();
-                assert_eq!(reg2.add_components::<Struct1>(), reference_to("#/components/schemas/Struct1"));
+                assert_eq!(reg2.add_components::<Struct1>().reference.unwrap(), reference_to("#/components/schemas/Struct1"));
 
                 let c = ComponentsBuilder::new().build();
                 let c = reg1.into_components(c);
@@ -247,10 +266,10 @@ mod tests {
             #[should_panic(expected = "Component `Struct1` is defined more then once.")]
             fn disallow_different_components_with_same_name() {
                 let mut reg1 = ComponentsRegistry::new();
-                assert_eq!(reg1.add_components::<sub1::Struct1>(), reference_to("#/components/schemas/Struct1"));
+                assert_eq!(reg1.add_components::<sub1::Struct1>().reference.unwrap(), reference_to("#/components/schemas/Struct1"));
 
                 let mut reg2 = ComponentsRegistry::new();
-                assert_eq!(reg2.add_components::<sub2::Struct1>(), reference_to("#/components/schemas/Struct1"));
+                assert_eq!(reg2.add_components::<sub2::Struct1>().reference.unwrap(), reference_to("#/components/schemas/Struct1"));
 
                 let c = ComponentsBuilder::new().build();
                 let c = reg1.into_components(c);
@@ -279,8 +298,8 @@ mod tests {
             #[test]
             fn allow_identical_components() {
                 let mut reg = ComponentsRegistry::new();
-                assert_eq!(reg.add_components::<Struct1>(), reference_to("#/components/schemas/Struct1"));
-                assert_eq!(reg.add_components::<submod::Struct1>(), reference_to("#/components/schemas/Struct1"));
+                assert_eq!(reg.add_components::<Struct1>().reference.unwrap(), reference_to("#/components/schemas/Struct1"));
+                assert_eq!(reg.add_components::<submod::Struct1>().reference.unwrap(), reference_to("#/components/schemas/Struct1"));
 
                 let c = ComponentsBuilder::new().build();
                 let c = reg.into_components(c);

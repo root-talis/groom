@@ -120,8 +120,8 @@ pub async fn json_string() {
 }
 
 /// Tests that openapi definition is correctly generated
-#[tokio::test]
-pub async fn test_openapi() {
+#[test]
+pub fn test_openapi() {
     assert_openapi_doc(
         |b| controller::merge_into_openapi_builder(b),
         json!({

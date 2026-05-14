@@ -15,14 +15,24 @@ mod controller {
         extract::GroomExtractor
     };
     use groom_macros::{DTO,Response};
+use serde::Deserialize;
+use utoipa::ToSchema;
 
     // ---
 
     /// TODO: this should be put under #/components/parameters
-    #[DTO(request)]
+    #[DTO(parameters)]
     pub struct PathParams {
         pub team_id: String,
         pub user_id: i32,
+        pub sort_by: SortBy,
+    }
+
+    #[derive(Deserialize, ToSchema)]
+    pub enum SortBy {
+        Id,
+        Title,
+        Status
     }
 
     #[Response(format(plain_text))]
@@ -31,9 +41,13 @@ mod controller {
         Ok(String),
     }
 
-    #[Route(method = "get", path = "/team/{team_id}/user/{user_id}")]
-    async fn rq_cons_path_struct(Path(team): Path<PathParams>) -> TextResponse {
-        TextResponse::Ok(format!("{} -> {}", team.user_id, team.team_id))
+    #[Route(method = "get", path = "/team/{team_id}/user/{user_id}/{sort_by}")]
+    async fn path_params(Path(team): Path<PathParams>) -> TextResponse {
+        TextResponse::Ok(format!("{} -> {} / {}", team.user_id, team.team_id, match team.sort_by {
+            SortBy::Id     => "id sort",
+            SortBy::Title  => "title sort",
+            SortBy::Status => "status sort",
+        }))
     }
 }
 
@@ -42,15 +56,15 @@ mod controller {
 pub async fn test_path_params() {
     let r = controller::merge_into_router(Router::new());
 
-    Req::get("/team/7/user/1").call(&r).await
+    Req::get("/team/7/user/1/Id").call(&r).await
         .assert_status(200)
-        .assert_body("1 -> 7")
+        .assert_body("1 -> 7 / id sort")
         .assert_content_type("text/plain; charset=utf-8")
     ;
 
-    Req::get("/team/Hitchhikers/user/42").call(&r).await
+    Req::get("/team/Hitchhikers/user/42/Status").call(&r).await
         .assert_status(200)
-        .assert_body("42 -> Hitchhikers")
+        .assert_body("42 -> Hitchhikers / status sort")
         .assert_content_type("text/plain; charset=utf-8")
     ;
 }
@@ -58,8 +72,8 @@ pub async fn test_path_params() {
 // Todo: HashMap in query
 
 /// Tests that openapi definition is correctly generated
-#[tokio::test]
-pub async fn test_openapi() {
+#[test]
+pub fn test_openapi() {
     assert_openapi_doc(
         |b| controller::merge_into_openapi_builder(b),
         json!({
@@ -73,36 +87,44 @@ pub async fn test_openapi() {
             },
             "openapi": "3.1.0",
             "components": {
-                 "schemas": {
-                     "PathParams": {
-                         "description":("TODO: this should be put under #/components/parameters"),
-                         "properties": {
-                             "team_id": {
-                                 "type": ("string"),
-                             },
-                             "user_id": {
-                                 "format": ("int32"),
-                                 "type": ("integer"),
-                             },
-                         },
-                         "required": [
-                            ("team_id"),
-                            ("user_id"),
-                         ],
-                         "type": ("object"),
-                     },
-                 },
-             },
+                "schemas": {
+                    "SortBy": {
+                        "enum": [
+                            ("Id"),
+                            ("Title"),
+                            ("Status"),
+                        ],
+                        "type": ("string"),
+                    },
+                },
+            },
             "paths": {
-                "/team/{team_id}/user/{user_id}": {
+                "/team/{team_id}/user/{user_id}/{sort_by}": {
                     "get": {
                         "parameters": [
                             {
                                 "in": "path",
-                                "name": "PathParams",
+                                "name": "team_id",
                                 "required": true,
                                 "schema": {
-                                    "$ref": ("#/components/schemas/PathParams"),
+                                    "type": ("string"),
+                                }
+                            },
+                            {
+                                "in": "path",
+                                "name": "user_id",
+                                "required": true,
+                                "schema": {
+                                    "type": ("integer"),
+                                    "format": "int32"
+                                },
+                            },
+                            {
+                                "in": ("path"),
+                                "name": ("sort_by"),
+                                "required": (true),
+                                "schema": {
+                                    "$ref": ("#/components/schemas/SortBy"),
                                 },
                             },
                         ],

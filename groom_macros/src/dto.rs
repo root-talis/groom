@@ -16,6 +16,9 @@ pub(crate) struct DtoArgs {
 
     #[darling(default)]
     pub(crate) request: bool,
+
+    #[darling(default)]
+    pub(crate) parameters: bool,
 }
 
 //
@@ -47,25 +50,43 @@ pub(crate) fn generate(args_t: TokenStream, args: DtoArgs, input: TokenStream) -
 fn generate_impl_for_struct(_args_t: TokenStream, args: DtoArgs, item_struct: ItemStruct) -> TokenStream {
     let ident = &item_struct.ident;
 
-    let (deserialize_derive, dto_request_impl) =
-        if !args.request {
+    let dto_request_impl =
+        if args.request {
+            quote! { impl ::groom::DTO_Request for #ident {} }
+        } else {;
             Default::default()
+        };
+    
+    let deserialize_derive =
+        if args.request || args.parameters {
+            quote! { #[derive(::serde::Deserialize)] }
         } else {
-            let deserialize_derive = quote! { #[derive(::serde::Deserialize)] };
-            let request_impl = quote! { impl ::groom::DTO_Request for #ident {} };
+            Default::default()
+        }
+    ;
 
-            (deserialize_derive, request_impl)
+    let serialize_derive = 
+        if args.response {
+            quote!{ #[derive(::serde::Serialize)] }
+        } else {
+            Default::default()
+        }
+    ;
+
+    let dto_response_impl =
+        if args.response {
+            quote! { impl ::groom::DTO_Response for #ident {} }
+        } else {
+            Default::default()
         };
 
-    let (serialize_derive, dto_response_impl) =
-        if !args.response {
-            Default::default()
+    let into_parameters_derive =
+        if args.parameters {
+            quote! { #[derive(::utoipa::IntoParams)] }
         } else {
-            let serialize_derive = quote!{ #[derive(::serde::Serialize)] };
-            let response_impl = quote! { impl ::groom::DTO_Response for #ident {} };
-
-            (serialize_derive, response_impl)
-        };
+            Default::default()
+        }
+    ;
 
     let openapi_derive = derive_openapi_schema_generation();
 
@@ -73,6 +94,7 @@ fn generate_impl_for_struct(_args_t: TokenStream, args: DtoArgs, item_struct: It
         #deserialize_derive
         #serialize_derive
         #openapi_derive
+        #into_parameters_derive
         #item_struct
 
         impl ::groom::DTO for #ident {}

@@ -16,6 +16,11 @@ clean:
 build-backend:
     CARGO_TARGET_DIR=./target cargo build --bin backend --release
 
+# Runs a backend helper and saves spec into spec.yaml
+[group('backend')]
+generate-api-spec:
+    cargo run --bin spec > spec.yaml
+
 # Runs backend tests
 [group('backend')]
 [working-directory('backend')]
@@ -29,13 +34,8 @@ test-backend:
 # Generates API client from spec
 [group('frontend')]
 [working-directory('frontend')]
-build-client: frontend-deps build-spec
+generate-api-client: frontend-deps generate-api-spec
     npx orval
-
-# Runs a backend helper and saves spec into spec.yaml
-[group('frontend')]
-build-spec:
-    cargo run --bin spec > spec.yaml
 
 [group('frontend')]
 [working-directory('frontend')]

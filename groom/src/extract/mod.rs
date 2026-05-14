@@ -1,7 +1,6 @@
 use utoipa::openapi::path::OperationBuilder;
 
-mod query;
-mod path;
+mod parameters;
 mod std_types;
 mod components_registry;
 
