@@ -10,6 +10,12 @@ clean:
 # Backend
 #
 
+# Runs backend for development
+[group('backend')]
+[working-directory('backend')]
+run-backend:
+    cargo run --bin backend
+
 # Builds backend
 [group('backend')]
 [working-directory('backend')]
@@ -35,7 +41,7 @@ test-backend:
 [group('frontend')]
 [working-directory('frontend')]
 generate-api-client: frontend-deps generate-api-spec
-    npx orval
+    npx openapi-ts
 
 [group('frontend')]
 [working-directory('frontend')]
@@ -56,11 +62,8 @@ frontend-deps:
     fi
 
     npm install
-    
-    ORVAL=$(npm list --depth=0 | grep orval)
-    if [ -n "$ORVAL" ]; then
-        echo 'Orval found'
-    else
-        echo 'Orval is not installed; installing now.'
-        npm install orval -D
+
+    if [ ! -f ".env" ]; then
+        echo 'Warning: .env file not found; using a copy of .env.example'
+        cp .env.example .env
     fi

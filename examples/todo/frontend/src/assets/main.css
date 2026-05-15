@@ -1,0 +1,44 @@
+@import './base.css';
+
+body {
+  display: flex;
+  justify-content: stretch;
+}
+
+#app {
+  max-width: 1440px;
+  max-height: 100vh;
+  margin: 0 auto;
+  font-weight: normal;
+  flex-grow: 1;
+
+  display: flex;
+  flex-direction: column;
+}
+
+a {
+  text-decoration: none;
+  color: var(--base-blue);
+  transition: 0.4s;
+  padding: 3px;
+}
+
+.label-error {
+  color: var(--base-red);
+}
+
+.label-info {
+  color: var(--base-yellow);
+}
+
+@media (min-width: 1024px) {
+  body {
+    display: flex;
+    justify-content: stretch;
+  }
+
+  #app {
+    flex-direction: row;
+  }
+}
+

@@ -138,18 +138,21 @@ mod controller {
         }
     }
 
+    #[DTO(response)]
+    pub struct TaskList(Vec::<TaskViewModel>);
+
     /// List of tasks.
     #[Response(format(json))]
     pub enum TaskListResponse {
         #[Response(code = 200)]
-        Ok(Vec::<TaskViewModel>),
+        Ok(TaskList),
 
         #[Response(code = 500)]
         ServerError,
     }
 
     /// Lists tasks
-    #[Route(method="get", path="/task")]
+    #[Route(method="get", path="/tasks")]
     pub async fn list_tasks(
         Extension(task_service): Extension<Arc<TaskService>>,
         Query(filters): Query<TaskListFilters>
@@ -162,7 +165,7 @@ mod controller {
                 ;
 
                 match tasks {
-                    Ok(v)  => TaskListResponse::Ok(v),
+                    Ok(v)  => TaskListResponse::Ok(TaskList(v)),
                     Err(_) => TaskListResponse::ServerError,
                 }
             },
@@ -196,7 +199,7 @@ mod controller {
     }
 
     /// Gets a single task.
-    #[Route(method="get", path="/task/{task_id}")]
+    #[Route(method="get", path="/tasks/{task_id}")]
     pub async fn get_task(
         Extension(task_service): Extension<Arc<TaskService>>,
         Path(path): Path<TaskIdentifier>
@@ -229,21 +232,25 @@ mod controller {
     /// Result of adding a task
     #[Response(format(json))]
     pub enum AddTaskResponse {
+        /// Task added successfully
         #[Response(code = 200)]
         Ok(TaskViewModel),
 
+        /// Task already exists with the same title
         #[Response(code = 409)]
         AlreadyExists,
 
+        /// Malformed request, e.g. missing title or title is too long.
         #[Response(code = 400)]
         MalformedRequest(String),
 
+        /// Unexpected error when adding a task, e.g. database is down or serialization error.
         #[Response(code = 500)]
         ServerError,
     }
 
     /// Adds a new task.
-    #[Route(method="post", path="/task")]
+    #[Route(method="post", path="/tasks")]
     pub async fn add_task(
         Extension(task_service): Extension<Arc<TaskService>>,
         req: AddTaskRequest
@@ -305,7 +312,7 @@ mod controller {
     }
 
     /// Renames a task.
-    #[Route(method="put", path="/task/{task_id}/name")]
+    #[Route(method="put", path="/tasks/{task_id}/name")]
     pub async fn rename_task(
         Extension(task_service): Extension<Arc<TaskService>>,
         Path(task_id): Path<TaskIdentifier>,
@@ -359,7 +366,7 @@ mod controller {
     }
 
     /// Mark the task as done.
-    #[Route(method="put", path="/task/{task_id}/status/done")]
+    #[Route(method="put", path="/tasks/{task_id}/status/done")]
     pub async fn set_done(
         Extension(task_service): Extension<Arc<TaskService>>,
         Path(task_id): Path<TaskIdentifier>
@@ -369,7 +376,7 @@ mod controller {
     }
 
     /// Mark the task as pending.
-    #[Route(method="put", path="/task/{task_id}/status/pending")]
+    #[Route(method="put", path="/tasks/{task_id}/status/pending")]
     pub async fn set_pending(
         Extension(task_service): Extension<Arc<TaskService>>,
         Path(task_id): Path<TaskIdentifier>
@@ -379,7 +386,7 @@ mod controller {
     }
 
     /// Mark the task as cancelled.
-    #[Route(method="put", path="/task/{task_id}/status/cancel")]
+    #[Route(method="put", path="/tasks/{task_id}/status/cancel")]
     pub async fn set_cancelled(
         Extension(task_service): Extension<Arc<TaskService>>,
         Path(task_id): Path<TaskIdentifier>

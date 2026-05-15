@@ -1,4 +1,6 @@
 use axum::{Extension, Router, http::StatusCode, response::IntoResponse, routing::get};
+use tower::ServiceBuilder;
+use tower_http::trace::TraceLayer;
 use utoipa::{OpenApi, openapi::OpenApiBuilder};
 use color_eyre::eyre::Result;
 

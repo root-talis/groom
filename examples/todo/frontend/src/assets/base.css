@@ -1,0 +1,70 @@
+/* 
+ * Tomorrow Night by Chris Kempson (http://chriskempson.com) 
+ * Taken from https://github.com/chriskempson/tomorrow-theme/tree/master/vim/colors.
+ */
+:root {
+  --base-foreground: #4d4d4c;
+  --base-background: #ffffff;
+  --base-selection: #d6d6d6;
+  --base-line: #efefef;
+  --base-comment: #8e908c;
+  --base-red: #c82829;
+  --base-orange: #f5871f;
+  --base-yellow: #eab700;
+  --base-green: #718c00;
+  --base-aqua: #3e999f;
+  --base-blue: #4271ae;
+  --base-purple: #8959a8;
+  --base-window: #efefef;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --base-foreground: #c5c8c6;
+    --base-background: #1d1f21;
+    --base-selection: #373b41;
+    --base-line: #282a2e;
+    --base-comment: #969896;
+    --base-red: #cc6666;
+    --base-orange: #de935f;
+    --base-yellow: #f0c674;
+    --base-green: #b5bd68;
+    --base-aqua: #8abeb7;
+    --base-blue: #81a2be;
+    --base-purple: #b294bb;
+    --base-window: #4d5057;
+  }
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  font-weight: normal;
+}
+
+body {
+  min-height: 100vh;
+  color: var(--base-foreground);
+  background: var(--base-background);
+  transition:
+    color 0.5s,
+    background-color 0.5s;
+  line-height: 1.6;
+  font-family:
+    'Noto Sans',
+    'Segoe UI',
+    Roboto,
+    Oxygen,
+    Ubuntu,
+    Cantarell,
+    'Fira Sans',
+    'Droid Sans',
+    'Helvetica Neue',
+    sans-serif;
+  font-size: 15px;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
