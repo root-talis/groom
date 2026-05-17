@@ -64,6 +64,7 @@ pub fn test_openapi() {
             "paths": {
                 "/header-map": {
                     "get": {
+                        "operationId": ("rqConsHeaderMap"),
                         "responses": {
                             "200": {
                                 "content": {

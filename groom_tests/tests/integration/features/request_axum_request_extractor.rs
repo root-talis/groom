@@ -62,6 +62,7 @@ pub fn test_openapi() {
             "paths": {
                 "/request-extractor": {
                     "get": {
+                        "operationId": ("rqConsRequest"),
                         "responses": {
                             "200": {
                                 "content": {

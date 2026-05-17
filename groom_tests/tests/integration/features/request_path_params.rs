@@ -101,6 +101,7 @@ pub fn test_openapi() {
             "paths": {
                 "/team/{team_id}/user/{user_id}/{sort_by}": {
                     "get": {
+                        "operationId": ("pathParams"),
                         "parameters": [
                             {
                                 "in": "path",

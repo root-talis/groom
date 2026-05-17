@@ -13,6 +13,7 @@ paths:
   /tasks:
     get:
       summary: Lists tasks
+      operationId: listTasks
       parameters:
       - name: title
         in: query
@@ -51,6 +52,7 @@ paths:
           description: ''
     post:
       summary: Adds a new task.
+      operationId: addTask
       requestBody:
         description: Request body
         content:
@@ -81,6 +83,7 @@ paths:
   /tasks/{task_id}:
     get:
       summary: Gets a single task.
+      operationId: getTask
       parameters:
       - name: task_id
         in: path
@@ -103,6 +106,7 @@ paths:
   /tasks/{task_id}/name:
     put:
       summary: Renames a task.
+      operationId: renameTask
       parameters:
       - name: task_id
         in: path
@@ -143,6 +147,7 @@ paths:
   /tasks/{task_id}/status/cancel:
     put:
       summary: Mark the task as cancelled.
+      operationId: setCancelled
       parameters:
       - name: task_id
         in: path
@@ -167,6 +172,7 @@ paths:
   /tasks/{task_id}/status/done:
     put:
       summary: Mark the task as done.
+      operationId: setDone
       parameters:
       - name: task_id
         in: path
@@ -191,6 +197,7 @@ paths:
   /tasks/{task_id}/status/pending:
     put:
       summary: Mark the task as pending.
+      operationId: setPending
       parameters:
       - name: task_id
         in: path

@@ -1,3 +1,4 @@
+use convert_case::{Case, Casing};
 use indexmap::IndexMap;
 use proc_macro2::{Ident, TokenStream};
 use syn::{parse2, Error, Item, ItemMod, ItemFn, Visibility, ReturnType};
@@ -166,7 +167,7 @@ fn parse_handler_function(
     crate::comments::remove_docblock(&mut function.attrs);
 
     generate_new_handler_ast(&function, &route, &docblock, &fn_fragments, mod_fragments);
-    generate_openapi_paths_setup_ast(&fn_fragments, &route, &docblock, mod_fragments);
+    generate_openapi_paths_setup_ast(&function, &fn_fragments, &route, &docblock, mod_fragments);
 
     if let ReturnType::Type(_, ty) = &function.sig.output {
         let ident = &function.sig.ident;
@@ -274,7 +275,7 @@ fn generate_handler_fragments(handler: &mut ItemFn, mod_fragments: &mut ModuleAS
 }
 
 /// Generates an AST to add OpenAPI spec modifier for this particular handler
-fn generate_openapi_modify_op_ast(handler: &mut ItemFn, mod_fragments: &mut ModuleASTFragments) -> Result<TokenStream, TokenStream> {
+fn generate_openapi_modify_op_ast(handler: &ItemFn, mod_fragments: &mut ModuleASTFragments) -> Result<TokenStream, TokenStream> {
     Ok(match &handler.sig.output {
         syn::ReturnType::Default => {
             return Err(
@@ -296,6 +297,7 @@ fn generate_openapi_modify_op_ast(handler: &mut ItemFn, mod_fragments: &mut Modu
 
 /// Generates an AST to configure all paths of this mod for the OpenAPI spec
 fn generate_openapi_paths_setup_ast(
+    handler: &ItemFn,
     fn_fragments: &HandlerASTFragments,
     route: &RouteArgs,
     docblock: &DocblockParts,
@@ -329,11 +331,15 @@ fn generate_openapi_paths_setup_ast(
     let extractors = &fn_fragments.openapi_extractors_modifiers;
     let openapi_setup = &fn_fragments.openapi_setup;
 
+    let operation_id = handler.sig.ident.to_string().to_case(Case::Camel);
+
     mod_fragments.openapi_paths_setup.entry(path.clone()).or_default().push(quote! {
         {
             let mut op_builder = ::utoipa::openapi::path::OperationBuilder::new()
                     .summary(#summary_tk)
-                    .description(#description_tk);
+                    .description(#description_tk)
+                    .operation_id(Some(#operation_id))
+            ;
 
             #(#extractors)*
 

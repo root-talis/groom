@@ -2,7 +2,7 @@
 
 import type { Client, Options as Options2, TDataShape } from './client';
 import { client } from './client.gen';
-import type { GetTasksByTaskIdData, GetTasksByTaskIdErrors, GetTasksByTaskIdResponses, GetTasksData, GetTasksErrors, GetTasksResponses, PostTasksData, PostTasksErrors, PostTasksResponses, PutTasksByTaskIdNameData, PutTasksByTaskIdNameErrors, PutTasksByTaskIdNameResponses, PutTasksByTaskIdStatusCancelData, PutTasksByTaskIdStatusCancelErrors, PutTasksByTaskIdStatusCancelResponses, PutTasksByTaskIdStatusDoneData, PutTasksByTaskIdStatusDoneErrors, PutTasksByTaskIdStatusDoneResponses, PutTasksByTaskIdStatusPendingData, PutTasksByTaskIdStatusPendingErrors, PutTasksByTaskIdStatusPendingResponses } from './types.gen';
+import type { AddTaskData, AddTaskErrors, AddTaskResponses, GetTaskData, GetTaskErrors, GetTaskResponses, ListTasksData, ListTasksErrors, ListTasksResponses, RenameTaskData, RenameTaskErrors, RenameTaskResponses, SetCancelledData, SetCancelledErrors, SetCancelledResponses, SetDoneData, SetDoneErrors, SetDoneResponses, SetPendingData, SetPendingErrors, SetPendingResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean, TResponse = unknown> = Options2<TData, ThrowOnError, TResponse> & {
     /**
@@ -21,7 +21,7 @@ export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends 
 /**
  * Lists tasks
  */
-export const getTasks = <ThrowOnError extends boolean = false>(options?: Options<GetTasksData, ThrowOnError>) => (options?.client ?? client).get<GetTasksResponses, GetTasksErrors, ThrowOnError>({
+export const listTasks = <ThrowOnError extends boolean = false>(options?: Options<ListTasksData, ThrowOnError>) => (options?.client ?? client).get<ListTasksResponses, ListTasksErrors, ThrowOnError>({
     responseType: 'json',
     url: '/tasks',
     ...options
@@ -30,7 +30,7 @@ export const getTasks = <ThrowOnError extends boolean = false>(options?: Options
 /**
  * Adds a new task.
  */
-export const postTasks = <ThrowOnError extends boolean = false>(options: Options<PostTasksData, ThrowOnError>) => (options.client ?? client).post<PostTasksResponses, PostTasksErrors, ThrowOnError>({
+export const addTask = <ThrowOnError extends boolean = false>(options: Options<AddTaskData, ThrowOnError>) => (options.client ?? client).post<AddTaskResponses, AddTaskErrors, ThrowOnError>({
     responseType: 'json',
     url: '/tasks',
     ...options,
@@ -43,7 +43,7 @@ export const postTasks = <ThrowOnError extends boolean = false>(options: Options
 /**
  * Gets a single task.
  */
-export const getTasksByTaskId = <ThrowOnError extends boolean = false>(options: Options<GetTasksByTaskIdData, ThrowOnError>) => (options.client ?? client).get<GetTasksByTaskIdResponses, GetTasksByTaskIdErrors, ThrowOnError>({
+export const getTask = <ThrowOnError extends boolean = false>(options: Options<GetTaskData, ThrowOnError>) => (options.client ?? client).get<GetTaskResponses, GetTaskErrors, ThrowOnError>({
     responseType: 'json',
     url: '/tasks/{task_id}',
     ...options
@@ -52,7 +52,7 @@ export const getTasksByTaskId = <ThrowOnError extends boolean = false>(options: 
 /**
  * Renames a task.
  */
-export const putTasksByTaskIdName = <ThrowOnError extends boolean = false>(options: Options<PutTasksByTaskIdNameData, ThrowOnError>) => (options.client ?? client).put<PutTasksByTaskIdNameResponses, PutTasksByTaskIdNameErrors, ThrowOnError>({
+export const renameTask = <ThrowOnError extends boolean = false>(options: Options<RenameTaskData, ThrowOnError>) => (options.client ?? client).put<RenameTaskResponses, RenameTaskErrors, ThrowOnError>({
     responseType: 'json',
     url: '/tasks/{task_id}/name',
     ...options,
@@ -65,7 +65,7 @@ export const putTasksByTaskIdName = <ThrowOnError extends boolean = false>(optio
 /**
  * Mark the task as cancelled.
  */
-export const putTasksByTaskIdStatusCancel = <ThrowOnError extends boolean = false>(options: Options<PutTasksByTaskIdStatusCancelData, ThrowOnError>) => (options.client ?? client).put<PutTasksByTaskIdStatusCancelResponses, PutTasksByTaskIdStatusCancelErrors, ThrowOnError>({
+export const setCancelled = <ThrowOnError extends boolean = false>(options: Options<SetCancelledData, ThrowOnError>) => (options.client ?? client).put<SetCancelledResponses, SetCancelledErrors, ThrowOnError>({
     responseType: 'json',
     url: '/tasks/{task_id}/status/cancel',
     ...options
@@ -74,7 +74,7 @@ export const putTasksByTaskIdStatusCancel = <ThrowOnError extends boolean = fals
 /**
  * Mark the task as done.
  */
-export const putTasksByTaskIdStatusDone = <ThrowOnError extends boolean = false>(options: Options<PutTasksByTaskIdStatusDoneData, ThrowOnError>) => (options.client ?? client).put<PutTasksByTaskIdStatusDoneResponses, PutTasksByTaskIdStatusDoneErrors, ThrowOnError>({
+export const setDone = <ThrowOnError extends boolean = false>(options: Options<SetDoneData, ThrowOnError>) => (options.client ?? client).put<SetDoneResponses, SetDoneErrors, ThrowOnError>({
     responseType: 'json',
     url: '/tasks/{task_id}/status/done',
     ...options
@@ -83,7 +83,7 @@ export const putTasksByTaskIdStatusDone = <ThrowOnError extends boolean = false>
 /**
  * Mark the task as pending.
  */
-export const putTasksByTaskIdStatusPending = <ThrowOnError extends boolean = false>(options: Options<PutTasksByTaskIdStatusPendingData, ThrowOnError>) => (options.client ?? client).put<PutTasksByTaskIdStatusPendingResponses, PutTasksByTaskIdStatusPendingErrors, ThrowOnError>({
+export const setPending = <ThrowOnError extends boolean = false>(options: Options<SetPendingData, ThrowOnError>) => (options.client ?? client).put<SetPendingResponses, SetPendingErrors, ThrowOnError>({
     responseType: 'json',
     url: '/tasks/{task_id}/status/pending',
     ...options

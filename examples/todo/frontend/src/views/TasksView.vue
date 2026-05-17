@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref, triggerRef, watch, type Ref } from 'vue'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/vue-query'
-import { getTasks, postTasks, type TaskViewModel } from '@/api'
+import { listTasks, addTask, type TaskViewModel } from '@/api'
 import client from '@/services/axios'
 import TodoItem from '@/components/TodoItem.vue'
 import AddIcon from '@/components/icons/IconAdd.vue'
@@ -12,7 +12,7 @@ const queryClient = useQueryClient()
 
 const { data, isLoading, refetch } = useQuery({
   queryKey: ['tasks'],
-  queryFn: () => getTasks({
+  queryFn: () => listTasks({
     axios: client,
     query: {
       sort_by: title.value.trim() ? 'status' : 'id',
@@ -34,8 +34,8 @@ function showError(message: string) {
   lastErrorUpd.value++;
 }
 
-const { mutate: addTask, isPending: isAdding, isError: isAddError, error  } = useMutation({
-  mutationFn: () => postTasks({
+const { mutate: doAddTask, isPending: isAdding, isError: isAddError, error  } = useMutation({
+  mutationFn: () => addTask({
     axios: client,
     body: { title: title.value },
   }),
@@ -92,7 +92,7 @@ function add(event: Event) {
     return;
   }
 
-  addTask()
+  doAddTask()
 }
 
 </script>

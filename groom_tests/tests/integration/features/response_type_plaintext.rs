@@ -62,6 +62,7 @@ pub fn test_openapi() {
             "paths": {
                 "/string": {
                     "get": {
+                        "operationId": ("string"),
                         "responses": {
                             "200": {
                                 "content": {

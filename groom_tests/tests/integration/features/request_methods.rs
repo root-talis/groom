@@ -136,6 +136,7 @@ pub fn test_openapi() {
             "paths":{
                 "/":{
                     "get":{
+                        "operationId": ("rootGet"),
                         "responses":{
                             "200":{"description":""},
                             "201":{"description":""},
@@ -145,6 +146,7 @@ pub fn test_openapi() {
                         }
                     },
                     "post":{
+                        "operationId": ("rootPost"),
                         "responses":{
                             "200":{"description":""},
                             "201":{"description":""},
@@ -154,6 +156,7 @@ pub fn test_openapi() {
                         }
                     },
                     "put":{
+                        "operationId": ("rootPut"),
                         "responses":{
                             "200":{"description":""},
                             "201":{"description":""},
@@ -163,6 +166,7 @@ pub fn test_openapi() {
                         }
                     },
                     "delete":{
+                        "operationId": ("rootDelete"),
                         "responses":{
                             "200":{"description":""},
                             "201":{"description":""},
@@ -172,6 +176,7 @@ pub fn test_openapi() {
                         }
                     },
                     "patch":{
+                        "operationId": ("rootPatch"),
                         "responses":{
                             "200":{"description":""},
                             "201":{"description":""},

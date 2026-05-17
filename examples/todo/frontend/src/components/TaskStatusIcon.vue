@@ -59,15 +59,11 @@ function endDrag() {
   const current = currentIndex.value
   let nextIndex = current
 
-  console.log(dragOffset.value, threshold);
-
   if (dragOffset.value > threshold && current > 0) {
     nextIndex = current - 1
   } else if (dragOffset.value < -threshold && current < statuses.length - 1) {
     nextIndex = current + 1
   }
-
-  console.log(nextIndex);   
 
   dragOffset.value = 0
 

@@ -32,7 +32,7 @@ export type TaskViewModel = {
 
 export type TasksSortBy = 'id' | 'title' | 'status';
 
-export type GetTasksData = {
+export type ListTasksData = {
     body?: never;
     path?: never;
     query?: {
@@ -44,17 +44,17 @@ export type GetTasksData = {
     url: '/tasks';
 };
 
-export type GetTasksErrors = {
+export type ListTasksErrors = {
     500: unknown;
 };
 
-export type GetTasksResponses = {
+export type ListTasksResponses = {
     200: TaskList;
 };
 
-export type GetTasksResponse = GetTasksResponses[keyof GetTasksResponses];
+export type ListTasksResponse = ListTasksResponses[keyof ListTasksResponses];
 
-export type PostTasksData = {
+export type AddTaskData = {
     /**
      * Request body
      */
@@ -64,7 +64,7 @@ export type PostTasksData = {
     url: '/tasks';
 };
 
-export type PostTasksErrors = {
+export type AddTaskErrors = {
     /**
      * Malformed request, e.g. missing title or title is too long.
      */
@@ -79,18 +79,18 @@ export type PostTasksErrors = {
     500: unknown;
 };
 
-export type PostTasksError = PostTasksErrors[keyof PostTasksErrors];
+export type AddTaskError = AddTaskErrors[keyof AddTaskErrors];
 
-export type PostTasksResponses = {
+export type AddTaskResponses = {
     /**
      * Task added successfully
      */
     200: TaskViewModel;
 };
 
-export type PostTasksResponse = PostTasksResponses[keyof PostTasksResponses];
+export type AddTaskResponse = AddTaskResponses[keyof AddTaskResponses];
 
-export type GetTasksByTaskIdData = {
+export type GetTaskData = {
     body?: never;
     path: {
         task_id: number;
@@ -99,18 +99,18 @@ export type GetTasksByTaskIdData = {
     url: '/tasks/{task_id}';
 };
 
-export type GetTasksByTaskIdErrors = {
+export type GetTaskErrors = {
     404: unknown;
     500: unknown;
 };
 
-export type GetTasksByTaskIdResponses = {
+export type GetTaskResponses = {
     200: TaskViewModel;
 };
 
-export type GetTasksByTaskIdResponse = GetTasksByTaskIdResponses[keyof GetTasksByTaskIdResponses];
+export type GetTaskResponse = GetTaskResponses[keyof GetTaskResponses];
 
-export type PutTasksByTaskIdNameData = {
+export type RenameTaskData = {
     /**
      * Request body
      */
@@ -122,22 +122,22 @@ export type PutTasksByTaskIdNameData = {
     url: '/tasks/{task_id}/name';
 };
 
-export type PutTasksByTaskIdNameErrors = {
+export type RenameTaskErrors = {
     400: string;
     404: unknown;
     409: unknown;
     500: unknown;
 };
 
-export type PutTasksByTaskIdNameError = PutTasksByTaskIdNameErrors[keyof PutTasksByTaskIdNameErrors];
+export type RenameTaskError = RenameTaskErrors[keyof RenameTaskErrors];
 
-export type PutTasksByTaskIdNameResponses = {
+export type RenameTaskResponses = {
     200: TaskViewModel;
 };
 
-export type PutTasksByTaskIdNameResponse = PutTasksByTaskIdNameResponses[keyof PutTasksByTaskIdNameResponses];
+export type RenameTaskResponse = RenameTaskResponses[keyof RenameTaskResponses];
 
-export type PutTasksByTaskIdStatusCancelData = {
+export type SetCancelledData = {
     body?: never;
     path: {
         task_id: number;
@@ -146,19 +146,19 @@ export type PutTasksByTaskIdStatusCancelData = {
     url: '/tasks/{task_id}/status/cancel';
 };
 
-export type PutTasksByTaskIdStatusCancelErrors = {
+export type SetCancelledErrors = {
     404: unknown;
     409: unknown;
     500: unknown;
 };
 
-export type PutTasksByTaskIdStatusCancelResponses = {
+export type SetCancelledResponses = {
     200: TaskViewModel;
 };
 
-export type PutTasksByTaskIdStatusCancelResponse = PutTasksByTaskIdStatusCancelResponses[keyof PutTasksByTaskIdStatusCancelResponses];
+export type SetCancelledResponse = SetCancelledResponses[keyof SetCancelledResponses];
 
-export type PutTasksByTaskIdStatusDoneData = {
+export type SetDoneData = {
     body?: never;
     path: {
         task_id: number;
@@ -167,19 +167,19 @@ export type PutTasksByTaskIdStatusDoneData = {
     url: '/tasks/{task_id}/status/done';
 };
 
-export type PutTasksByTaskIdStatusDoneErrors = {
+export type SetDoneErrors = {
     404: unknown;
     409: unknown;
     500: unknown;
 };
 
-export type PutTasksByTaskIdStatusDoneResponses = {
+export type SetDoneResponses = {
     200: TaskViewModel;
 };
 
-export type PutTasksByTaskIdStatusDoneResponse = PutTasksByTaskIdStatusDoneResponses[keyof PutTasksByTaskIdStatusDoneResponses];
+export type SetDoneResponse = SetDoneResponses[keyof SetDoneResponses];
 
-export type PutTasksByTaskIdStatusPendingData = {
+export type SetPendingData = {
     body?: never;
     path: {
         task_id: number;
@@ -188,14 +188,14 @@ export type PutTasksByTaskIdStatusPendingData = {
     url: '/tasks/{task_id}/status/pending';
 };
 
-export type PutTasksByTaskIdStatusPendingErrors = {
+export type SetPendingErrors = {
     404: unknown;
     409: unknown;
     500: unknown;
 };
 
-export type PutTasksByTaskIdStatusPendingResponses = {
+export type SetPendingResponses = {
     200: TaskViewModel;
 };
 
-export type PutTasksByTaskIdStatusPendingResponse = PutTasksByTaskIdStatusPendingResponses[keyof PutTasksByTaskIdStatusPendingResponses];
+export type SetPendingResponse = SetPendingResponses[keyof SetPendingResponses];

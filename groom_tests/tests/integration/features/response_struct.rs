@@ -440,6 +440,7 @@ pub fn test_openapi() {
             "paths": {
                 "/named-struct": {
                     "get": {
+                        "operationId": ("respNamedStruct"),
                         "responses": {
                             "418": {
                                 "content": {
@@ -466,6 +467,7 @@ pub fn test_openapi() {
                 },
                 "/named-struct-only-plaintext": {
                     "get": {
+                        "operationId": ("respNamedStructOnlyPlaintext"),
                         "responses": {
                             "418": {
                                 "content": {
@@ -482,6 +484,7 @@ pub fn test_openapi() {
                 },
                 "/unit-struct": {
                     "get": {
+                        "operationId": ("respUnitStruct"),
                         "responses": {
                             "418": {
                                 "description": ("Unit struct"),
@@ -491,6 +494,7 @@ pub fn test_openapi() {
                 },
                 "/unnamed-struct": {
                     "get": {
+                        "operationId": ("respUnnamedStruct"),
                         "responses": {
                             "418": {
                                 "content": {
@@ -517,6 +521,7 @@ pub fn test_openapi() {
                 },
                 "/unnamed-struct-dto": {
                     "get": {
+                        "operationId": ("respUnnamedStructDto"),
                         "responses": {
                             "418": {
                                 "content": {
@@ -533,6 +538,7 @@ pub fn test_openapi() {
                 },
                 "/unnamed-struct-only-plaintext": {
                     "get": {
+                        "operationId": ("respUnnamedStructOnlyPlaintext"),
                         "responses": {
                             "418": {
                                 "content": {

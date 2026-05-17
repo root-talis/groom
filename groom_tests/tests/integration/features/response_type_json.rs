@@ -159,6 +159,7 @@ pub fn test_openapi() {
             "paths": {
                 "/json_string": {
                     "get": {
+                        "operationId": ("jsonString"),
                         "responses": {
                             "200": {
                                 "content": {
@@ -175,6 +176,7 @@ pub fn test_openapi() {
                 },
                 "/json_struct": {
                     "get": {
+                        "operationId": ("jsonStruct"),
                         "responses": {
                             "200": {
                                 "content": {
@@ -191,6 +193,7 @@ pub fn test_openapi() {
                 },
                 "/json_struct/no_time": {
                     "get": {
+                        "operationId": ("jsonStructNoTime"),
                         "responses": {
                             "200": {
                                 "content": {

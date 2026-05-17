@@ -212,6 +212,7 @@ pub fn test_openapi() {
             "paths": {
                 "/no-content": {
                     "put": {
+                        "operationId": ("root"),
                         "responses": {
                             "202": {
                                 "description": "",
@@ -224,6 +225,7 @@ pub fn test_openapi() {
                 },
                 "/status": {
                     "get": {
+                        "operationId": ("statusDefaultJson"),
                         "responses": {
                             "200": {
                                 "content": {
@@ -245,6 +247,7 @@ pub fn test_openapi() {
                 },
                 "/status/html": {
                     "get": {
+                        "operationId": ("statusDefaultHtml"),
                         "responses": {
                             "200": {
                                 "content": {
@@ -384,6 +387,7 @@ pub async fn test_html_or_text_weights_openapi() {
             "paths": {
                 "/html-or-text": {
                     "get": {
+                        "operationId": ("respHtmlOrText"),
                         "responses": {
                             "200": {
                                 "content": {

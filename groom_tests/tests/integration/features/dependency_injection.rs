@@ -105,6 +105,7 @@ pub fn test_openapi() {
             "paths": {
                 "/extension": {
                     "get": {
+                        "operationId": ("rqConsExtension"),
                         "responses": {
                             "200": {
                                 "content": {
@@ -121,6 +122,7 @@ pub fn test_openapi() {
                 },
                 "/state": {
                     "get": {
+                        "operationId": ("rqConsState"),
                         "responses": {
                             "200": {
                                 "content": {

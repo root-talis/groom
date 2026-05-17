@@ -249,6 +249,7 @@ pub fn test_openapi() {
             "paths": {
                 "/enum/named-struct": {
                     "get": {
+                        "operationId": ("respEnumNamedStruct"),
                         "responses": {
                             "200": {
                                 "content": {
@@ -285,6 +286,7 @@ pub fn test_openapi() {
                 },
                 "/enum/unit": {
                     "get": {
+                        "operationId": ("respEnumUnit"),
                         "responses": {
                             "200": {
                                 "content": {
@@ -321,6 +323,7 @@ pub fn test_openapi() {
                 },
                 "/enum/unnamed-struct": {
                     "get": {
+                        "operationId": ("respEnumUnnamedStruct"),
                         "responses": {
                             "200": {
                                 "content": {
@@ -357,6 +360,7 @@ pub fn test_openapi() {
                 },
                 "/wrapped/conflict/named-struct": {
                     "get": {
+                        "operationId": ("respWrappedNamedStructWithConflict"),
                         "responses": {
                             "200": {
                                 "content": {
@@ -393,6 +397,7 @@ pub fn test_openapi() {
                 },
                 "/wrapped/named-struct": {
                     "get": {
+                        "operationId": ("respWrappedNamedStruct"),
                         "responses": {
                             "200": {
                                 "content": {
@@ -429,6 +434,7 @@ pub fn test_openapi() {
                 },
                 "/wrapped/unit": {
                     "get": {
+                        "operationId": ("respWrappedUnit"),
                         "responses": {
                             "200": {
                                 "content": {
@@ -465,6 +471,7 @@ pub fn test_openapi() {
                 },
                 "/wrapped/unnamed-struct": {
                     "get": {
+                        "operationId": ("respWrappedUnnamedStruct"),
                         "responses": {
                             "200": {
                                 "content": {

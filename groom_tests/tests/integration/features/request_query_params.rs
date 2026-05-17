@@ -195,6 +195,7 @@ pub fn test_openapi() {
             "paths": {
                 "/two_query_inputs": {
                     "get": {
+                        "operationId": ("twoQueryInputs"),
                         "parameters": [
                             {
                                 "in": "query",
@@ -253,6 +254,7 @@ pub fn test_openapi() {
                 },
                 "/enum_parameter": {
                      "get": {
+                         "operationId": ("enumParameter"),
                          "parameters": [
                              {
                                  "in": ("query"),

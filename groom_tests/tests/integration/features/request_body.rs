@@ -362,6 +362,7 @@ pub fn test_openapi() {
             "paths": {
                 "/bytes_body": {
                     "post": {
+                        "operationId": ("rqConsBytesBody"),
                         "requestBody": {
                             "content": {
                                 "application/octet-stream": {
@@ -400,6 +401,7 @@ pub fn test_openapi() {
                 },
                 "/image_body": {
                     "post": {
+                        "operationId": ("rqConsImageBody"),
                         "requestBody": {
                             "content": {
                                 "image/jpeg": {
@@ -438,6 +440,7 @@ pub fn test_openapi() {
                 },
                 "/multi_format": {
                     "post": {
+                        "operationId": ("rqConsMultiFormatBody"),
                         "requestBody": {
                             "content": {
                                 "application/json": {
@@ -481,6 +484,7 @@ pub fn test_openapi() {
                 },
                 "/multi_format_dto": {
                     "post": {
+                        "operationId": ("rqConsMultiFormatBodyDto"),
                         "requestBody": {
                             "content": {
                                 "application/json": {
@@ -523,6 +527,7 @@ pub fn test_openapi() {
                 },
                 "/string_body": {
                     "post": {
+                        "operationId": ("rqConsStringBody"),
                         "requestBody": {
                             "content": {
                                 "text/plain; charset=utf-8": {

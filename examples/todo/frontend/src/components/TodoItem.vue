@@ -3,7 +3,7 @@ import type { TaskViewModel } from '@/api/types.gen';
 import TaskStatusIcon from '@/components/TaskStatusIcon.vue';
 import ErrorBar from '@/components/ErrorBar.vue';
 import InlineEditor from '@/components/InlineEditor.vue';
-import { putTasksByTaskIdName, putTasksByTaskIdStatusCancel, putTasksByTaskIdStatusDone, putTasksByTaskIdStatusPending } from '@/api'
+import { renameTask, setCancelled, setDone, setPending } from '@/api'
 import client from '@/services/axios'
 import { ref } from 'vue';
 import { useMutation, useQueryClient } from '@tanstack/vue-query';
@@ -34,11 +34,11 @@ const { mutate: updateTaskStatus } = useMutation({
     let res;
 
     if (status === 'Done') {
-      res = putTasksByTaskIdStatusDone(params);
+      res = setDone(params);
     } else if (status === 'Cancelled') {
-      res = putTasksByTaskIdStatusCancel(params);
+      res = setCancelled(params);
     } else if (status === 'Pending') {
-      res = putTasksByTaskIdStatusPending(params);
+      res = setPending(params);
     } else {
       throw new Error(`Invalid status ${status}`);
     }
@@ -76,9 +76,9 @@ const { mutate: updateTaskStatus } = useMutation({
   }
 });
 
-const { mutate: renameTask } = useMutation({
+const { mutate: doRenameTask } = useMutation({
   mutationFn: (title: string) => {
-    return putTasksByTaskIdName({
+    return renameTask({
       axios: client,
       path: { task_id: props.item.id },
       body: { title: title.trim() },
@@ -119,7 +119,7 @@ function submitCurrentInlineTitle() {
 }
 
 function handleTitleEdited(name: string) {
-  renameTask(name);
+  doRenameTask(name);
 }
 
 function handleStatusChanged(status: TaskViewModel['status']) {

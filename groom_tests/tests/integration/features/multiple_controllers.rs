@@ -153,6 +153,7 @@ pub fn test_openapi() {
             "paths": {
                 "/a/hello": {
                     "get": {
+                        "operationId": ("hello"),
                         "responses": {
                             "200": {
                                 "content": {
@@ -169,6 +170,7 @@ pub fn test_openapi() {
                 },
                 "/b/hello": {
                     "get": {
+                        "operationId": ("hello"), // todo: forbid duplicates
                         "responses": {
                             "200": {
                                 "content": {
@@ -262,7 +264,6 @@ mod disallow_overlaps {
 mod allow_shared_components {
     use groom_macros::{Controller, DTO};
     use serde_json::json;
-    use utoipa::{PartialSchema, openapi::OpenApiBuilder};
 
     use crate::integration::test_utils::assert_openapi_doc;
 
@@ -383,6 +384,7 @@ mod allow_shared_components {
                 "paths": {
                     "/1/hello": {
                         "get": {
+                            "operationId": ("hello"),
                             "responses": {
                                 "200": {
                                     "content": {
@@ -409,6 +411,7 @@ mod allow_shared_components {
                     },
                     "/2/hello": {
                         "get": {
+                            "operationId": ("hello"),
                             "responses": {
                                 "200": {
                                     "content": {
