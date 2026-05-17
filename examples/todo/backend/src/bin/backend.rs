@@ -1,12 +1,29 @@
 use std::env;
 use color_eyre::eyre::{Result, eyre};
 
+use clap::Parser;
+
 use groom_example_todo_backend::{CorsOrigin, make_router};
-use serde::Serialize;
 use tokio::signal;
 
 use groom_example_todo_backend::{bootstrap::Bootstrap, server::run_server};
 use tracing::info;
+
+
+#[derive(Parser)]
+struct Args {
+    /// Whether to serve OpenAPI spec and Swagger UI. This is useful for development and testing, but should be disabled in production.
+    #[arg(long, env = "SERVE_SPEC", default_value = "false")]
+    serve_spec: bool,
+
+    /// Which origins should be allowed for CORS. Can be either `any` or a comma-separated list of origins.
+    #[arg(long, env = "CORS_ORIGIN")]
+    cors_origin: Option<CorsOrigin>,
+
+    #[arg(long, env = "LISTEN_ADDR", default_value = "127.0.0.1:8888")]
+    listen_addr: String,
+}
+
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -16,21 +33,17 @@ async fn main() -> Result<()> {
         .with_max_level(tracing::Level::DEBUG)
         .init();
 
-    let cors_origin: CorsOrigin = env::var("CORS_ORIGIN").unwrap_or_else(|_| "any".to_owned()).into();
-    let serve_spec = match env::var("SERVE_SPEC").unwrap_or_else(|_| "false".to_owned()).to_lowercase().as_str() {
-        "true"  => Ok(true),
-        "false" => Ok(false),
-        v       => Err(eyre!("invalid value `{}` for SERVE_SPEC, only `true` and `false` are allowed", v)),
-    }?;
+    let args = Args::parse();
 
-    info!(?cors_origin, "CORS_ORIGIN is set");
-    info!(?serve_spec, "SERVE_SPEC is set");
+    info!(?args.cors_origin, "CORS_ORIGIN is set");
+    info!(?args.serve_spec, "SERVE_SPEC is set");
+    info!(?args.listen_addr, "LISTEN_ADDR is set");
 
     let app = Bootstrap::new();
 
     run_server(
-        String::from("127.0.0.1:8888"),
-        make_router(app, serve_spec, cors_origin)?,
+        args.listen_addr,
+        make_router(app, args.serve_spec, args.cors_origin)?,
         shutdown_signal()
     ).await
 }

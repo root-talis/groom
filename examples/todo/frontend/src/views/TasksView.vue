@@ -50,7 +50,7 @@ const { mutate: addTask, isPending: isAdding, isError: isAddError, error  } = us
         showError("A pending task with the same title already exists. Please choose a different title.");
         break;
       case 400:
-        showError(`Malformed request: ${data.data}`);
+        showError(`Malformed request: ${data.error || "unspecified error"}.`);
         break;
       case 500:
         showError("Server error occurred while adding the task. Please try again later.");

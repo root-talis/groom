@@ -1,3 +1,6 @@
+//! This binary is used to generate the OpenAPI spec for the API.
+//! It is used by the `generate-api-spec` task in the `justfile` to generate the spec before
+//! generating the API client.
 use std::io::Write;
 
 use color_eyre::eyre::Result;
