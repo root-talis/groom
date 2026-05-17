@@ -34,12 +34,12 @@ paths:
         in: query
         required: false
         schema:
-          $ref: '#/components/schemas/TaskOrderBy'
+          $ref: '#/components/schemas/TasksSortBy'
       - name: order
         in: query
         required: false
         schema:
-          $ref: '#/components/schemas/OrderDirection'
+          $ref: '#/components/schemas/SortDirection'
       responses:
         '200':
           description: ''
@@ -222,11 +222,6 @@ components:
       properties:
         title:
           type: string
-    OrderDirection:
-      type: string
-      enum:
-      - Asc
-      - Desc
     RenameTaskRequest:
       type: object
       description: Request body
@@ -235,6 +230,11 @@ components:
       properties:
         title:
           type: string
+    SortDirection:
+      type: string
+      enum:
+      - asc
+      - desc
     Status:
       type: string
       enum:
@@ -245,12 +245,6 @@ components:
       type: array
       items:
         $ref: '#/components/schemas/TaskViewModel'
-    TaskOrderBy:
-      type: string
-      enum:
-      - Id
-      - Title
-      - Status
     TaskViewModel:
       type: object
       required:
@@ -266,3 +260,9 @@ components:
           $ref: '#/components/schemas/Status'
         title:
           type: string
+    TasksSortBy:
+      type: string
+      enum:
+      - id
+      - title
+      - status

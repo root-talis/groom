@@ -87,10 +87,10 @@ mod controller {
         pub status: Option<Vec<Status>>,
 
         #[serde(default)]
-        pub sort_by: TaskOrderBy,
+        pub sort_by: TasksSortBy,
 
         #[serde(default)]
-        pub order:   OrderDirection,
+        pub order:   SortDirection,
     }
 
     impl Into<TaskFilter> for TaskListFilters {
@@ -105,35 +105,37 @@ mod controller {
     }
 
     #[derive(Default, Deserialize, ToSchema)]
-    pub enum TaskOrderBy {
+    #[serde(rename_all = "lowercase")]
+    pub enum TasksSortBy {
         #[default]
         Id,
         Title,
         Status
     }
 
-    impl Into<TaskOrderField> for TaskOrderBy {
+    impl Into<TaskOrderField> for TasksSortBy {
         fn into(self) -> TaskOrderField {
             match self {
-                TaskOrderBy::Id     => TaskOrderField::Id,
-                TaskOrderBy::Title  => TaskOrderField::Title,
-                TaskOrderBy::Status => TaskOrderField::Status,
+                TasksSortBy::Id     => TaskOrderField::Id,
+                TasksSortBy::Title  => TaskOrderField::Title,
+                TasksSortBy::Status => TaskOrderField::Status,
             }
         }
     }
 
     #[derive(Default, Deserialize, ToSchema)]
-    pub enum OrderDirection {
+    #[serde(rename_all = "lowercase")]
+    pub enum SortDirection {
         #[default]
         Asc,
         Desc
     }
 
-    impl Into<Order> for OrderDirection {
+    impl Into<Order> for SortDirection {
         fn into(self) -> Order {
             match self {
-                OrderDirection::Asc  => Order::Ascending,
-                OrderDirection::Desc => Order::Descending,
+                SortDirection::Asc  => Order::Ascending,
+                SortDirection::Desc => Order::Descending,
             }
         }
     }

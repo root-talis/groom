@@ -15,8 +15,8 @@ const { data, isLoading, refetch } = useQuery({
   queryFn: () => getTasks({
     axios: client,
     query: {
-      sort_by: title.value.trim() ? 'Status' : 'Id',
-      order: title.value.trim() ? 'Asc' : 'Desc',
+      sort_by: title.value.trim() ? 'status' : 'id',
+      order: title.value.trim() ? 'asc' : 'desc',
       title: title.value.trim() || null,
     }
   }),

@@ -11,8 +11,6 @@ export type AddTaskRequest = {
     title: string;
 };
 
-export type OrderDirection = 'Asc' | 'Desc';
-
 /**
  * Request body
  */
@@ -20,11 +18,11 @@ export type RenameTaskRequest = {
     title: string;
 };
 
+export type SortDirection = 'asc' | 'desc';
+
 export type Status = 'Pending' | 'Done' | 'Cancelled';
 
 export type TaskList = Array<TaskViewModel>;
-
-export type TaskOrderBy = 'Id' | 'Title' | 'Status';
 
 export type TaskViewModel = {
     id: number;
@@ -32,14 +30,16 @@ export type TaskViewModel = {
     title: string;
 };
 
+export type TasksSortBy = 'id' | 'title' | 'status';
+
 export type GetTasksData = {
     body?: never;
     path?: never;
     query?: {
         title?: string | null;
         status?: Array<Status> | null;
-        sort_by?: TaskOrderBy;
-        order?: OrderDirection;
+        sort_by?: TasksSortBy;
+        order?: SortDirection;
     };
     url: '/tasks';
 };
