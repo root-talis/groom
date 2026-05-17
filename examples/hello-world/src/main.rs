@@ -59,7 +59,7 @@ mod controller {
     };
 
     /// Parameters to personalize greetings.
-    #[DTO(request)]
+    #[DTO(parameters)]
     pub struct GreetParams {
         name: Option<String>,
     }
