@@ -318,7 +318,7 @@ use super::model::{SortDirection, TaskViewModel, TasksSortBy};
         Path(task_id): Path<TaskIdentifier>
     ) -> ChangeStatusResponse {
         let result = task_service.change_status(task_id.task_id.into(), Status::Done).await;
-        map_change_status_result(result).await
+        map_change_status_result(result)
     }
 
     /// Mark the task as pending.
@@ -328,7 +328,7 @@ use super::model::{SortDirection, TaskViewModel, TasksSortBy};
         Path(task_id): Path<TaskIdentifier>
     ) -> ChangeStatusResponse {
         let result = task_service.change_status(task_id.task_id.into(), Status::Pending).await;
-        map_change_status_result(result).await
+        map_change_status_result(result)
     }
 
     /// Mark the task as cancelled.
@@ -338,11 +338,10 @@ use super::model::{SortDirection, TaskViewModel, TasksSortBy};
         Path(task_id): Path<TaskIdentifier>
     ) -> ChangeStatusResponse {
         let result = task_service.change_status(task_id.task_id.into(), Status::Cancelled).await;
-        map_change_status_result(result).await
+        map_change_status_result(result)
     }
 
-    // !!TODO: allow this to be not async
-    async fn map_change_status_result(r: Result<Task, ChangeStatusError>) -> ChangeStatusResponse {
+    fn map_change_status_result(r: Result<Task, ChangeStatusError>) -> ChangeStatusResponse {
         match r {
             Ok(t) => 
                 match TaskViewModel::try_from(t) {

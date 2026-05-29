@@ -1359,7 +1359,8 @@ mod result_struct_struct {
                 {
                     let mut op_builder = ::utoipa::openapi::path::OperationBuilder::new()
                         .summary(None as Option<String>)
-                        .description(None as Option<String>);
+                        .description(None as Option<String>)
+                        .operation_id(Some("foo"));
                     op_builder = <Result<
                         Success,
                         Error,
@@ -1661,7 +1662,8 @@ mod result_struct_enum {
                 {
                     let mut op_builder = ::utoipa::openapi::path::OperationBuilder::new()
                         .summary(None as Option<String>)
-                        .description(None as Option<String>);
+                        .description(None as Option<String>)
+                        .operation_id(Some("foo"));
                     op_builder = <Result<
                         Success,
                         Error,
@@ -2141,7 +2143,8 @@ mod wrapped_enum {
                 {
                     let mut op_builder = ::utoipa::openapi::path::OperationBuilder::new()
                         .summary(None as Option<String>)
-                        .description(None as Option<String>);
+                        .description(None as Option<String>)
+                        .operation_id(Some("foo"));
                     op_builder = <Result<
                         Resp,
                         Error,

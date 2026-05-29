@@ -20,6 +20,10 @@ pub mod api_root {
         let a = 2;
     }
 
+    fn sync_util_fn(s: String) -> String { 
+        s
+    }
+
     /// Query<struct>
     #[Route(method = "get", path = "/greet")]
     pub async fn rq_cons_query_struct(query: Query<RqConsQueryStruct>) -> RqConsQueryResponse {
@@ -28,7 +32,7 @@ pub mod api_root {
         } else {
             let mut result = "Hello, ".to_owned();
             result.push_str(query.name);
-            RqConsQueryResponse::Ok(result)
+            RqConsQueryResponse::Ok(sync_util_fn(result))
         }
     }
 

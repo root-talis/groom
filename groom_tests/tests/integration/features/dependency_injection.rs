@@ -30,12 +30,16 @@ mod controller {
 
     #[Route(method = "get", path = "/extension")]
     async fn rq_cons_extension(e: Extension<super::SomeExt>) -> TextResponse {
-        TextResponse::Ok(format!("name from extension: {}", e.name))
+        TextResponse::Ok(sync_util_function(format!("name from extension: {}", e.name)))
     }
 
     #[Route(method = "get", path = "/state")]
     async fn rq_cons_state(e: State<super::SomeState>) -> TextResponse {
-        TextResponse::Ok(format!("name from state: {}", e.name))
+        TextResponse::Ok(sync_util_function(format!("name from state: {}", e.name)))
+    }
+
+    fn sync_util_function(s: String) -> String {
+        s
     }
 }
 

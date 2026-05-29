@@ -142,14 +142,14 @@ fn parse_handler_function(
     function: &mut ItemFn,
     mod_fragments: &mut ModuleASTFragments,
 ) -> Result<(), TokenStream> {
-    if function.sig.asyncness.is_none() {
-        return Err(Error::new_spanned(&function.sig.fn_token, "handler should be async fn").to_compile_error());
-    }
-
     let route = match extract_route_args(function, mod_fragments)? {
         Some(r) => r,
         None => return Ok(())
     };
+
+    if function.sig.asyncness.is_none() {
+        return Err(Error::new_spanned(&function.sig.fn_token, "handler should be async fn").to_compile_error());
+    }
 
     deduplicate_handler(function, &route, mod_fragments)?;
 

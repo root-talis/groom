@@ -31,6 +31,9 @@ pub mod api_root {
         let result = post_root().await;
         result.__groom_into_response(accept)
     }
+    fn sync_util_fn(s: String) -> String {
+        s
+    }
     /// Query<struct>
     ///
     /// HTTP handler: GET /greet
@@ -42,7 +45,7 @@ pub mod api_root {
         } else {
             let mut result = "Hello, ".to_owned();
             result.push_str(query.name);
-            RqConsQueryResponse::Ok(result)
+            RqConsQueryResponse::Ok(sync_util_fn(result))
         }
     }
     async fn __groom_wrapper_rq_cons_query_struct(
@@ -1379,7 +1382,8 @@ pub mod api_root {
                 {
                     let mut op_builder = ::utoipa::openapi::path::OperationBuilder::new()
                         .summary(Some("Summary"))
-                        .description(Some("Description"));
+                        .description(Some("Description"))
+                        .operation_id(Some("getRoot"));
                     op_builder = <GetRootResponse>::__openapi_modify_operation(
                         op_builder,
                         &mut components,
@@ -1398,7 +1402,8 @@ pub mod api_root {
                 {
                     let mut op_builder = ::utoipa::openapi::path::OperationBuilder::new()
                         .summary(None as Option<String>)
-                        .description(None as Option<String>);
+                        .description(None as Option<String>)
+                        .operation_id(Some("postRoot"));
                     op_builder = <GetRootResponse>::__openapi_modify_operation(
                         op_builder,
                         &mut components,
@@ -1417,7 +1422,8 @@ pub mod api_root {
                 {
                     let mut op_builder = ::utoipa::openapi::path::OperationBuilder::new()
                         .summary(Some("Query<struct>"))
-                        .description(None as Option<String>);
+                        .description(None as Option<String>)
+                        .operation_id(Some("rqConsQueryStruct"));
                     op_builder = <Query<
                         RqConsQueryStruct,
                     >>::__openapi_modify_operation(op_builder, &mut components);
@@ -1439,7 +1445,8 @@ pub mod api_root {
                 {
                     let mut op_builder = ::utoipa::openapi::path::OperationBuilder::new()
                         .summary(Some("Path<struct>"))
-                        .description(None as Option<String>);
+                        .description(None as Option<String>)
+                        .operation_id(Some("rqConsPathStruct"));
                     op_builder = <Path<
                         RqConsPathStruct,
                     >>::__openapi_modify_operation(op_builder, &mut components);
@@ -1461,7 +1468,8 @@ pub mod api_root {
                 {
                     let mut op_builder = ::utoipa::openapi::path::OperationBuilder::new()
                         .summary(None as Option<String>)
-                        .description(None as Option<String>);
+                        .description(None as Option<String>)
+                        .operation_id(Some("respJson"));
                     op_builder = <RespJsonResponse>::__openapi_modify_operation(
                         op_builder,
                         &mut components,
