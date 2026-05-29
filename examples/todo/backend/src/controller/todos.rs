@@ -12,6 +12,8 @@ pub fn setup_spec(spec_builder: OpenApiBuilder) -> OpenApiBuilder {
     controller::merge_into_openapi_builder(spec_builder)
 }
 
+mod model;
+
 #[Controller()]
 mod controller {
     use std::sync::Arc;
@@ -53,29 +55,7 @@ mod controller {
         task_service::{self, AddTaskError, ChangeStatusError, RenameTaskError, TaskService}
     };
 
-    #[DTO(response)]
-    pub struct TaskViewModel {
-        pub id:     u64,
-        pub title:  String,
-        pub status: Status,
-    }
-
-    impl TryFrom<Task> for TaskViewModel {
-        type Error = ();
-        
-        fn try_from(t: Task) -> Result<Self, Self::Error> {
-            Ok(TaskViewModel {
-                id: if let Some(id) = t.id() {
-                        id.value()
-                    } else {
-                        tracing::error!("task_id is expected to be set");
-                        return Err(())
-                    },
-                title: t.title(),
-                status: t.status(),
-            })
-        }
-    }
+use super::model::{SortDirection, TaskViewModel, TasksSortBy};
 
     // region: list tasks
     //
@@ -100,42 +80,6 @@ mod controller {
                 status:  self.status,
                 sort_by: self.sort_by.into(),
                 order:   self.order.into(),
-            }
-        }
-    }
-
-    #[derive(Default, Deserialize, ToSchema)]
-    #[serde(rename_all = "lowercase")]
-    pub enum TasksSortBy {
-        #[default]
-        Id,
-        Title,
-        Status
-    }
-
-    impl Into<TaskOrderField> for TasksSortBy {
-        fn into(self) -> TaskOrderField {
-            match self {
-                TasksSortBy::Id     => TaskOrderField::Id,
-                TasksSortBy::Title  => TaskOrderField::Title,
-                TasksSortBy::Status => TaskOrderField::Status,
-            }
-        }
-    }
-
-    #[derive(Default, Deserialize, ToSchema)]
-    #[serde(rename_all = "lowercase")]
-    pub enum SortDirection {
-        #[default]
-        Asc,
-        Desc
-    }
-
-    impl Into<Order> for SortDirection {
-        fn into(self) -> Order {
-            match self {
-                SortDirection::Asc  => Order::Ascending,
-                SortDirection::Desc => Order::Descending,
             }
         }
     }
