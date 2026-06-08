@@ -27,6 +27,17 @@ jobs:
             exit 1
           fi
 
+      - name: Set crate versions from tag
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          for manifest in groom/Cargo.toml groom_macros/Cargo.toml; do
+            sed -i "s/^version = \".*\"/version = \"${version}\"/" "$manifest"
+          done
+          sed -i "s/^groom = { version = \".*\", path = \"..\/groom\" }/groom = { version = \"${version}\", path = \"..\/groom\" }/" groom_macros/Cargo.toml
+          echo "groom version: $(grep '^version = ' groom/Cargo.toml)"
+          echo "groom_macros version: $(grep '^version = ' groom_macros/Cargo.toml)"
+          echo "groom_macros groom dependency: $(grep '^groom = ' groom_macros/Cargo.toml)"
+
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@master
         with:
@@ -54,14 +65,14 @@ jobs:
       - name: Publish groom to crates.io
         env:
           CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
-        run: cargo publish -p groom
+        run: cargo publish -p groom --allow-dirty
 
       - name: Publish groom_macros to crates.io
         env:
           CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
         run: |
           for attempt in $(seq 1 12); do
-            if cargo publish -p groom_macros; then
+            if cargo publish -p groom_macros --allow-dirty; then
               exit 0
             fi
             echo "Waiting for groom to appear on crates.io (attempt ${attempt}/12)..."
