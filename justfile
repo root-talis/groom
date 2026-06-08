@@ -16,6 +16,6 @@ test:
 
     for example in examples/*/; do
         if [ -f "${example}justfile" ]; then
-            just --justfile "${example}justfile" build
+            just --justfile "${example}justfile" test
         fi
     done

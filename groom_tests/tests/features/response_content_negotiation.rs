@@ -3,8 +3,8 @@ use serde_json::json;
 
 use crate::{
     groom_macros::Controller,
-    integration::{
-        features::response_content_negotiation::controller::DataObject,
+    features::{
+        response_content_negotiation::controller::DataObject,
         test_utils::{Req, assert_openapi_doc}
     }
 };

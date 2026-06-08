@@ -3,14 +3,14 @@ use serde_json::json;
 
 use crate::{
     groom_macros::Controller,
-    integration::test_utils::{Req, assert_openapi_doc}
+    features::test_utils::{Req, assert_openapi_doc}
 };
 
 // Important: state type should be mentioned in `use` INSIDE the controller.
 #[Controller(state_type = SomeState)]
 mod controller {
     // this import is used to set state_type in #[Controller()] macro above
-    use crate::integration::features::dependency_injection::SomeState;
+    use crate::features::dependency_injection::SomeState;
 
     use axum::{Extension, extract::State, response::IntoResponse};
 

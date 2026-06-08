@@ -2,7 +2,7 @@ use axum::Router;
 
 use crate::{
     groom_macros::Controller,
-    integration::test_utils::{Req, assert_openapi_doc}
+    features::test_utils::{Req, assert_openapi_doc}
 };
 
 use serde_json::json;

@@ -6,6 +6,7 @@ members = [
     "groom_tests",
 
     "examples/hello-world",
+    "examples/quick-example",
     "examples/todo/backend"
 ]
 

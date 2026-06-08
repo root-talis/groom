@@ -2,7 +2,7 @@ use axum::Router;
 use serde_json::json;
 
 use crate::{
-    integration::test_utils::{Req, assert_openapi_doc}
+    features::test_utils::{Req, assert_openapi_doc}
 };
 
 mod namespace_a {
@@ -17,7 +17,7 @@ mod namespace_a {
 
     #[Controller(state_type = SomeState)]
     pub mod controller {
-        use crate::integration::features::multiple_controllers::SomeState;
+        use crate::features::multiple_controllers::SomeState;
 
         use axum::{Extension, extract::State, response::IntoResponse};
 
@@ -63,7 +63,7 @@ mod namespace_b {
 
     #[Controller(state_type = SomeState)]
     pub mod controller {
-        use crate::integration::features::multiple_controllers::SomeState;
+        use crate::features::multiple_controllers::SomeState;
 
         use axum::{Extension, extract::State, response::IntoResponse};
 
@@ -265,7 +265,7 @@ mod allow_shared_components {
     use groom_macros::{Controller, DTO};
     use serde_json::json;
 
-    use crate::integration::test_utils::assert_openapi_doc;
+    use crate::features::test_utils::assert_openapi_doc;
 
     #[DTO(response)]
     pub struct RespData {
@@ -285,7 +285,7 @@ mod allow_shared_components {
             response::Response
         };
         use groom_macros::Response;
-        use crate::integration::features::multiple_controllers::allow_shared_components::RespData2;
+        use crate::features::multiple_controllers::allow_shared_components::RespData2;
 
         use super::RespData;
 

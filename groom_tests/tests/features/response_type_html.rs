@@ -2,7 +2,7 @@ use axum::Router;
 
 use crate::{
     groom_macros::Controller,
-    integration::{features::response_type_html::controller::SOME_TEXT, test_utils::Req}
+    features::{response_type_html::controller::SOME_TEXT, test_utils::Req}
 };
 
 #[Controller()]

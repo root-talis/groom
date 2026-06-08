@@ -3,7 +3,7 @@ use serde_json::json;
 
 use crate::{
     groom_macros::Controller,
-    integration::test_utils::{Req, ReqBody, assert_openapi_doc}
+    features::test_utils::{Req, ReqBody, assert_openapi_doc}
 };
 
 /// A controller

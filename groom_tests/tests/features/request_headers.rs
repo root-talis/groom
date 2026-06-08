@@ -3,13 +3,13 @@ use serde_json::json;
 
 use crate::{
     groom_macros::Controller,
-    integration::test_utils::{Req, assert_openapi_doc}
+    features::test_utils::{Req, assert_openapi_doc}
 };
 
 #[Controller()]
 mod controller {
-    use axum::{extract::Request, response::IntoResponse};
-    
+    use axum::{response::IntoResponse, http::HeaderMap};
+
     use groom::{
         response::Response,
         extract::GroomExtractor
@@ -24,25 +24,27 @@ mod controller {
         Ok(String),
     }
 
-    #[Route(method = "get", path = "/request-extractor")]
-    async fn rq_cons_request(req: Request) -> TextResponse {
-        let uri = req.uri().to_string();
-        TextResponse::Ok(format!("uri: {uri}"))
+    #[Route(method = "get", path = "/header-map")]
+    async fn rq_cons_header_map(h: HeaderMap) -> TextResponse {
+        let token = h.get("x-access-token");
+        TextResponse::Ok(format!(
+            "token: {}",
+            token.map_or("none", |t| t.to_str().unwrap())
+        ))
     }
 }
 
-/// Test that Path parameters are correctly read
+// axum::http::HeaderMap
 #[tokio::test]
-pub async fn test_path_params() {
+pub async fn test_get_axum_http_header_map() {
     let r = controller::merge_into_router(Router::new());
 
-    Req::get("/request-extractor?id=123456").call(&r).await
+    Req::get("/header-map").with_headers([("x-access-token", "123456789")]).call(&r).await
         .assert_status(200)
         .assert_content_type("text/plain; charset=utf-8")
-        .assert_body("uri: /request-extractor?id=123456");
+        .assert_body("token: 123456789")
+    ;
 }
-
-// Todo: HashMap in query
 
 /// Tests that openapi definition is correctly generated
 #[test]
@@ -60,9 +62,9 @@ pub fn test_openapi() {
             },
             "openapi": "3.1.0",
             "paths": {
-                "/request-extractor": {
+                "/header-map": {
                     "get": {
-                        "operationId": ("rqConsRequest"),
+                        "operationId": ("rqConsHeaderMap"),
                         "responses": {
                             "200": {
                                 "content": {

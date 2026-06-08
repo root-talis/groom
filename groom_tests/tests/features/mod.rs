@@ -1,5 +1,7 @@
 ///! Tests of separate features
 
+mod test_utils;
+
 // region: project structuring
 //
 
@@ -32,6 +34,7 @@ mod response_struct;
 mod response_type_html;
 mod response_type_json;
 mod response_type_plaintext;
+mod response_type_result;
 
 //
 // endregion: responses

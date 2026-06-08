@@ -1,0 +1,98 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 824 512" font-family="monospace" font-size="13">
+  <defs>
+    <!-- 8×8 alignment grid -->
+    <pattern id="grid" width="8" height="8" patternUnits="userSpaceOnUse">
+      <path d="M 8 0 L 0 0 0 8" fill="none" stroke="#25272b" stroke-width="0.5"/>
+    </pattern>
+
+    <marker id="arrow_down" viewBox="0 0 8 8" refX="4" refY="8" markerWidth="6" markerHeight="6" orient="0">
+      <path d="M 0 0 L 8 0 L 4 8 Z" fill="context-stroke"/>
+    </marker>
+    <marker id="arrow_up" viewBox="0 0 8 8" refX="4" refY="0" markerWidth="6" markerHeight="6" orient="0">
+      <path d="M 0 8 L 8 8 L 4 0 Z" fill="context-stroke"/>
+    </marker>
+    <marker id="arrow_left" viewBox="0 0 8 8" refX="0" refY="4" markerWidth="6" markerHeight="6" orient="0">
+      <path d="M 8 0 L 8 8 L 0 4 Z" fill="context-stroke"/>
+    </marker>
+  </defs>
+
+  <rect width="824" height="512" fill="#1d1f21"/>
+  <rect width="824" height="512" fill="url(#grid)"/>
+
+  <!-- Groom controller -->
+  <rect x="280" y="16" width="264" height="56" fill="#282a2e" stroke="#969896" stroke-width="1"/>
+  <text x="412" y="40" fill="#b294bb" text-anchor="middle">#[Controller]</text>
+  <text x="412" y="58" fill="#c5c8c6" text-anchor="middle">Groom controller</text>
+
+  <!-- axum Router -->
+  <rect x="64" y="112" width="240" height="56" fill="#282a2e" stroke="#969896" stroke-width="1"/>
+  <text x="184" y="136" fill="#de935f" text-anchor="middle">axum Router</text>
+  <text x="184" y="154" fill="#969896" text-anchor="middle" font-size="11">existing</text>
+
+  <!-- utoipa ApiDoc -->
+  <rect x="520" y="112" width="240" height="56" fill="#282a2e" stroke="#969896" stroke-width="1"/>
+  <text x="640" y="136" fill="#81a2be" text-anchor="middle">utoipa ApiDoc</text>
+  <text x="640" y="154" fill="#969896" text-anchor="middle" font-size="11">existing</text>
+
+  <!-- HTTP endpoint (runtime) -->
+  <rect x="64" y="232" width="240" height="56" fill="#282a2e" stroke="#969896" stroke-width="1"/>
+  <text x="184" y="256" fill="#8abeb7" text-anchor="middle">HTTP endpoint</text>
+  <text x="184" y="274" fill="#969896" text-anchor="middle" font-size="11">API requests</text>
+
+  <!-- spec binary -->
+  <rect x="520" y="232" width="240" height="56" fill="#282a2e" stroke="#969896" stroke-width="1"/>
+  <text x="640" y="256" fill="#f0c674" text-anchor="middle">spec binary</text>
+  <text x="640" y="274" fill="#969896" text-anchor="middle" font-size="11">cargo run --bin spec</text>
+
+  <!-- Client app -->
+  <rect x="64" y="352" width="240" height="56" fill="#282a2e" stroke="#969896" stroke-width="1"/>
+  <text x="184" y="376" fill="#cc6666" text-anchor="middle">Client app</text>
+  <text x="184" y="394" fill="#969896" text-anchor="middle" font-size="11">generated (build time)</text>
+
+  <!-- spec.yaml -->
+  <rect x="520" y="352" width="240" height="56" fill="#282a2e" stroke="#969896" stroke-width="1"/>
+  <text x="640" y="376" fill="#b5bd68" text-anchor="middle">spec.yaml</text>
+  <text x="640" y="394" fill="#969896" text-anchor="middle" font-size="11">committed</text>
+
+  <!-- merge_into_router: controller → axum Router -->
+  <polyline points="336,80 336,96 184,96 184,104" fill="none" stroke="#969896" stroke-width="1" marker-end="url(#arrow_down)"/>
+  <text x="256" y="88" fill="#969896" text-anchor="middle" font-size="11">.merge_into_router(r)</text>
+
+  <!-- merge_into_openapi_builder: controller → utoipa ApiDoc -->
+  <polyline points="488,80 488,96 640,96 640,104" fill="none" stroke="#969896" stroke-width="1" marker-end="url(#arrow_down)"/>
+  <text x="500" y="88" fill="#969896" text-anchor="left" font-size="11">.merge_into_openapi_builder(b)</text>
+
+  <!-- axum::serve: axum Router → HTTP endpoint (runtime) -->
+  <polyline points="184,176 184,224" fill="none" stroke="#969896" stroke-width="1" marker-end="url(#arrow_down)"/>
+  <text x="192" y="200" fill="#969896" text-anchor="start" font-size="11">axum::serve</text>
+
+  <!-- /spec.yaml (optionally): utoipa → HTTP endpoint (runtime), right side -->
+  <polyline points="552,176 552,196 328,196 328,256 312,256" fill="none" stroke="#969896" stroke-width="1" marker-end="url(#arrow_left)"/>
+  <text x="436" y="210" fill="#969896" text-anchor="middle" font-size="11">/spec.yaml (optionally)</text>
+
+  <!-- build(): utoipa → spec binary (compile time) -->
+  <polyline points="640,176 640,224" fill="none" stroke="#b294bb" stroke-width="1" stroke-dasharray="8 8 1 8" stroke-linecap="round" marker-end="url(#arrow_down)"/>
+  <text x="648" y="200" fill="#b294bb" text-anchor="start" font-size="11">build()</text>
+
+  <!-- to_yaml(): spec binary → spec.yaml (compile time) -->
+  <polyline points="640,296 640,344" fill="none" stroke="#b294bb" stroke-width="1" stroke-dasharray="8 8 1 8" stroke-linecap="round" marker-end="url(#arrow_down)"/>
+  <text x="648" y="324" fill="#b294bb" text-anchor="start" font-size="11">to_yaml()</text>
+
+  <!-- contract alignment: HTTP endpoint (runtime) → Client app -->
+  <polyline points="184,296 184,344" fill="none" stroke="#969896" stroke-width="1" stroke-dasharray="8 8" marker-start="url(#arrow_up)" marker-end="url(#arrow_down)"/>
+  <text x="192" y="324" fill="#969896" text-anchor="start" font-size="11">contract alignment</text>
+
+  <!-- generated API client: spec.yaml → Client app (compile time) -->
+  <line x1="512" y1="392" x2="312" y2="392" fill="none" stroke="#b294bb" stroke-width="1" stroke-dasharray="8 8 1 8" stroke-linecap="round" marker-end="url(#arrow_left)"/>
+  <text x="416" y="385" fill="#b294bb" text-anchor="middle" font-size="11">generated API client</text>
+
+  <!-- legend -->
+  <text x="40" y="440" fill="#969896" font-size="11">solid: runtime</text>
+  <polyline points="184,436 144,436" fill="none" stroke="#969896" stroke-width="1" marker-end="url(#arrow_left)"/>
+
+  <text x="40" y="464" fill="#969896" font-size="11">dashed: contract alignment</text>
+  <polyline points="269,460 218,460" fill="none" stroke="#969896" stroke-width="1" stroke-dasharray="8 8" marker-end="url(#arrow_left)"/>
+
+  <text x="40" y="488" fill="#969896" font-size="11">dotted: compile time</text>
+  <polyline points="220,484 180,484" fill="none" stroke="#b294bb" stroke-width="1" stroke-dasharray="8 8 1 8" stroke-linecap="round" marker-end="url(#arrow_left)"/>
+</svg>
