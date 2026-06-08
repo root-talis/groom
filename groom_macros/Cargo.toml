@@ -31,7 +31,7 @@ strum = { version = "0.28.0", features = ["strum_macros"] }
 strum_macros = "0.28.0"
 syn = { version = "2.0.41", features = ["full"] }
 thiserror = "2.0.18"
-groom = {path = "../groom" }
+groom = { version = "0.1.0", path = "../groom" }
 derive_more = { version = "2.1.1", default-features = false, features = ["deref", "deref_mut"] }
 convert_case = "0.11.0"
 

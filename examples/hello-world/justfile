@@ -1,0 +1,12 @@
+# Shows list of recepies
+default:
+    just --list
+
+# Builds the example
+build:
+    cargo build
+
+# Ensure the example passes all tests and builds
+test:
+    just build
+

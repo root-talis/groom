@@ -2,6 +2,11 @@
 default:
     just --list
 
+# Ensure the example passes all tests and builds
+test:
+    just test-backend
+    just build # Ensure the entire thing can build
+
 # Builds everything
 build:
     #!/usr/bin/env sh
