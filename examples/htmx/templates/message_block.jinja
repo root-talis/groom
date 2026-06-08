@@ -1,0 +1,9 @@
+<div
+  id="message-block"
+  class="tn-panel w-full max-w-3xl rounded-2xl border px-8 py-16 text-center shadow-lg"
+>
+  <p class="mb-4 text-sm font-medium uppercase tracking-[0.2em] tn-muted">Message of the day</p>
+  <p class="text-3xl font-semibold leading-snug sm:text-4xl md:text-5xl">{{ message }}</p>
+  <p class="tn-muted mt-8 text-sm">Shown {{ shown }} time{% if shown != 1 %}s{% endif %}</p>
+</div>
+<div id="footer-error-slot" class="mx-auto mb-4" hx-swap-oob="true"></div>

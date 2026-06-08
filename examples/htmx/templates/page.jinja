@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Message of the day</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'media',
+      theme: {
+        extend: {
+          colors: {
+            tn: {
+              bg: '#f4f4f4',
+              fg: '#2d2d2d',
+              muted: '#6b7280',
+              sidebar: '#e5e7eb',
+              panel: '#ffffff',
+              border: '#d1d5db',
+              accent: '#6699cc',
+              'accent-hover': '#4d7aa8',
+              error: '#bf616a',
+              errorBg: '#fde8ea',
+            },
+          },
+        },
+      },
+    };
+  </script>
+  <style type="text/tailwindcss">
+    @media (prefers-color-scheme: dark) {
+      :root {
+        color-scheme: dark;
+      }
+      .tn-page {
+        @apply bg-[#2d2d2d] text-[#cccccc];
+      }
+      .tn-sidebar {
+        @apply bg-[#1e1e1e];
+      }
+      .tn-panel {
+        @apply bg-[#393939] border-[#4f4f4f];
+      }
+      .tn-muted {
+        @apply text-[#999999];
+      }
+      .tn-input {
+        @apply bg-[#2d2d2d] border-[#4f4f4f] text-[#cccccc] placeholder-[#777777];
+      }
+      .tn-error {
+        @apply bg-[#3d2f32] border-[#f2777a] text-[#f2777a];
+      }
+    }
+    @media (prefers-color-scheme: light) {
+      .tn-page {
+        @apply bg-tn-bg text-tn-fg;
+      }
+      .tn-sidebar {
+        @apply bg-tn-sidebar;
+      }
+      .tn-panel {
+        @apply bg-tn-panel border-tn-border;
+      }
+      .tn-muted {
+        @apply text-tn-muted;
+      }
+      .tn-input {
+        @apply bg-white border-tn-border text-tn-fg placeholder-tn-muted;
+      }
+      .tn-error {
+        @apply bg-tn-errorBg border-tn-error text-tn-error;
+      }
+    }
+  </style>
+  <script src="https://unpkg.com/htmx.org@2.0.4"></script>
+  <script src="https://unpkg.com/htmx.org@2.0.4/dist/ext/json-enc.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/htmx-ext-response-targets@2.0.4" integrity="sha384-T41oglUPvXLGBVyRdZsVRxNWnOOqCynaPubjUVjxhsjFTKrFJGEMm3/0KGmNQ+Pg" crossorigin="anonymous"></script>
+</head>
+<body class="tn-page min-h-screen w-screen overflow-x-hidden" hx-ext="response-targets">
+  <div class="flex min-h-screen w-full">
+    <div class="tn-sidebar hidden min-h-screen flex-1 sm:block" aria-hidden="true"></div>
+
+    <main class="flex min-h-screen w-full max-w-[1440px] flex-col">
+      <section class="flex flex-1 flex-col gap-1 items-center justify-center px-6 py-12">
+        {% include "message_block.jinja" %}
+      </section>
+
+      <footer class="border-t border-black/10 px-6 py-6 dark:border-white/10">
+        <div id="footer-error-slot" class="mx-auto mb-4"></div>
+        <form
+          id="update-form"
+          class="mx-auto flex w-full max-w-2xl flex-col gap-3 sm:flex-row sm:items-center"
+          hx-put="/message"
+          hx-ext="json-enc"
+          hx-target="#message-block"
+          hx-target-error="#footer-error-slot"
+          hx-swap="outerHTML"
+          hx-swap-error="innerHTML"
+        >
+          <label for="message-input" class="sr-only">New message</label>
+          <input
+            id="message-input"
+            type="text"
+            name="message"
+            value="{{ message }}"
+            autocomplete="off"
+            class="tn-input min-w-0 flex-1 rounded-lg border px-4 py-3 text-lg shadow-sm outline-none ring-tn-accent focus:ring-2"
+            placeholder="Type a new message of the day"
+          >
+          <button
+            type="submit"
+            class="rounded-lg bg-tn-accent px-6 py-3 text-lg font-semibold text-white shadow-sm transition hover:bg-tn-accent-hover focus:outline-none focus:ring-2 focus:ring-tn-accent focus:ring-offset-2 dark:focus:ring-offset-[#2d2d2d]"
+          >
+            update
+          </button>
+        </form>
+      </footer>
+    </main>
+
+    <div class="tn-sidebar hidden min-h-screen flex-1 sm:block" aria-hidden="true"></div>
+  </div>
+</body>
+</html>

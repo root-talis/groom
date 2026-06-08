@@ -417,6 +417,7 @@ Because the spec is derived from Rust types, refactors that break the contract f
 |---------|------|---------|
 | Quick example | [examples/quick-example](examples/quick-example) | JSON greet endpoint from this guide; snippet kept in sync with `QUICKSTART.md`. |
 | Hello world | [examples/hello-world](examples/hello-world) | Single controller, plain-text responses, inline spec route. |
+| HTMX app | [examples/htmx](examples/htmx) | Simple backend with HTMX, rendered with minijinja templating engine. |
 | Todo app | [examples/todo](examples/todo) | Layered backend, multiple endpoints, spec binary, Vue frontend with generated client. |
 
 Run the todo backend (with spec endpoint and CORS for local frontend):
