@@ -2,6 +2,10 @@
 default:
     just --list
 
+# Install version-controlled git hooks (pre-push semver tag checks)
+install-hooks:
+    git config core.hooksPath .githooks
+
 # Run crate tests and build every example
 test:
     #!/usr/bin/env sh

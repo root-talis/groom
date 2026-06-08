@@ -1,0 +1,67 @@
+#!/usr/bin/env bash
+# Verify semver release tags match groom and groom_macros Cargo.toml versions.
+set -euo pipefail
+
+root="$(git rev-parse --show-toplevel)"
+cd "$root"
+
+semver_tag_re='^v?[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?(\+[0-9A-Za-z.-]+)?$'
+
+package_version() {
+	local manifest="$1"
+	grep -m1 '^version[[:space:]]*=' "$manifest" \
+		| sed -E 's/^version[[:space:]]*=[[:space:]]*"([^"]+)".*/\1/'
+}
+
+normalize_tag_version() {
+	local tag="$1"
+	if [[ "$tag" == v* ]]; then
+		echo "${tag#v}"
+	else
+		echo "$tag"
+	fi
+}
+
+check_tag_version() {
+	local tag="$1"
+	local expected
+	expected="$(normalize_tag_version "$tag")"
+
+	local groom_version groom_macros_version
+	groom_version="$(package_version groom/Cargo.toml)"
+	groom_macros_version="$(package_version groom_macros/Cargo.toml)"
+
+	local mismatches=()
+	if [[ "$groom_version" != "$expected" ]]; then
+		mismatches+=("groom/Cargo.toml has version ${groom_version}, expected ${expected}")
+	fi
+	if [[ "$groom_macros_version" != "$expected" ]]; then
+		mismatches+=("groom_macros/Cargo.toml has version ${groom_macros_version}, expected ${expected}")
+	fi
+
+	if ((${#mismatches[@]} > 0)); then
+		echo "error: tag '${tag}' does not match crate versions:" >&2
+		for mismatch in "${mismatches[@]}"; do
+			echo "  - ${mismatch}" >&2
+		done
+		return 1
+	fi
+}
+
+while read -r local_ref local_sha _remote_ref _remote_sha; do
+	# Skip ref deletions.
+	if [[ "$local_sha" == "0000000000000000000000000000000000000000" ]]; then
+		continue
+	fi
+
+	if [[ "$local_ref" != refs/tags/* ]]; then
+		continue
+	fi
+
+	tag="${local_ref#refs/tags/}"
+	if [[ ! "$tag" =~ $semver_tag_re ]]; then
+		continue
+	fi
+
+	check_tag_version "$tag"
+done
