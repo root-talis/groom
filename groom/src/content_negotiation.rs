@@ -17,15 +17,13 @@ pub enum BodyContentType {
 }
 
 pub fn parse_content_type_header(headers: &HeaderMap) -> Option<Mime> {
-    get_header_as_string(headers, CONTENT_TYPE).map_or(None, |val| {
-        val.parse::<Mime>().map_or(None, |v| Some(v))
+    get_header_as_string(headers, CONTENT_TYPE).and_then(|val| {
+        val.parse::<Mime>().ok()
     })
 }
 
 pub fn get_body_content_type(mime: Option<Mime>) -> Option<BodyContentType> {
-    if mime.is_none() {
-        return None;
-    }
+    mime.as_ref()?;
 
     let mime = mime.unwrap();
 
@@ -40,14 +38,9 @@ pub fn get_body_content_type(mime: Option<Mime>) -> Option<BodyContentType> {
 
 fn get_header_as_string(headers: &HeaderMap, header_name: HeaderName) -> Option<String>
 {
-    headers.get(&header_name)
-        .map_or(None, |content_type| {
-            Some(
-                String::from_utf8(content_type.as_bytes().to_vec())
+    headers.get(&header_name).map(|content_type| String::from_utf8(content_type.as_bytes().to_vec())
                     .map_err(|non_utf8| String::from_utf8_lossy(non_utf8.as_bytes()).into_owned())
-                    .expect(format!("Failed to read header `{}` as a utf-8 string.", header_name).as_str())
-            )
-        })
+                    .unwrap_or_else(|_| panic!("Failed to read header `{}` as a utf-8 string.", header_name)))
 }
 
 fn is_form_url_encoded(mime: &Mime) -> bool {
@@ -56,8 +49,8 @@ fn is_form_url_encoded(mime: &Mime) -> bool {
 
 fn is_json(mime: &Mime) -> bool {
     // shamelessly taken from axum::json because their function is private
-    let is_json_content_type = mime.type_() == "application"
-        && (mime.subtype() == "json" || mime.suffix().map_or(false, |name| name == "json"));
+    
 
-    is_json_content_type
+    mime.type_() == "application"
+        && (mime.subtype() == "json" || mime.suffix().is_some_and(|name| name == "json"))
 }

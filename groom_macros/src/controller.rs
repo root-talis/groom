@@ -68,8 +68,8 @@ struct ModuleASTFragments {
     /// code to set up paths in merge_into_openapi_builder()
     openapi_paths_setup: IndexMap<String, Vec<TokenStream>>,
 
-    /// code to set up components in merge_into_openapi_builder()
-    openapi_components_setup: IndexMap<String, Vec<TokenStream>>,
+    // code to set up components in merge_into_openapi_builder()
+    //openapi_components_setup: IndexMap<String, Vec<TokenStream>>,
 
     /// compile-time checks of trait implementation (for better error messages)
     type_assertions: Vec<TokenStream>,
@@ -117,7 +117,7 @@ fn generate_controller_impl(_args_t: TokenStream, args: ControllerArgs, input: T
         module_items: Vec::with_capacity(items.len()),
         routes_setup: Vec::new(),
         openapi_paths_setup: IndexMap::new(),
-        openapi_components_setup: IndexMap::new(),
+        //openapi_components_setup: IndexMap::new(),
         type_assertions: Vec::new(),
         runtime_checks: Vec::new(),
     };
@@ -148,7 +148,7 @@ fn parse_handler_function(
     };
 
     if function.sig.asyncness.is_none() {
-        return Err(Error::new_spanned(&function.sig.fn_token, "handler should be async fn").to_compile_error());
+        return Err(Error::new_spanned(function.sig.fn_token, "handler should be async fn").to_compile_error());
     }
 
     ensure_handler_is_unique(function, &route, mod_fragments)?;
@@ -166,8 +166,8 @@ fn parse_handler_function(
     let docblock = crate::comments::get_docblock_parts(&function.attrs).unwrap_or_default();
     crate::comments::remove_docblock(&mut function.attrs);
 
-    generate_new_handler_ast(&function, &route, &docblock, &fn_fragments, mod_fragments);
-    generate_openapi_paths_setup_ast(&function, &fn_fragments, &route, &docblock, mod_fragments);
+    generate_new_handler_ast(function, &route, &docblock, &fn_fragments, mod_fragments);
+    generate_openapi_paths_setup_ast(function, &fn_fragments, &route, &docblock, mod_fragments);
 
     // if handlers returnes something
     if let ReturnType::Type(_, ty) = &function.sig.output {
@@ -214,12 +214,12 @@ fn ensure_handler_is_unique(handler: &mut ItemFn, route: &RouteArgs, mod_fragmen
         .insert(*method, fn_name.to_string())
     ;
 
-    if duplicate_handler.is_some() {
+    if let Some(name) = duplicate_handler {
         return Err(Error::new_spanned(
             &handler.sig,
             format!(
                 "duplicate handler: function named `{}` is already assigned to route `{} {}`",
-                duplicate_handler.unwrap(),
+                name,
                 method,
                 path,
             )
@@ -243,7 +243,7 @@ fn generate_handler_fragments(handler: &mut ItemFn, mod_fragments: &mut ModuleAS
             syn::FnArg::Receiver(receiver) => {
                 return Err(
                     Error::new_spanned(
-                        &receiver,
+                        receiver,
                         "handlers with receiver are not supported, remove `self` and use State instead: https://docs.rs/axum/latest/axum/extract/struct.State.html"
                     ).to_compile_error()
                 );

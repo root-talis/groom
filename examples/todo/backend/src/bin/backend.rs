@@ -1,5 +1,4 @@
-use std::env;
-use color_eyre::eyre::{Result, eyre};
+use color_eyre::eyre::Result;
 
 use clap::Parser;
 

@@ -310,7 +310,6 @@ mod rename_task {
             .returning(move |_| Ok(Some(t.clone())))
         ;
 
-        let t = expected_task.clone();
         w.expect_update_task()
             .with(eq(expected_task.clone()))
             .once()
@@ -403,7 +402,6 @@ mod change_status {
             .returning(move |_| Ok(Some(t.clone())))
         ;
 
-        let t = expected_task.clone();
         w.expect_update_task()
             .with(eq(expected_task.clone()))
             .once()

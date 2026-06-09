@@ -5,6 +5,12 @@ pub struct AppState {
     pub motd: Arc<Mutex<MessageOfTheDay>>,
 }
 
+impl Default for AppState {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl AppState {
     pub fn new() -> Self {
         Self {

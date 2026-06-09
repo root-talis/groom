@@ -219,7 +219,7 @@ pub mod api_root {
             op
         }
         fn __groom_check_response_codes(
-            context: &String,
+            context: &str,
             codes: &mut ::groom::runtime_checks::HTTPCodeSet,
         ) {
             let context = ::alloc::__export::must_use({
@@ -645,7 +645,7 @@ pub mod api_root {
             op
         }
         fn __groom_check_response_codes(
-            context: &String,
+            context: &str,
             codes: &mut ::groom::runtime_checks::HTTPCodeSet,
         ) {
             let context = ::alloc::__export::must_use({
@@ -1072,7 +1072,7 @@ pub mod api_root {
             op
         }
         fn __groom_check_response_codes(
-            context: &String,
+            context: &str,
             codes: &mut ::groom::runtime_checks::HTTPCodeSet,
         ) {
             let context = ::alloc::__export::must_use({
@@ -1258,7 +1258,7 @@ pub mod api_root {
             op
         }
         fn __groom_check_response_codes(
-            context: &String,
+            context: &str,
             codes: &mut ::groom::runtime_checks::HTTPCodeSet,
         ) {
             let context = ::alloc::__export::must_use({

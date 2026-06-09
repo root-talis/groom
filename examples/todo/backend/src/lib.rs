@@ -31,23 +31,23 @@ impl From<String> for CorsOrigin {
             value
                 .split(',')
                 .map(|v| v.trim())
-                .filter(|v| v.len() > 0)
+                .filter(|v| !v.is_empty())
                 .map(String::from)
                 .collect()
         )
     }
 }
 
-impl Into<AllowOrigin> for CorsOrigin {
-    fn into(self) -> AllowOrigin {
-        match self {
+impl From<CorsOrigin> for AllowOrigin {
+    fn from(val: CorsOrigin) -> Self {
+        match val {
             CorsOrigin::Any => AllowOrigin::mirror_request(),
             CorsOrigin::List(items) => AllowOrigin::list(
                 items
                     .into_iter()
                     .map(|s| 
                         s.parse::<HeaderValue>()
-                            .expect(format!("Error parsing `{}` as CORS header value.", s).as_str())
+                            .unwrap_or_else(|_| panic!("Error parsing `{}` as CORS header value.", s))
                     )
             ),
         }

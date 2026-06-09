@@ -45,7 +45,7 @@ mod no_content_type {
             op
         }
         fn __groom_check_response_codes(
-            context: &String,
+            context: &str,
             codes: &mut ::groom::runtime_checks::HTTPCodeSet,
         ) {
             let context = ::alloc::__export::must_use({
@@ -172,7 +172,7 @@ mod plaintext_only {
             op
         }
         fn __groom_check_response_codes(
-            context: &String,
+            context: &str,
             codes: &mut ::groom::runtime_checks::HTTPCodeSet,
         ) {
             let context = ::alloc::__export::must_use({
@@ -345,7 +345,7 @@ mod html_only {
             op
         }
         fn __groom_check_response_codes(
-            context: &String,
+            context: &str,
             codes: &mut ::groom::runtime_checks::HTTPCodeSet,
         ) {
             let context = ::alloc::__export::must_use({
@@ -510,7 +510,7 @@ mod json_only {
             op
         }
         fn __groom_check_response_codes(
-            context: &String,
+            context: &str,
             codes: &mut ::groom::runtime_checks::HTTPCodeSet,
         ) {
             let context = ::alloc::__export::must_use({
@@ -755,7 +755,7 @@ mod multiple_content_types {
             op
         }
         fn __groom_check_response_codes(
-            context: &String,
+            context: &str,
             codes: &mut ::groom::runtime_checks::HTTPCodeSet,
         ) {
             let context = ::alloc::__export::must_use({
@@ -925,7 +925,7 @@ mod named_struct_response {
             op
         }
         fn __groom_check_response_codes(
-            context: &String,
+            context: &str,
             codes: &mut ::groom::runtime_checks::HTTPCodeSet,
         ) {
             codes
@@ -1087,7 +1087,7 @@ mod unnamed_struct_response {
             op
         }
         fn __groom_check_response_codes(
-            context: &String,
+            context: &str,
             codes: &mut ::groom::runtime_checks::HTTPCodeSet,
         ) {
             codes
@@ -1169,7 +1169,7 @@ mod unit_struct_response {
             op
         }
         fn __groom_check_response_codes(
-            context: &String,
+            context: &str,
             codes: &mut ::groom::runtime_checks::HTTPCodeSet,
         ) {
             codes
@@ -1238,7 +1238,7 @@ mod result_struct_struct {
             op
         }
         fn __groom_check_response_codes(
-            context: &String,
+            context: &str,
             codes: &mut ::groom::runtime_checks::HTTPCodeSet,
         ) {
             codes
@@ -1304,7 +1304,7 @@ mod result_struct_struct {
             op
         }
         fn __groom_check_response_codes(
-            context: &String,
+            context: &str,
             codes: &mut ::groom::runtime_checks::HTTPCodeSet,
         ) {
             codes
@@ -1447,7 +1447,7 @@ mod result_struct_enum {
             op
         }
         fn __groom_check_response_codes(
-            context: &String,
+            context: &str,
             codes: &mut ::groom::runtime_checks::HTTPCodeSet,
         ) {
             codes
@@ -1554,7 +1554,7 @@ mod result_struct_enum {
             op
         }
         fn __groom_check_response_codes(
-            context: &String,
+            context: &str,
             codes: &mut ::groom::runtime_checks::HTTPCodeSet,
         ) {
             let context = ::alloc::__export::must_use({
@@ -1922,7 +1922,7 @@ mod wrapped_enum {
             op
         }
         fn __groom_check_response_codes(
-            context: &String,
+            context: &str,
             codes: &mut ::groom::runtime_checks::HTTPCodeSet,
         ) {
             let context = ::alloc::__export::must_use({
@@ -2082,7 +2082,7 @@ mod wrapped_enum {
             op
         }
         fn __groom_check_response_codes(
-            context: &String,
+            context: &str,
             codes: &mut ::groom::runtime_checks::HTTPCodeSet,
         ) {
             codes

@@ -24,7 +24,7 @@ pub(crate) struct RequestBodyTypesList {
 
 impl RequestBodyTypesList {
     pub(crate) fn is_any(&self) -> bool {
-        return self.url_encoded || self.json;
+        self.url_encoded || self.json
     }
 }
 
@@ -94,8 +94,8 @@ mod struct_impl {
         /// Code to pack the extracted DTO into #ident (if #ident is an unnamed struct that wraps DTO)
         pack_dto: TokenStream,
 
-        /// Schema of #ident for OpenAPI spec
-        schema: TokenStream,
+        // Schema of #ident for OpenAPI spec
+        //schema: TokenStream,
     }
 
     /// Generates RequestBody implementation for `struct`
@@ -155,10 +155,10 @@ mod struct_impl {
 
             Fields::Named(_) => {
                 Ok(DtoFragments {
-                    schema: quote! { match #ident::schema() {
+                    /*schema: quote! { match #ident::schema() {
                         ::utoipa::openapi::RefOr::T(s) => Some(s),
                         ::utoipa::openapi::RefOr::Ref(_) => panic!("dto schema is ref"),
-                    }},
+                    }},*/
                     extract_ty: quote! { #ident },
                     pack_dto: quote! { dto },
                 })
@@ -187,10 +187,10 @@ mod struct_impl {
                 });
 
                 Ok(DtoFragments {
-                    schema: quote! { match #ty::schema() {
+                    /*schema: quote! { match #ty::schema() {
                         ::utoipa::openapi::RefOr::T(s) => Some(s),
                         ::utoipa::openapi::RefOr::Ref(_) => panic!("dto schema is ref"),
-                    }},
+                    }},*/
                     extract_ty: quote! { #ty },
                     pack_dto: quote! { #ident(dto) },
                 })

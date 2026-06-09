@@ -14,7 +14,7 @@ impl Task {
     }
 
     pub fn id(&self) -> Option<TaskID> {
-        self.id.clone()
+        self.id
     }
 
     pub fn set_id(&mut self, id: TaskID) -> &mut Self {
@@ -56,9 +56,9 @@ impl From<u64> for TaskID {
     }
 }
 
-impl Into<u64> for TaskID {
-    fn into(self) -> u64 {
-        self.0
+impl From<TaskID> for u64 {
+    fn from(val: TaskID) -> Self {
+        val.0
     }
 }
 

@@ -6,6 +6,12 @@ pub struct Bootstrap {
     pub task_service: Arc<TaskService>
 }
 
+impl Default for Bootstrap {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl Bootstrap {
     pub fn new() -> Self {
         Self { task_service: Arc::from(Self::make_task_service()) }

@@ -66,7 +66,7 @@ pub(crate) struct ResponseFormatsList {
 
 impl ResponseFormatsList {
     pub(crate) fn is_any(&self) -> bool {
-        return self.plain_text || self.html || self.json;
+        self.plain_text || self.html || self.json
     }
 
     pub(crate) fn count(&self) -> usize {
@@ -381,8 +381,8 @@ fn make_new_ast(fragments: NewAstFragments)
     let groom_into_response_function =
         make_groom_into_response_function(
             &fragments,
-            &resp_args,
-            &resp_args_span
+            resp_args,
+            resp_args_span
         )?;
 
     let formatter_functions = &fragments.formatter_functions;
@@ -447,7 +447,7 @@ fn make_groom_into_response_function(
     let fn_ident_for_application_json = &fragments.into_response_application_json_ident;
 
     let default_format =
-        detect_default_format(&fragments.item_ident, &resp_args, &resp_args_span)?;
+        detect_default_format(&fragments.item_ident, resp_args, resp_args_span)?;
 
     let content_type_negotiation = if !resp_args.format.is_any() {
         quote! {
@@ -469,8 +469,8 @@ fn make_groom_into_response_function(
         };
 
         let mime_type_matches = make_mime_types_matches_for_content_negotiation(
-            &resp_args,
-            &fragments
+            resp_args,
+            fragments
         );
 
         quote! {
@@ -525,7 +525,7 @@ fn detect_default_format(
         } else {
             let default_format = resp_args.default_format.map_or_else(
                 || resp_args.format.get_single_value(),
-                |val| Some(val),
+                Some,
             );
 
             if default_format.is_none() {
@@ -661,7 +661,7 @@ mod enum_impl {
 
         let new_context_format = format!("{{context}} / enum `{}`", &ident);
         fragments.check_response_codes_fn = quote! {
-            fn __groom_check_response_codes(context: &String, codes: &mut ::groom::runtime_checks::HTTPCodeSet) {
+            fn __groom_check_response_codes(context: &str, codes: &mut ::groom::runtime_checks::HTTPCodeSet) {
                 let context = format!(#new_context_format);
                 #(#response_codes_checks)*
             }
@@ -691,7 +691,7 @@ mod enum_impl {
     fn extract_response_body_field(variant: &Variant) -> Result<Option<&Field>, TokenStream> {
         match &variant.fields {
             syn::Fields::Named(fields) => {
-                return Err(syn::Error::new_spanned(fields, "error in `#[Response]` annotation: named fields are not supported").into_compile_error());
+                Err(syn::Error::new_spanned(fields, "error in `#[Response]` annotation: named fields are not supported").into_compile_error())
                 // todo: support something like http::response::Parts
             },
 
@@ -802,11 +802,11 @@ mod enum_impl {
     fn populate_openapi_impls(
         response_body_field: &Option<&Field>,
         response_code_u16: u16,
-        variant_attributes: &Vec<Attribute>,
+        variant_attributes: &[Attribute],
         fragments: &mut NewAstFragments,
     )
     {
-        let description_tk = match get_docblock(&variant_attributes).unwrap_or_default() {
+        let description_tk = match get_docblock(variant_attributes).unwrap_or_default() {
             Some(s) => quote! { #s },
             None => quote! { "" },
         };
@@ -933,13 +933,13 @@ mod struct_impl {
     }
 
     fn make_formatter_functions(resp_args: &ResponseArgsStruct, struct_impl: &ItemStruct, fragments: &mut NewAstFragments) -> Result<(), TokenStream> {
-        let (_, response_code_ts) = extract_response_code(resp_args.code, &struct_impl)?;
+        let (_, response_code_ts) = extract_response_code(resp_args.code, struct_impl)?;
 
         let ident = &struct_impl.ident;
         let base_args = &resp_args.base_args;
 
-        if let Fields::Unit = struct_impl.fields {
-            if base_args.format.is_any() {
+        if let Fields::Unit = struct_impl.fields
+            && base_args.format.is_any() {
                 return Err(
                     syn::Error::new_spanned(
                         struct_impl,
@@ -947,7 +947,6 @@ mod struct_impl {
                     ).into_compile_error()
                 );
             }
-        }
 
         if !base_args.format.is_any() {
             let formatter = &fragments.into_response_any_content_type_ident;
@@ -1101,7 +1100,7 @@ mod struct_impl {
     fn make_groom_check_response_codes_fn(struct_impl: &ItemStruct, code: u16, fragments: &mut NewAstFragments) {
         let new_context_format = format!("{{context}} / struct `{}`", &struct_impl.ident);
         fragments.check_response_codes_fn = quote! {
-            fn __groom_check_response_codes(context: &String, codes: &mut ::groom::runtime_checks::HTTPCodeSet) {
+            fn __groom_check_response_codes(context: &str, codes: &mut ::groom::runtime_checks::HTTPCodeSet) {
                 codes.ensure_distinct(format!(#new_context_format), #code)
             }
         };

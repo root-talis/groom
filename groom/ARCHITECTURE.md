@@ -109,7 +109,7 @@ When building OpenAPI, nested DTO schemas must be registered under `#/components
 pub trait Response {
     fn __openapi_modify_operation(op: OperationBuilder, c: &mut ComponentsRegistry) -> OperationBuilder;
     fn __groom_into_response(self, accept: Option<Accept>) -> axum::response::Response;
-    fn __groom_check_response_codes(context: &String, codes: &mut HTTPCodeSet);
+    fn __groom_check_response_codes(context: &str, codes: &mut HTTPCodeSet);
 }
 ```
 

@@ -13,7 +13,7 @@ pub trait Response {
 
     /// Performs runtime checks of response codes of this Response.
     /// Used to detect duplicated codes in composite types like Result<T, E>
-    fn __groom_check_response_codes(context: &String, codes: &mut HTTPCodeSet);
+    fn __groom_check_response_codes(context: &str, codes: &mut HTTPCodeSet);
 }
 
 pub mod html_response;

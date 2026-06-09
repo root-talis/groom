@@ -9,6 +9,12 @@ pub struct InMemoryTaskRepository {
     store: Mutex<Store>,
 }
 
+impl Default for InMemoryTaskRepository {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl InMemoryTaskRepository {
     pub fn new() -> Self {
         Self { 
@@ -101,7 +107,7 @@ impl Store {
     }
 
     pub fn get_task_by_id(&self, id: TaskID) -> Result<Option<Task>, TaskReadRepositoryError> {
-        Ok(self.tasks.get(&id).map(|t| t.clone()))
+        Ok(self.tasks.get(&id).cloned())
     }
 
     pub fn get_tasks(&self, filter: TaskFilter) -> Result<Vec<Task>, TaskReadRepositoryError> {

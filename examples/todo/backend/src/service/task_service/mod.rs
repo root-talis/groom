@@ -20,7 +20,7 @@ impl TaskService {
         Self { reader, writer }
     }
     
-    fn validate_title(t: &String) -> Result<(), &'static str> {
+    fn validate_title(t: &str) -> Result<(), &'static str> {
         if t.trim().len() <= 3 {
             Err("title is too short")
         } else {
@@ -50,7 +50,7 @@ pub enum AddTaskError {
 
 impl TaskService {
     pub async fn add_task(&self, req: AddTaskRequest) -> Result<Task, AddTaskError> {
-        Self::validate_title(&req.title).map_err(|e| AddTaskError::InvalidRequest(e))?;
+        Self::validate_title(&req.title).map_err(AddTaskError::InvalidRequest)?;
 
         self.writer
             .add_task(Task::new(req.title, Status::Pending))
@@ -113,7 +113,7 @@ impl TaskService {
 
 impl TaskService {
     pub async fn rename_task(&self, task_id: TaskID, title: String) -> Result<Task, RenameTaskError> {
-        Self::validate_title(&title).map_err(|e| RenameTaskError::InvalidRequest(e))?;
+        Self::validate_title(&title).map_err(RenameTaskError::InvalidRequest)?;
 
         let mut task = self.reader.get_task_by_id(task_id)
             .await

@@ -46,9 +46,9 @@ pub enum TasksSortBy {
     Status
 }
 
-impl Into<TaskOrderField> for TasksSortBy {
-    fn into(self) -> TaskOrderField {
-        match self {
+impl From<TasksSortBy> for TaskOrderField {
+    fn from(val: TasksSortBy) -> Self {
+        match val {
             TasksSortBy::Id     => TaskOrderField::Id,
             TasksSortBy::Title  => TaskOrderField::Title,
             TasksSortBy::Status => TaskOrderField::Status,
@@ -68,9 +68,9 @@ pub enum SortDirection {
     Desc
 }
 
-impl Into<Order> for SortDirection {
-    fn into(self) -> Order {
-        match self {
+impl From<SortDirection> for Order {
+    fn from(val: SortDirection) -> Self {
+        match val {
             SortDirection::Asc  => Order::Ascending,
             SortDirection::Desc => Order::Descending,
         }

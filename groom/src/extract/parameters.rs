@@ -15,7 +15,7 @@ fn get_schemas<T: DTO>(c: &mut ComponentsRegistry) -> Vec<(String, ComponentEntr
         .collect()
 }
 
-fn fold_parameter(op: OperationBuilder, mut p: Parameter, schemas: &Vec<(String, ComponentEntry)>) -> OperationBuilder {
+fn fold_parameter(op: OperationBuilder, mut p: Parameter, schemas: &[(String, ComponentEntry)]) -> OperationBuilder {
     if let Some(ref schema) = p.schema {
         match schema {
             RefOr::T(schema)   => {

@@ -48,6 +48,6 @@ pub fn make_spec() -> Result<Spec> {
     )]
     struct ApiDoc;
 
-    let spec_builder = OpenApiBuilder::from(OpenApiBuilder::from(ApiDoc::openapi()));
+    let spec_builder = OpenApiBuilder::from(ApiDoc::openapi());
     Ok(Spec(todos::setup_spec(spec_builder).build().to_yaml()?))
 }

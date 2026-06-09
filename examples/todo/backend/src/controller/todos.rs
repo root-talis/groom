@@ -44,18 +44,13 @@ mod controller {
         Response
     };
 
-    use serde::Deserialize;
-
-    // PartialSchema is used to get schema of some types within RequestBody DTO and Response.
-    use utoipa::ToSchema;
-
     use crate::service::{
         model::{Status, Task, TaskID},
-        repository::{Order, TaskFilter, TaskOrderField},
+        repository::TaskFilter,
         task_service::{self, AddTaskError, ChangeStatusError, RenameTaskError, TaskService}
     };
 
-use super::model::{SortDirection, TaskViewModel, TasksSortBy};
+    use super::model::{SortDirection, TaskViewModel, TasksSortBy};
 
     // region: list tasks
     //
@@ -73,13 +68,13 @@ use super::model::{SortDirection, TaskViewModel, TasksSortBy};
         pub order:   SortDirection,
     }
 
-    impl Into<TaskFilter> for TaskListFilters {
-        fn into(self) -> TaskFilter {
+    impl From<TaskListFilters> for TaskFilter {
+        fn from(val: TaskListFilters) -> Self {
             TaskFilter {
-                title:   self.title,
-                status:  self.status,
-                sort_by: self.sort_by.into(),
-                order:   self.order.into(),
+                title:   val.title,
+                status:  val.status,
+                sort_by: val.sort_by.into(),
+                order:   val.order.into(),
             }
         }
     }

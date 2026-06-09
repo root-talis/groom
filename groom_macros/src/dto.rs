@@ -53,7 +53,7 @@ fn generate_impl_for_struct(_args_t: TokenStream, args: DtoArgs, item_struct: It
     let dto_request_impl =
         if args.request {
             quote! { impl ::groom::DTO_Request for #ident {} }
-        } else {;
+        } else {
             Default::default()
         };
     

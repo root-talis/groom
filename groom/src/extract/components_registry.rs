@@ -9,12 +9,12 @@ pub struct ComponentEntry {
     pub reference: Option<Ref>,
 }
 
-impl Into<RefOr<Schema>> for ComponentEntry {
-    fn into(self) -> RefOr<Schema> {
-        if let Some(r) = self.reference {
+impl From<ComponentEntry> for RefOr<Schema> {
+    fn from(val: ComponentEntry) -> Self {
+        if let Some(r) = val.reference {
             RefOr::Ref(r)
         } else {
-            RefOr::T(self.schema)
+            RefOr::T(val.schema)
         }
     }
 }

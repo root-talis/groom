@@ -9,8 +9,8 @@ where T: Response, E: Response
 {
     fn __openapi_modify_operation(op: OperationBuilder, c: &mut ComponentsRegistry) -> OperationBuilder {
         let op = T::__openapi_modify_operation(op, c);
-        let op = E::__openapi_modify_operation(op, c);
-        op
+        
+        E::__openapi_modify_operation(op, c)
     }
 
     fn __groom_into_response(self, accept: Option<Accept>) -> axum::response::Response {
@@ -20,7 +20,7 @@ where T: Response, E: Response
         }
     }
 
-    fn __groom_check_response_codes(context: &String, codes: &mut HTTPCodeSet) {
+    fn __groom_check_response_codes(context: &str, codes: &mut HTTPCodeSet) {
         T::__groom_check_response_codes(&format!("{context} / Result<Ok, _>"), codes);
         E::__groom_check_response_codes(&format!("{context} / Result<_, Err>"), codes);
     }
