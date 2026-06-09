@@ -74,7 +74,6 @@
     }
   </style>
   <script src="https://unpkg.com/htmx.org@2.0.4"></script>
-  <script src="https://unpkg.com/htmx.org@2.0.4/dist/ext/json-enc.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/htmx-ext-response-targets@2.0.4" integrity="sha384-T41oglUPvXLGBVyRdZsVRxNWnOOqCynaPubjUVjxhsjFTKrFJGEMm3/0KGmNQ+Pg" crossorigin="anonymous"></script>
 </head>
 <body class="tn-page min-h-screen w-screen overflow-x-hidden" hx-ext="response-targets">
@@ -92,7 +91,6 @@
           id="update-form"
           class="mx-auto flex w-full max-w-2xl flex-col gap-3 sm:flex-row sm:items-center"
           hx-put="/message"
-          hx-ext="json-enc"
           hx-target="#message-block"
           hx-target-error="#footer-error-slot"
           hx-swap="outerHTML"

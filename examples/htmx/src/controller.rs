@@ -136,7 +136,7 @@ mod controller {
         BadArgument(ValidationErrorView),
     }
 
-    #[RequestBody(format(json))]
+    #[RequestBody(format(url_encoded))]
     pub struct UpdateMessageRequest {
         message: String,
     }
