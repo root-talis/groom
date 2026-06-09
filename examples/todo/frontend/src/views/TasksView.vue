@@ -1,23 +1,27 @@
 <script setup lang="ts">
-import { computed, ref, triggerRef, watch, type Ref } from 'vue'
+import { computed, ref, watch, type Ref } from 'vue'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/vue-query'
-import { listTasks, addTask, type TaskViewModel } from '@/api'
+import { listTasks, addTask, type Status } from '@/api'
 import client from '@/services/axios'
 import TodoItem from '@/components/TodoItem.vue'
+import FiltersBar from '@/components/FiltersBar.vue'
 import AddIcon from '@/components/icons/IconAdd.vue'
 import ErrorBar from '@/components/ErrorBar.vue'
+
 const title: Ref<string> = ref("");
+const allowedStatuses = ref<Status[]>(['Done', 'Pending', 'Cancelled'])
 
 const queryClient = useQueryClient()
 
 const { data, isLoading, refetch } = useQuery({
-  queryKey: ['tasks'],
+  queryKey: computed(() => ['tasks', title.value.trim(), [...allowedStatuses.value].sort()]),
   queryFn: () => listTasks({
     axios: client,
     query: {
       sort_by: title.value.trim() ? 'status' : 'id',
       order: title.value.trim() ? 'asc' : 'desc',
       title: title.value.trim() || null,
+      status: allowedStatuses.value,
     }
   }),
 })
@@ -109,6 +113,7 @@ function add(event: Event) {
       <ErrorBar :lastError="lastError" :update-key="lastErrorUpd" />
     </div>
     <div id="results">
+      <FiltersBar v-model:allowed-statuses="allowedStatuses" />
       <div id="todos">
         <div v-if="isLoading" class="todo-item-banner">
           Loading...

@@ -12,8 +12,6 @@ pub fn setup_spec(spec_builder: OpenApiBuilder) -> OpenApiBuilder {
     controller::merge_into_openapi_builder(spec_builder)
 }
 
-mod model;
-
 #[Controller()]
 mod controller {
     use std::sync::Arc;
@@ -55,6 +53,28 @@ mod controller {
     // region: list tasks
     //
 
+    /// Lists tasks
+    #[Route(method="get", path="/tasks")]
+    pub async fn list_tasks(
+        Extension(task_service): Extension<Arc<TaskService>>,
+        Query(filters): Query<TaskListFilters>
+    ) -> TaskListResponse {
+        match task_service.list_tasks(filters.into()).await {
+            Ok(l) => {
+                let tasks: Result<Vec<TaskViewModel>, ()> = l.iter()
+                    .map(|t| TaskViewModel::try_from(t.clone()))
+                    .collect()
+                ;
+
+                match tasks {
+                    Ok(v)  => TaskListResponse::Ok(TaskList(v)),
+                    Err(_) => TaskListResponse::ServerError,
+                }
+            },
+            Err(_) => TaskListResponse::ServerError,
+        }
+    }
+
     /// Task list filters
     #[DTO(parameters)]
     pub struct TaskListFilters {
@@ -92,52 +112,11 @@ mod controller {
         ServerError,
     }
 
-    /// Lists tasks
-    #[Route(method="get", path="/tasks")]
-    pub async fn list_tasks(
-        Extension(task_service): Extension<Arc<TaskService>>,
-        Query(filters): Query<TaskListFilters>
-    ) -> TaskListResponse {
-        match task_service.list_tasks(filters.into()).await {
-            Ok(l) => {
-                let tasks: Result<Vec<TaskViewModel>, ()> = l.iter()
-                    .map(|t| TaskViewModel::try_from(t.clone()))
-                    .collect()
-                ;
-
-                match tasks {
-                    Ok(v)  => TaskListResponse::Ok(TaskList(v)),
-                    Err(_) => TaskListResponse::ServerError,
-                }
-            },
-            Err(_) => TaskListResponse::ServerError,
-        }
-    }
-
     //
     // endregion: list tasks
 
     // region: get task
     //
-
-    /// Params to get a single task
-    #[DTO(parameters)]
-    pub struct TaskIdentifier {
-        pub task_id: u64,
-    }
-
-    /// Single task.
-    #[Response(format(json))]
-    pub enum GetTaskResponse {
-        #[Response(code = 200)]
-        Ok(TaskViewModel),
-
-        #[Response(code = 404)]
-        NotFound,
-
-        #[Response(code = 500)]
-        ServerError,
-    }
 
     /// Gets a single task.
     #[Route(method="get", path="/tasks/{task_id}")]
@@ -158,37 +137,30 @@ mod controller {
         }
     }
 
+    /// Params to get a single task
+    #[DTO(parameters)]
+    pub struct TaskIdentifier {
+        pub task_id: u64,
+    }
+
+    /// Single task.
+    #[Response(format(json))]
+    pub enum GetTaskResponse {
+        #[Response(code = 200)]
+        Ok(TaskViewModel),
+
+        #[Response(code = 404)]
+        NotFound,
+
+        #[Response(code = 500)]
+        ServerError,
+    }
+
     //
     // endregion: get task
 
     // region: add task
     //
-
-    /// Request body
-    #[RequestBody(format(json, url_encoded))]
-    pub struct AddTaskRequest {
-        pub title: String,
-    }
-
-    /// Result of adding a task
-    #[Response(format(json))]
-    pub enum AddTaskResponse {
-        /// Task added successfully
-        #[Response(code = 200)]
-        Ok(TaskViewModel),
-
-        /// Task already exists with the same title
-        #[Response(code = 409)]
-        AlreadyExists,
-
-        /// Malformed request, e.g. missing title or title is too long.
-        #[Response(code = 400)]
-        MalformedRequest(String),
-
-        /// Unexpected error when adding a task, e.g. database is down or serialization error.
-        #[Response(code = 500)]
-        ServerError,
-    }
 
     /// Adds a new task.
     #[Route(method="post", path="/tasks")]
@@ -221,36 +193,37 @@ mod controller {
         }
     }
 
+    /// Request body
+    #[RequestBody(format(json, url_encoded))]
+    pub struct AddTaskRequest {
+        pub title: String,
+    }
+
+    /// Result of adding a task
+    #[Response(format(json))]
+    pub enum AddTaskResponse {
+        /// Task added successfully
+        #[Response(code = 200)]
+        Ok(TaskViewModel),
+
+        /// Task already exists with the same title
+        #[Response(code = 409)]
+        AlreadyExists,
+
+        /// Malformed request, e.g. missing title or title is too long.
+        #[Response(code = 400)]
+        MalformedRequest(String),
+
+        /// Unexpected error when adding a task, e.g. database is down or serialization error.
+        #[Response(code = 500)]
+        ServerError,
+    }
+
     //
     // endregion: add task
 
     // region: rename task
     //
-
-    /// Request body
-    #[RequestBody(format(json, url_encoded))]
-    pub struct RenameTaskRequest {
-        pub title: String,
-    }
-
-    /// Result of renaming a task
-    #[Response(format(json))]
-    pub enum RenameTaskResponse {
-        #[Response(code = 200)]
-        Ok(TaskViewModel),
-
-        #[Response(code = 404)]
-        NotFound,
-
-        #[Response(code = 400)]
-        MalformedRequest(String),
-
-        #[Response(code = 409)]
-        AlreadyExists,
-
-        #[Response(code = 500)]
-        ServerError,
-    }
 
     /// Renames a task.
     #[Route(method="put", path="/tasks/{task_id}/name")]
@@ -284,27 +257,36 @@ mod controller {
         }
     }
 
-    //
-    // endregion: rename task
+    /// Request body
+    #[RequestBody(format(json, url_encoded))]
+    pub struct RenameTaskRequest {
+        pub title: String,
+    }
 
-    // region: change status
-    //
-
-    /// Result of changing the status of task
+    /// Result of renaming a task
     #[Response(format(json))]
-    pub enum ChangeStatusResponse {
+    pub enum RenameTaskResponse {
         #[Response(code = 200)]
         Ok(TaskViewModel),
 
         #[Response(code = 404)]
         NotFound,
 
+        #[Response(code = 400)]
+        MalformedRequest(String),
+
         #[Response(code = 409)]
-        Duplicate,
+        AlreadyExists,
 
         #[Response(code = 500)]
         ServerError,
     }
+
+    //
+    // endregion: rename task
+
+    // region: change status
+    //
 
     /// Mark the task as done.
     #[Route(method="put", path="/tasks/{task_id}/status/done")]
@@ -336,6 +318,22 @@ mod controller {
         map_change_status_result(result)
     }
 
+    /// Result of changing the status of task
+    #[Response(format(json))]
+    pub enum ChangeStatusResponse {
+        #[Response(code = 200)]
+        Ok(TaskViewModel),
+
+        #[Response(code = 404)]
+        NotFound,
+
+        #[Response(code = 409)]
+        Duplicate,
+
+        #[Response(code = 500)]
+        ServerError,
+    }
+
     fn map_change_status_result(r: Result<Task, ChangeStatusError>) -> ChangeStatusResponse {
         match r {
             Ok(t) => 
@@ -360,4 +358,85 @@ mod controller {
 
     //
     // endregion: change status
+}
+
+/// View models for HTTP layer
+mod model {
+    use groom_macros::DTO;
+    use serde::Deserialize;
+    use utoipa::ToSchema;
+
+    use crate::service::{model::{Status, Task}, repository::{Order, TaskOrderField}};
+
+    //
+    // TaskViewModel
+    //
+
+    #[DTO(response)]
+    pub struct TaskViewModel {
+        pub id:     u64,
+        pub title:  String,
+        pub status: Status,
+    }
+
+    impl TryFrom<Task> for TaskViewModel {
+        type Error = ();
+        
+        fn try_from(t: Task) -> Result<Self, Self::Error> {
+            Ok(TaskViewModel {
+                id: if let Some(id) = t.id() {
+                        id.value()
+                    } else {
+                        tracing::error!("task_id is expected to be set");
+                        return Err(())
+                    },
+                title: t.title(),
+                status: t.status(),
+            })
+        }
+    }
+
+    //
+    // TasksSortBy
+    //
+
+    #[derive(Default, Deserialize, ToSchema)]
+    #[serde(rename_all = "lowercase")]
+    pub enum TasksSortBy {
+        #[default]
+        Id,
+        Title,
+        Status
+    }
+
+    impl From<TasksSortBy> for TaskOrderField {
+        fn from(val: TasksSortBy) -> Self {
+            match val {
+                TasksSortBy::Id     => TaskOrderField::Id,
+                TasksSortBy::Title  => TaskOrderField::Title,
+                TasksSortBy::Status => TaskOrderField::Status,
+            }
+        }
+    }
+
+    //
+    // SortDirection
+    //
+
+    #[derive(Default, Deserialize, ToSchema)]
+    #[serde(rename_all = "lowercase")]
+    pub enum SortDirection {
+        #[default]
+        Asc,
+        Desc
+    }
+
+    impl From<SortDirection> for Order {
+        fn from(val: SortDirection) -> Self {
+            match val {
+                SortDirection::Asc  => Order::Ascending,
+                SortDirection::Desc => Order::Descending,
+            }
+        }
+    }
 }
