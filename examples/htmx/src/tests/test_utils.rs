@@ -112,10 +112,51 @@ pub struct ReqBody {
 }
 
 impl ReqBody {
-    pub fn json(body: impl Into<Body>) -> Self {
+    pub fn url_encoded(body: impl Into<Body>) -> Self {
         Self {
-            content_type: Some("application/json"),
+            content_type: Some("application/x-www-form-urlencoded"),
             body: body.into(),
         }
     }
+}
+
+/// Builds a URL-encoded request body from field/value pairs.
+///
+/// ```ignore
+/// url_encoded_body! { message => "hello" }
+/// url_encoded_body! { name => "Mark", age => "20" }
+/// ```
+macro_rules! url_encoded_body {
+    ($($field:ident => $value:expr),+ $(,)?) => {{
+        $crate::tests::test_utils::ReqBody::url_encoded({
+            let mut body = String::new();
+            $(
+                if !body.is_empty() {
+                    body.push('&');
+                }
+                body.push_str(stringify!($field));
+                body.push('=');
+                body.push_str(&$crate::tests::test_utils::form_encode($value));
+            )+
+            body
+        })
+    }};
+}
+
+pub(crate) use url_encoded_body;
+
+pub(crate) fn form_encode(value: impl AsRef<str>) -> String {
+    let mut out = String::new();
+
+    for byte in value.as_ref().bytes() {
+        match byte {
+            b'A'..=b'Z' | b'a'..=b'z' | b'0'..=b'9' | b'-' | b'_' | b'.' | b'~' => {
+                out.push(byte as char);
+            }
+            b' ' => out.push('+'),
+            _ => out.push_str(&format!("%{byte:02X}")),
+        }
+    }
+
+    out
 }

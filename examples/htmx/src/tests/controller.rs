@@ -1,4 +1,4 @@
-use crate::{tests::test_utils::{Req, ReqBody}, make_router};
+use crate::{make_router, tests::test_utils::{Req, url_encoded_body}};
 
 const DEFAULT_MESSAGE: &str = "Welcome to your message of the day.";
 
@@ -35,7 +35,7 @@ async fn update_message_replaces_message_and_resets_view_count() {
     let router = test_router();
 
     Req::put("/message")
-        .with_body(ReqBody::json(r#"{"message":"A fresh message for today."}"#))
+        .with_body(url_encoded_body! { message => "A fresh message for today." })
         .call(&router)
         .await
         .assert_status(200)
@@ -54,7 +54,7 @@ async fn update_message_replaces_message_and_resets_view_count() {
 #[tokio::test]
 async fn update_message_trims_whitespace() {
     Req::put("/message")
-        .with_body(ReqBody::json(r#"{"message":"  padded message text  "}"#))
+        .with_body(url_encoded_body! { message => "  padded message text  " })
         .call(&test_router())
         .await
         .assert_status(200)
@@ -66,7 +66,7 @@ async fn update_message_trims_unicode_whitespace() {
     let message = "\u{2003}unicode padded message\u{00a0}";
 
     Req::put("/message")
-        .with_body(ReqBody::json(format!(r#"{{"message":"{message}"}}"#)))
+        .with_body(url_encoded_body! { message => message })
         .call(&test_router())
         .await
         .assert_status(200)
@@ -78,7 +78,7 @@ async fn update_message_rejects_short_unicode_message() {
     let message = "😀😀😀";
 
     Req::put("/message")
-        .with_body(ReqBody::json(format!(r#"{{"message":"{message}"}}"#)))
+        .with_body(url_encoded_body! { message => message })
         .call(&test_router())
         .await
         .assert_status(400)
@@ -90,7 +90,7 @@ async fn update_message_accepts_minimum_valid_unicode_length() {
     let message = "😀😀😀😀";
 
     Req::put("/message")
-        .with_body(ReqBody::json(format!(r#"{{"message":"{message}"}}"#)))
+        .with_body(url_encoded_body! { message => message })
         .call(&test_router())
         .await
         .assert_status(200)
@@ -102,7 +102,7 @@ async fn update_message_rejects_long_unicode_message() {
     let message = "😀".repeat(512);
 
     Req::put("/message")
-        .with_body(ReqBody::json(format!(r#"{{"message":"{message}"}}"#)))
+        .with_body(url_encoded_body! { message => &message })
         .call(&test_router())
         .await
         .assert_status(400)
@@ -114,7 +114,7 @@ async fn update_message_accepts_maximum_valid_unicode_length() {
     let message = "😀".repeat(511);
 
     Req::put("/message")
-        .with_body(ReqBody::json(format!(r#"{{"message":"{message}"}}"#)))
+        .with_body(url_encoded_body! { message => &message })
         .call(&test_router())
         .await
         .assert_status(200)
@@ -124,7 +124,7 @@ async fn update_message_accepts_maximum_valid_unicode_length() {
 #[tokio::test]
 async fn update_message_rejects_leading_slash() {
     Req::put("/message")
-        .with_body(ReqBody::json(r#"{"message":"/not allowed"}"#))
+        .with_body(url_encoded_body! { message => "/not allowed" })
         .call(&test_router())
         .await
         .assert_status(400)
@@ -135,7 +135,7 @@ async fn update_message_rejects_leading_slash() {
 #[tokio::test]
 async fn update_message_rejects_short_message() {
     Req::put("/message")
-        .with_body(ReqBody::json(r#"{"message":"hey"}"#))
+        .with_body(url_encoded_body! { message => "hey" })
         .call(&test_router())
         .await
         .assert_status(400)
@@ -145,7 +145,7 @@ async fn update_message_rejects_short_message() {
 #[tokio::test]
 async fn update_message_accepts_minimum_valid_length() {
     Req::put("/message")
-        .with_body(ReqBody::json(r#"{"message":"four"}"#))
+        .with_body(url_encoded_body! { message => "four" })
         .call(&test_router())
         .await
         .assert_status(200)
@@ -157,7 +157,7 @@ async fn update_message_rejects_long_message() {
     let message = "x".repeat(512);
 
     Req::put("/message")
-        .with_body(ReqBody::json(format!(r#"{{"message":"{message}"}}"#)))
+        .with_body(url_encoded_body! { message => &message })
         .call(&test_router())
         .await
         .assert_status(400)
@@ -169,7 +169,7 @@ async fn update_message_accepts_maximum_valid_length() {
     let message = "x".repeat(511);
 
     Req::put("/message")
-        .with_body(ReqBody::json(format!(r#"{{"message":"{message}"}}"#)))
+        .with_body(url_encoded_body! { message => &message })
         .call(&test_router())
         .await
         .assert_status(200)
