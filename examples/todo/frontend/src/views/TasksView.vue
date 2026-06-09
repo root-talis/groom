@@ -1,12 +1,13 @@
 <script setup lang="ts">
 import { computed, ref, watch, type Ref } from 'vue'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/vue-query'
-import { listTasks, addTask, type Status } from '@/api'
 import client from '@/services/axios'
 import TodoItem from '@/components/TodoItem.vue'
 import FiltersBar from '@/components/FiltersBar.vue'
 import AddIcon from '@/components/icons/IconAdd.vue'
 import ErrorBar from '@/components/ErrorBar.vue'
+import { addTask, listTasks } from '@/api/generated/endpoints/tODOExampleGroom'
+import type { Status } from '@/api/generated/models'
 
 const title: Ref<string> = ref("");
 const allowedStatuses = ref<Status[]>(['Done', 'Pending', 'Cancelled'])
@@ -16,13 +17,10 @@ const queryClient = useQueryClient()
 const { data, isLoading, refetch } = useQuery({
   queryKey: computed(() => ['tasks', title.value.trim(), [...allowedStatuses.value].sort()]),
   queryFn: () => listTasks({
-    axios: client,
-    query: {
-      sort_by: title.value.trim() ? 'status' : 'id',
-      order: title.value.trim() ? 'asc' : 'desc',
-      title: title.value.trim() || null,
-      status: allowedStatuses.value,
-    }
+    sort_by: title.value.trim() ? 'status' : 'id',
+    order: title.value.trim() ? 'asc' : 'desc',
+    title: title.value.trim() || null,
+    status: allowedStatuses.value,
   }),
 })
 
@@ -40,8 +38,7 @@ function showError(message: string) {
 
 const { mutate: doAddTask, isPending: isAdding, isError: isAddError, error  } = useMutation({
   mutationFn: () => addTask({
-    axios: client,
-    body: { title: title.value },
+    title: title.value
   }),
   onSuccess: (data) => {
     switch (data.status) {

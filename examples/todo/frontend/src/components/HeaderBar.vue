@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { RouterLink } from 'vue-router'
 import TaskChecklistIcon from './icons/IconTaskChecklist.vue'
 import AddIcon from './icons/IconAdd.vue'
 </script>

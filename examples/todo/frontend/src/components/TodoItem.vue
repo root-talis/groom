@@ -1,14 +1,14 @@
 <script setup lang="ts">
-import type { TaskViewModel } from '@/api/types.gen';
 import TaskStatusIcon from '@/components/TaskStatusIcon.vue';
 import ErrorBar from '@/components/ErrorBar.vue';
 import InlineEditor from '@/components/InlineEditor.vue';
-import { renameTask, setCancelled, setDone, setPending } from '@/api'
 import client from '@/services/axios'
 import { ref } from 'vue';
 import { useMutation, useQueryClient } from '@tanstack/vue-query';
 import FloppyDiskIcon from './icons/IconFloppyDisk.vue';
 import IconButton from './IconButton.vue';
+import type { TaskViewModel } from '@/api/generated/models/index.ts';
+import { renameTask, setCancelled, setDone, setPending } from '@/api/generated/endpoints/tODOExampleGroom.ts';
 
 const props = defineProps<{item: TaskViewModel}>()
 
@@ -29,16 +29,14 @@ function showError(message: string) {
 
 const { mutate: updateTaskStatus } = useMutation({
   mutationFn: (status: TaskViewModel['status']) => {
-    const params = { axios: client, path: { task_id: props.item.id } };
-
     let res;
 
     if (status === 'Done') {
-      res = setDone(params);
+      res = setDone(props.item.id);
     } else if (status === 'Cancelled') {
-      res = setCancelled(params);
+      res = setCancelled(props.item.id );
     } else if (status === 'Pending') {
-      res = setPending(params);
+      res = setPending(props.item.id );
     } else {
       throw new Error(`Invalid status ${status}`);
     }
@@ -78,11 +76,10 @@ const { mutate: updateTaskStatus } = useMutation({
 
 const { mutate: doRenameTask } = useMutation({
   mutationFn: (title: string) => {
-    return renameTask({
-      axios: client,
-      path: { task_id: props.item.id },
-      body: { title: title.trim() },
-    });
+    return renameTask(
+      props.item.id,
+      { title: title.trim() },
+    );
   },
   onSuccess: (data) => {
     switch (data.status) {

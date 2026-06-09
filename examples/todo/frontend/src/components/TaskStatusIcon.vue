@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, ref, watch } from 'vue'
-import type { Status } from '@/api/types.gen'
 import PendingIcon from '@/components/icons/IconPending.vue'
 import DoneIcon from '@/components/icons/IconDone.vue'
 import CancelIcon from '@/components/icons/IconCancel.vue'
+import type { Status } from '@/api/generated/models';
 
 const props = defineProps<{ status: Status }>()
 const emit = defineEmits<{

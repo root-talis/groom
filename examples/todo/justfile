@@ -70,7 +70,7 @@ build-frontend:
 [group('frontend')]
 [working-directory('frontend')]
 generate-api-client: frontend-deps
-    npx openapi-ts
+    npm run generate:api
 
 [group('frontend')]
 [working-directory('frontend')]
