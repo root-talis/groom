@@ -1,11 +1,12 @@
 #!/usr/bin/env bash
-# Verify semver release tags match groom and groom_macros Cargo.toml versions.
+# Verify semver release tags match crate versions and have CHANGELOG.md sections.
 set -euo pipefail
 
 root="$(git rev-parse --show-toplevel)"
 cd "$root"
 
 semver_tag_re='^v?[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?(\+[0-9A-Za-z.-]+)?$'
+release_tag_re='^v[0-9]+\.[0-9]+\.[0-9]+$'
 
 package_version() {
 	local manifest="$1"
@@ -48,6 +49,32 @@ check_tag_version() {
 	fi
 }
 
+check_changelog_section() {
+	local tag="$1"
+
+	if [[ ! -f CHANGELOG.md ]]; then
+		echo "error: CHANGELOG.md not found; required for release tag '${tag}'" >&2
+		return 1
+	fi
+
+	if ! awk -v tag="$tag" '
+		BEGIN { found=0; printed=0 }
+		/^## v[0-9]+\.[0-9]+\.[0-9]+$/ {
+			if (found) exit
+			if ($0 == "## " tag) found=1
+			next
+		}
+		found {
+			if ($0 !~ /^[[:space:]]*$/) printed=1
+		}
+		END { exit(printed ? 0 : 1) }
+	' CHANGELOG.md; then
+		echo "error: CHANGELOG.md has no non-empty section for tag '${tag}'" >&2
+		echo "  Add a '## ${tag}' section with release notes before pushing the tag." >&2
+		return 1
+	fi
+}
+
 while read -r local_ref local_sha _remote_ref _remote_sha; do
 	# Skip ref deletions.
 	if [[ "$local_sha" == "0000000000000000000000000000000000000000" ]]; then
@@ -64,4 +91,8 @@ while read -r local_ref local_sha _remote_ref _remote_sha; do
 	fi
 
 	check_tag_version "$tag"
+
+	if [[ "$tag" =~ $release_tag_re ]]; then
+		check_changelog_section "$tag"
+	fi
 done

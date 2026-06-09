@@ -60,10 +60,30 @@ jobs:
       - name: Run tests
         run: just test
 
+      - name: Extract release notes from CHANGELOG.md
+        run: |
+          tag="${GITHUB_REF_NAME}"
+          awk -v tag="$tag" '
+            BEGIN { found=0; printed=0 }
+            /^## v[0-9]+\.[0-9]+\.[0-9]+$/ {
+              if (found) exit
+              if ($0 == "## " tag) found=1
+              next
+            }
+            found { printed=1; print }
+            END { if (!printed) exit 1 }
+          ' CHANGELOG.md > release-notes.md
+          if [ ! -s release-notes.md ]; then
+            echo "No changelog section found for ${tag}"
+            exit 1
+          fi
+          echo "Release notes for ${tag}:"
+          cat release-notes.md
+
       - name: Create GitHub release
         uses: softprops/action-gh-release@v2
         with:
-          generate_release_notes: true
+          body_path: release-notes.md
 
       - name: Publish groom to crates.io
         env:

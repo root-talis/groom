@@ -2,7 +2,7 @@
 default:
     just --list
 
-# Install version-controlled git hooks (pre-push semver tag checks)
+# Install version-controlled git hooks (pre-push tag and changelog checks)
 install-hooks:
     git config core.hooksPath .githooks
 
