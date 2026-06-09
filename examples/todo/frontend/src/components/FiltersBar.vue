@@ -27,7 +27,7 @@ function toggle(status: Status) {
 
 <template>
   <div id="filters" class="filters-bar">
-    <span class="filter-label">status</span>
+    <span class="filter-label">Show status:</span>
     <div class="filter-buttons">
       <button
         v-for="filter in filters"
@@ -59,31 +59,47 @@ function toggle(status: Status) {
 .filter-label {
   color: var(--base-foreground);
   opacity: 0.7;
-  text-transform: lowercase;
 }
 
 .filter-buttons {
-  display: flex;
-  gap: 0.5rem;
+  display: inline-flex;
+  border: 1px solid var(--base-window);
+  border-radius: 0.25rem;
+  overflow: hidden;
 }
 
 .filter-button {
-  border: 1px solid var(--base-window);
+  border: none;
+  border-right: 1px solid var(--base-window);
   background: var(--base-background);
   padding: 0.35rem 0.5rem;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  border-radius: 0.25rem;
+  border-radius: 0;
   opacity: 0.35;
-  transition: opacity 0.15s ease, box-shadow 0.15s ease, transform 0.1s ease;
+  transition: opacity 0.15s ease, background-color 0.15s ease, color 0.15s ease;
+}
+
+.filter-button:last-child {
+  border-right: none;
 }
 
 .filter-button.pressed {
   opacity: 1;
-  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.15);
-  transform: translateY(1px);
+}
+
+.filter-button.pressed.pending {
+  background: var(--base-yellow);
+}
+
+.filter-button.pressed.done {
+  background: var(--base-green);
+}
+
+.filter-button.pressed.cancelled {
+  background: var(--base-red);
 }
 
 .filter-button:hover,
@@ -111,5 +127,9 @@ function toggle(status: Status) {
 
 .filter-button.cancelled .status-icon {
   color: var(--base-red);
+}
+
+.filter-button.pressed .status-icon {
+  color: var(--base-background);
 }
 </style>

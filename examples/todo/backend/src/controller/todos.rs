@@ -42,7 +42,7 @@ mod controller {
         // Response macro generates implementations for enums and structs as responses.
         Response
     };
-use tracing::debug;
+    use tracing::debug;
 
     use crate::service::{
         model::{Status, Task, TaskID},

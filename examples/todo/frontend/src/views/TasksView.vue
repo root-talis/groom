@@ -10,16 +10,17 @@ import { addTask, listTasks } from '@/api/generated/endpoints/tODOExampleGroom'
 import type { Status } from '@/api/generated/models'
 
 const title: Ref<string> = ref("");
+const searchTitle = ref("");
 const allowedStatuses = ref<Status[]>(['Done', 'Pending', 'Cancelled'])
 
 const queryClient = useQueryClient()
 
-const { data, isLoading, refetch } = useQuery({
-  queryKey: computed(() => ['tasks', title.value.trim(), [...allowedStatuses.value].sort()]),
+const { data, isLoading } = useQuery({
+  queryKey: computed(() => ['tasks', searchTitle.value, [...allowedStatuses.value].sort()]),
   queryFn: () => listTasks({
-    sort_by: title.value.trim() ? 'status' : 'id',
-    order: title.value.trim() ? 'asc' : 'desc',
-    title: title.value.trim() || null,
+    sort_by: searchTitle.value ? 'status' : 'id',
+    order: searchTitle.value ? 'asc' : 'desc',
+    title: searchTitle.value || null,
     status: allowedStatuses.value,
   }),
 })
@@ -36,7 +37,7 @@ function showError(message: string) {
   lastErrorUpd.value++;
 }
 
-const { mutate: doAddTask, isPending: isAdding, isError: isAddError, error  } = useMutation({
+const { mutate: doAddTask, isPending: isAdding } = useMutation({
   mutationFn: () => addTask({
     title: title.value
   }),
@@ -44,6 +45,11 @@ const { mutate: doAddTask, isPending: isAdding, isError: isAddError, error  } = 
     switch (data.status) {
       case 200:
         title.value = "";
+        searchTitle.value = "";
+        if (searchTimeout) {
+          clearTimeout(searchTimeout);
+          searchTimeout = null;
+        }
         lastError.value = "";
         queryClient.invalidateQueries({ queryKey: ['tasks'] });
         break;
@@ -65,26 +71,18 @@ const { mutate: doAddTask, isPending: isAdding, isError: isAddError, error  } = 
   }
 })
 
-let timeout: number|null = null;
+let searchTimeout: ReturnType<typeof setTimeout> | null = null;
 
-const titleWatcher = watch(title, () => {
-  if (timeout) {
-    clearTimeout(timeout);
+watch(title, () => {
+  if (searchTimeout) {
+    clearTimeout(searchTimeout);
   }
 
-  timeout = setTimeout(() => {
-    refetch();
+  searchTimeout = setTimeout(() => {
+    searchTitle.value = title.value.trim();
+    searchTimeout = null;
   }, 500);
 })
-
-function search(event: Event) {
-  event.preventDefault();
-  if (isAdding.value) {
-    return;
-  }
-
-  refetch()
-}
 
 function add(event: Event) {
   event.preventDefault();
@@ -102,7 +100,7 @@ function add(event: Event) {
   <main>
     <div id="bar">
       <form @submit="add">
-        <input v-model="title" :disabled="isAdding" placeholder="A small step..."/>
+        <input v-model="title" :disabled="isAdding" placeholder="A small step&hellip;"/>
         <a href="#" :class="{button: true, disabled: isAdding || !title.trim()}" @click="add">
           <AddIcon />
         </a>
