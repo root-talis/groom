@@ -6,6 +6,10 @@ default:
 build:
     cargo build
 
+# Runs the example
+run:
+    cargo run
+
 # Ensure the example passes all tests and builds
 test:
     cargo test

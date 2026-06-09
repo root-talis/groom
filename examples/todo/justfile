@@ -7,6 +7,10 @@ test:
     just test-backend
     just build # Ensure the entire thing can build
 
+# Runs the example
+run: build
+    backend/target/release/backend
+
 # Builds everything
 build:
     #!/usr/bin/env sh
