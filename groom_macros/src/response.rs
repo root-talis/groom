@@ -585,7 +585,7 @@ mod enum_impl {
     use quote::{quote, ToTokens};
 
     use crate::comments::get_docblock;
-    use crate::parse_nested_meta;
+    use crate::extract_macro_arguments;
     use crate::response;
     use crate::response::{extract_response_code, make_openapi_fragments_for_type, NewAstFragments, populate_supported_mimes, ResponseFormatsList, ResponseVariantAnnotation};
 
@@ -602,7 +602,7 @@ mod enum_impl {
 
     /// Entry point for generation of `#[Response]` code for `enum`.
     pub(crate) fn make_fragments_for_enum(enum_impl: ItemEnum, args: TokenStream) -> Result<NewAstFragments, TokenStream> {
-        let resp_args = parse_nested_meta!(response::ResponseArgsEnum, &args)?;
+        let resp_args = extract_macro_arguments!(response::ResponseArgsEnum, &args)?;
 
         let ident = &enum_impl.ident;
 
@@ -899,12 +899,12 @@ mod struct_impl {
     use proc_macro2::TokenStream;
     use quote::quote;
     use syn::{Fields, ItemStruct};
-    use crate::{parse_nested_meta, response};
+    use crate::{extract_macro_arguments, response};
     use crate::comments::get_docblock;
     use crate::response::{extract_response_code, make_openapi_fragments_for_type, NewAstFragments, populate_supported_mimes, ResponseArgsStruct};
 
     pub(crate) fn make_fragments_for_struct(struct_impl: ItemStruct, args: TokenStream) -> Result<NewAstFragments, TokenStream> {
-        let resp_args = parse_nested_meta!(response::ResponseArgsStruct, &args)?;
+        let resp_args = extract_macro_arguments!(response::ResponseArgsStruct, &args)?;
         let mut fragments = NewAstFragments::new(&struct_impl.ident, resp_args.base_args.clone(), args);
 
         fragments.new_item_ast = quote! {

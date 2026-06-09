@@ -373,6 +373,10 @@ The base `ApiDoc` and Groom controllers share one spec: Groom adds `paths` and `
 
 See how the [hello-world](examples/hello-world/src/main.rs) example serves the merged YAML at `/spec.yaml` via an axum `Extension`, and [todo example](examples/todo/backend/src/controller/mod.rs) gates this behind a `--serve-spec` flag.
 
+### Architecture overview
+
+Detailed architecture overviews are available for [groom](groom/ARCHITECTURE.md) and [groom_macros](groom_macros/ARCHITECTURE.md) crates.
+
 ## Companion spec binary
 
 Place a small binary next to the main server crate to export OpenAPI without starting HTTP. The [todo example](examples/todo/backend/src/bin/spec.rs) writes the same spec the server would use:

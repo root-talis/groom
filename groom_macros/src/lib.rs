@@ -17,7 +17,7 @@ mod response;
 
 /// Macro to parse arguments of proc macros into structs
 /// (like `default_format` part of `#[Response(default_format = "json")]`).
-macro_rules! parse_nested_meta {
+macro_rules! extract_macro_arguments {
     ($ty:ty, $args:expr) => {{
         match darling::ast::NestedMeta::parse_meta_list(proc_macro2::TokenStream::from(
             $args.clone(),
@@ -35,7 +35,7 @@ macro_rules! parse_nested_meta {
         }
     }};
 }
-pub(crate) use parse_nested_meta;
+pub(crate) use extract_macro_arguments;
 
 
 /// Macro to generate `#[Controller]` implementations.
@@ -46,7 +46,7 @@ pub(crate) use parse_nested_meta;
 #[allow(non_snake_case)]
 pub fn Controller(args: TokenStream, input: TokenStream) -> TokenStream {
     let args: proc_macro2::TokenStream = args.into();
-    let controller_args = match parse_nested_meta!(controller::ControllerArgs, &args) {
+    let controller_args = match extract_macro_arguments!(controller::ControllerArgs, &args) {
         Ok(a) => a,
         Err(e) => return e,
     };
@@ -62,7 +62,7 @@ pub fn Controller(args: TokenStream, input: TokenStream) -> TokenStream {
 #[allow(non_snake_case)]
 pub fn RequestBody(args: TokenStream, input: TokenStream) -> TokenStream {
     let args: proc_macro2::TokenStream = args.into();
-    let request_body_args = match parse_nested_meta!(request_body::RequestBodyArgs, &args) {
+    let request_body_args = match extract_macro_arguments!(request_body::RequestBodyArgs, &args) {
         Ok(a) => a,
         Err(e) => return e,
     };
@@ -92,7 +92,7 @@ pub fn DTO(args: TokenStream, input: TokenStream) -> TokenStream {
         abort!(args, "error in `#[DTO]` annotation: specify `request`, `response`, `parameters`, or all as DTO arguments (e.g. `#[DTO(request, response)`])")
     }
 
-    let dto_args = match parse_nested_meta!(dto::DtoArgs, &args) {
+    let dto_args = match extract_macro_arguments!(dto::DtoArgs, &args) {
         Ok(a) => a,
         Err(e) => return e,
     };

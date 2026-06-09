@@ -1,0 +1,66 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 824 296" font-family="monospace" font-size="13">
+  <defs>
+    <pattern id="grid" width="8" height="8" patternUnits="userSpaceOnUse">
+      <path d="M 8 0 L 0 0 0 8" fill="none" stroke="#25272b" stroke-width="0.5"/>
+    </pattern>
+
+    <marker id="arrow_down" viewBox="0 0 8 8" refX="4" refY="8" markerWidth="6" markerHeight="6" orient="0">
+      <path d="M 0 0 L 8 0 L 4 8 Z" fill="context-stroke"/>
+    </marker>
+    <marker id="arrow_left" viewBox="0 0 8 8" refX="0" refY="4" markerWidth="6" markerHeight="6" orient="0">
+      <path d="M 8 0 L 8 8 L 0 4 Z" fill="context-stroke"/>
+    </marker>
+  </defs>
+
+  <rect width="824" height="360" fill="#1d1f21"/>
+  <rect width="824" height="360" fill="url(#grid)"/>
+
+  <!-- #[Controller] mod api (container) -->
+  <rect x="64" y="16" width="696" height="160" fill="#282a2e" stroke="#969896" stroke-width="1"/>
+  <text x="412" y="40" fill="#b294bb" text-anchor="middle">#[Controller] mod</text>
+
+  <!-- #[Route] -->
+  <rect x="88" y="56" width="152" height="48" fill="#1d1f21" stroke="#969896" stroke-width="1"/>
+  <text x="164" y="76" fill="#c5c8c6" text-anchor="middle">#[Route]</text>
+  <text x="164" y="92" fill="#969896" text-anchor="middle" font-size="10">wrapped async fn</text>
+
+  <!-- #[DTO] -->
+  <rect x="256" y="56" width="152" height="48" fill="#1d1f21" stroke="#969896" stroke-width="1"/>
+  <text x="332" y="76" fill="#b5bd68" text-anchor="middle">#[DTO]</text>
+  <text x="332" y="92" fill="#969896" text-anchor="middle" font-size="10">serde, openapi</text>
+
+  <!-- #[RequestBody] -->
+  <rect x="424" y="56" width="152" height="48" fill="#1d1f21" stroke="#969896" stroke-width="1"/>
+  <text x="500" y="76" fill="#8abeb7" text-anchor="middle">#[RequestBody]</text>
+  <text x="500" y="92" fill="#969896" text-anchor="middle" font-size="10">FromRequest + openapi</text>
+
+  <!-- #[Response] -->
+  <rect x="592" y="56" width="152" height="48" fill="#1d1f21" stroke="#969896" stroke-width="1"/>
+  <text x="668" y="76" fill="#cc6666" text-anchor="middle">#[Response]</text>
+  <text x="668" y="92" fill="#969896" text-anchor="middle" font-size="10">IntoResponse + openapi</text>
+
+  <!-- compile-time expansion (inside module) -->
+  <polyline points="164,104 164,128 412,128 412,144" fill="none" stroke="#b294bb" stroke-width="1" stroke-dasharray="8 8 1 8" stroke-linecap="round"/>
+  <polyline points="332,104 332,120 412,120" fill="none" stroke="#b294bb" stroke-width="1" stroke-dasharray="8 8 1 8" stroke-linecap="round"/>
+  <polyline points="500,104 500,120 412,120" fill="none" stroke="#b294bb" stroke-width="1" stroke-dasharray="8 8 1 8" stroke-linecap="round"/>
+  <polyline points="668,104 668,128 412,128" fill="none" stroke="#b294bb" stroke-width="1" stroke-dasharray="8 8 1 8" stroke-linecap="round"/>
+  <text x="412" y="156" fill="#b294bb" text-anchor="middle" font-size="11">macro expansion (compile time)</text>
+
+  <!-- axum::Router<S> -->
+  <rect x="64" y="224" width="240" height="56" fill="#282a2e" stroke="#969896" stroke-width="1"/>
+  <text x="184" y="248" fill="#de935f" text-anchor="middle">axum::Router&lt;S&gt;</text>
+  <text x="184" y="266" fill="#969896" text-anchor="middle" font-size="11">route registration</text>
+
+  <!-- utoipa::OpenApiBuilder -->
+  <rect x="520" y="224" width="240" height="56" fill="#282a2e" stroke="#969896" stroke-width="1"/>
+  <text x="640" y="248" fill="#81a2be" text-anchor="middle">utoipa::OpenApiBuilder</text>
+  <text x="640" y="266" fill="#969896" text-anchor="middle" font-size="11">paths + components</text>
+
+  <!-- merge_into_router -->
+  <polyline points="312,184 312,200 184,200 184,216" fill="none" stroke="#969896" stroke-width="1" marker-end="url(#arrow_down)"/>
+  <text x="248" y="192" fill="#969896" text-anchor="middle" font-size="11">merge_into_router</text>
+
+  <!-- merge_into_openapi_builder -->
+  <polyline points="512,184 512,200 640,200 640,216" fill="none" stroke="#969896" stroke-width="1" marker-end="url(#arrow_down)"/>
+  <text x="604" y="192" fill="#969896" text-anchor="middle" font-size="11">merge_into_openapi_builder</text>
+</svg>

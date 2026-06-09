@@ -1,0 +1,98 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 888 664" font-family="monospace" font-size="13">
+  <defs>
+    <pattern id="grid" width="8" height="8" patternUnits="userSpaceOnUse">
+      <path d="M 8 0 L 0 0 0 8" fill="none" stroke="#25272b" stroke-width="0.5"/>
+    </pattern>
+
+    <marker id="arrow_down" viewBox="0 0 8 8" refX="4" refY="8" markerWidth="6" markerHeight="6" orient="0">
+      <path d="M 0 0 L 8 0 L 4 8 Z" fill="context-stroke"/>
+    </marker>
+    <marker id="arrow_right" viewBox="0 0 8 8" refX="8" refY="4" markerWidth="6" markerHeight="6" orient="0">
+      <path d="M 0 0 L 0 8 L 8 4 Z" fill="context-stroke"/>
+    </marker>
+  </defs>
+
+  <rect width="888" height="664" fill="#1d1f21"/>
+  <rect width="888" height="664" fill="url(#grid)"/>
+
+  <!-- Controller mod container -->
+  <rect x="64" y="16" width="760" height="632" fill="#282a2e" stroke="#969896" stroke-width="1"/>
+  <text x="444" y="40" fill="#b294bb" text-anchor="middle">#[Controller] mod</text>
+  <text x="96" y="64" fill="#969896" font-size="11">merge at startup</text>
+
+  <!-- merge_into_router -->
+  <rect x="88" y="72" width="256" height="48" fill="#1d1f21" stroke="#969896" stroke-width="1"/>
+  <text x="216" y="92" fill="#c5c8c6" text-anchor="middle">merge_into_router()</text>
+  <text x="216" y="108" fill="#969896" text-anchor="middle" font-size="10">generated merge fn</text>
+
+  <!-- axum::Router -->
+  <rect x="520" y="72" width="224" height="48" fill="#1d1f21" stroke="#969896" stroke-width="1"/>
+  <text x="632" y="92" fill="#de935f" text-anchor="middle">axum::Router&lt;S&gt;</text>
+  <text x="632" y="108" fill="#969896" text-anchor="middle" font-size="10">route registration</text>
+
+  <!-- runtime arrow: merge_into_router to Router -->
+  <polyline points="352,96 424,96" fill="none" stroke="#969896" stroke-width="1" stroke-linecap="round"/>
+  <polyline points="440,96 512,96" fill="none" stroke="#969896" stroke-width="1" stroke-linecap="round" marker-end="url(#arrow_right)"/>
+  <text x="432" y="88" fill="#969896" text-anchor="middle" font-size="11">at runtime</text>
+
+  <!-- branch: Response::__groom_check_response_codes -->
+  <polyline points="432,96 432,128" fill="none" stroke="#969896" stroke-width="1" marker-end="url(#arrow_down)"/>
+  <rect x="248" y="136" width="368" height="48" fill="#1d1f21" stroke="#969896" stroke-width="1"/>
+  <text x="432" y="156" fill="#cc6666" text-anchor="middle">Response::__groom_check_response_codes</text>
+  <text x="432" y="172" fill="#969896" text-anchor="middle" font-size="10">once per handler return type</text>
+
+  <!-- merge_into_openapi_builder -->
+  <rect x="88" y="200" width="256" height="48" fill="#1d1f21" stroke="#969896" stroke-width="1"/>
+  <text x="216" y="220" fill="#c5c8c6" text-anchor="middle">merge_into_openapi_builder()</text>
+  <text x="216" y="236" fill="#969896" text-anchor="middle" font-size="10">generated merge fn</text>
+
+  <!-- utoipa::OpenApiBuilder -->
+  <rect x="520" y="200" width="224" height="48" fill="#1d1f21" stroke="#969896" stroke-width="1"/>
+  <text x="632" y="220" fill="#81a2be" text-anchor="middle">utoipa::OpenApiBuilder</text>
+  <text x="632" y="236" fill="#969896" text-anchor="middle" font-size="10">paths + components</text>
+
+  <!-- runtime arrow: merge_into_openapi_builder to OpenApiBuilder -->
+  <polyline points="352,224 424,224" fill="none" stroke="#969896" stroke-width="1" stroke-linecap="round"/>
+  <polyline points="440,224 512,224" fill="none" stroke="#969896" stroke-width="1" stroke-linecap="round" marker-end="url(#arrow_right)"/>
+  <text x="432" y="216" fill="#969896" text-anchor="middle" font-size="11">at runtime</text>
+
+  <!-- branch: OpenAPI trait hooks -->
+  <polyline points="432,224 432,256" fill="none" stroke="#969896" stroke-width="1" marker-end="url(#arrow_down)"/>
+  <rect x="200" y="264" width="464" height="56" fill="#1d1f21" stroke="#969896" stroke-width="1"/>
+  <text x="432" y="284" fill="#8abeb7" text-anchor="middle">GroomExtractor::__openapi_modify_operation</text>
+  <text x="432" y="300" fill="#cc6666" text-anchor="middle">Response::__openapi_modify_operation</text>
+  <text x="432" y="312" fill="#969896" text-anchor="middle" font-size="10">per extractor arg and return type</text>
+
+  <!-- merge / per-request divider -->
+  <line x1="88" y1="352" x2="800" y2="352" stroke="#969896" stroke-width="1"/>
+  <text x="444" y="368" fill="#c5c8c6" text-anchor="middle" font-size="11">runtime (per request)</text>
+
+  <!-- __groom_wrapper_your_handler container -->
+  <rect x="88" y="384" width="712" height="248" fill="#1d1f21" stroke="#969896" stroke-width="1"/>
+  <text x="112" y="408" fill="#c5c8c6">
+    <tspan>__groom_wrapper_your_handler(</tspan>
+    <tspan fill="#8abeb7">headers: HeaderMap, </tspan>
+    <tspan fill="#b5bd68">Extractor(arg): Extractor&lt;DTO&gt;...</tspan>
+    <tspan fill="#c5c8c6">)</tspan>
+  </text>
+
+  <!-- 1) parse Accept header -->
+  <rect x="112" y="432" width="664" height="40" fill="#282a2e" stroke="#969896" stroke-width="1"/>
+  <text x="128" y="448" fill="#8abeb7">1) read headers: HeaderMap</text>
+  <text x="128" y="464" fill="#969896" font-size="10">parse Accept, content negotiation input</text>
+
+  <polyline points="444,472 444,480" fill="none" stroke="#969896" stroke-width="1" marker-end="url(#arrow_down)"/>
+
+  <!-- 2) your_handler -->
+  <rect x="112" y="488" width="664" height="48" fill="#282a2e" stroke="#969896" stroke-width="1"/>
+  <text x="128" y="506" fill="#b5bd68">2) your_handler(Extractor(arg): Extractor&lt;DTO&gt;...)</text>
+  <text x="128" y="522" fill="#969896" font-size="10">#[Route] async fn -&gt; ResponseType</text>
+
+  <polyline points="444,536 444,544" fill="none" stroke="#969896" stroke-width="1" marker-end="url(#arrow_down)"/>
+
+  <!-- 3) __groom_into_response -->
+  <rect x="112" y="552" width="664" height="56" fill="#282a2e" stroke="#969896" stroke-width="1"/>
+  <text x="128" y="570" fill="#cc6666">3) Response::__groom_into_response(accept)</text>
+  <text x="128" y="586" fill="#969896" font-size="10">3.1) pick format, or 400</text>
+  <text x="128" y="600" fill="#969896" font-size="10">3.2) pick status, from #[Response(code = ...)]</text>
+</svg>

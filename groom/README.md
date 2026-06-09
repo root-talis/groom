@@ -4,6 +4,10 @@ A thin wrapper around [axum](https://github.com/tokio-rs/axum) for making code-f
 
 Groom is heavily inspired by [poem-openapi](https://github.com/poem-web/poem/blob/3bd9ee79e94b3f8a088a21e16648e7be6eed471c/poem-openapi-derive/src/api.rs).
 
+Groom [README.md](https://github.com/root-talis/groom/blob/main/README.md) is a good starting point.
+
+For how this crate's modules, traits, and runtime behavior fit together, see [ARCHITECTURE.md](ARCHITECTURE.md). Proc-macro code generation is documented in [groom_macros/ARCHITECTURE.md](../groom_macros/ARCHITECTURE.md).
+
 ## Goals:
   - leverage rust's type system to describe and enforce API contracts;
   - abstract out content-type negotiations and serialization/deserialization and allow developer to work with raw data;

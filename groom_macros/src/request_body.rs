@@ -37,11 +37,11 @@ impl RequestBodyTypesList {
 
 /// Entry point for `#[RequestBody]` macro.
 pub(crate) fn generate(args_t: TokenStream, args: RequestBodyArgs, input: TokenStream) -> TokenStream {
-    generate_implementation(args_t, args, input).unwrap_or_else(|t| t)
+    generate_req_body_implementation(args_t, args, input).unwrap_or_else(|t| t)
 }
 
 /// Generates appropriate implementation (based on input type).
-fn generate_implementation(args_t: TokenStream, args: RequestBodyArgs, input: TokenStream)
+fn generate_req_body_implementation(args_t: TokenStream, args: RequestBodyArgs, input: TokenStream)
     -> Result<TokenStream, TokenStream>
 {
     let item = parse2::<Item>(input).map_err(

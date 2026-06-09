@@ -52,7 +52,7 @@ impl RouteArgs {
 //
 
 pub(crate) fn generate(args_t: TokenStream, args: ControllerArgs, input: TokenStream) -> TokenStream {
-    generate_impl(args_t, args, input).unwrap_or_else(|e| e)
+    generate_controller_impl(args_t, args, input).unwrap_or_else(|e| e)
 }
 
 struct ModuleASTFragments {
@@ -92,11 +92,11 @@ struct HandlerASTFragments {
     openapi_extractors_modifiers: Vec<TokenStream>,
 
     /// entire AST to set up this handler OpenAPI spec
-    openapi_setup: TokenStream,
+    openapi_modification_code: TokenStream,
 }
 
 /// Generates implementation for mod annotated with `#[Controller()]`
-fn generate_impl(_args_t: TokenStream, args: ControllerArgs, input: TokenStream) -> Result<TokenStream, TokenStream> {
+fn generate_controller_impl(_args_t: TokenStream, args: ControllerArgs, input: TokenStream) -> Result<TokenStream, TokenStream> {
     let item_mod = match parse2::<ItemMod>(input) {
         Ok(syntax_tree) => syntax_tree,
         Err(error) => return Err(error.to_compile_error()),
@@ -151,12 +151,12 @@ fn parse_handler_function(
         return Err(Error::new_spanned(&function.sig.fn_token, "handler should be async fn").to_compile_error());
     }
 
-    deduplicate_handler(function, &route, mod_fragments)?;
+    ensure_handler_is_unique(function, &route, mod_fragments)?;
 
     let mut fn_fragments = generate_handler_fragments(function, mod_fragments)?;
 
-    generate_route_add_ast(&fn_fragments.wrapper_name, &route, mod_fragments);
-    fn_fragments.openapi_setup = generate_openapi_modify_op_ast(function, mod_fragments)?;
+    generate_router_modifier_for_handler(&fn_fragments.wrapper_name, &route, mod_fragments);
+    fn_fragments.openapi_modification_code = generate_openapi_modifier_for_handler(function, mod_fragments)?;
 
     //
     // new module item instead of current one:
@@ -169,6 +169,7 @@ fn parse_handler_function(
     generate_new_handler_ast(&function, &route, &docblock, &fn_fragments, mod_fragments);
     generate_openapi_paths_setup_ast(&function, &fn_fragments, &route, &docblock, mod_fragments);
 
+    // if handlers returnes something
     if let ReturnType::Type(_, ty) = &function.sig.output {
         let ident = &function.sig.ident;
         let context_format = format!("{{context}}: handler `{ident}`");
@@ -200,8 +201,8 @@ fn extract_route_args(function: &mut ItemFn, mod_fragments: &mut ModuleASTFragme
     Ok(Some(route))
 }
 
-/// Deduplicates handler. If a duplicate is found, emits a compile error.
-fn deduplicate_handler(handler: &mut ItemFn, route: &RouteArgs, mod_fragments: &mut ModuleASTFragments) -> Result<(), TokenStream> {
+/// Checks if there is a duplicate of handler. If a duplicate is found, emits a compile error.
+fn ensure_handler_is_unique(handler: &mut ItemFn, route: &RouteArgs, mod_fragments: &mut ModuleASTFragments) -> Result<(), TokenStream> {
     let path = &route.path;
     let method = &route.method;
 
@@ -234,7 +235,7 @@ fn generate_handler_fragments(handler: &mut ItemFn, mod_fragments: &mut ModuleAS
         openapi_extractors_modifiers: Vec::new(),
         wrapper_inputs: Vec::new(),
         delegated_inputs: Vec::new(),
-        openapi_setup: Default::default(),
+        openapi_modification_code: Default::default(),
     };
 
     for item in &handler.sig.inputs {
@@ -275,7 +276,7 @@ fn generate_handler_fragments(handler: &mut ItemFn, mod_fragments: &mut ModuleAS
 }
 
 /// Generates an AST to add OpenAPI spec modifier for this particular handler
-fn generate_openapi_modify_op_ast(handler: &ItemFn, mod_fragments: &mut ModuleASTFragments) -> Result<TokenStream, TokenStream> {
+fn generate_openapi_modifier_for_handler(handler: &ItemFn, mod_fragments: &mut ModuleASTFragments) -> Result<TokenStream, TokenStream> {
     Ok(match &handler.sig.output {
         syn::ReturnType::Default => {
             return Err(
@@ -329,7 +330,7 @@ fn generate_openapi_paths_setup_ast(
     };
 
     let extractors = &fn_fragments.openapi_extractors_modifiers;
-    let openapi_setup = &fn_fragments.openapi_setup;
+    let openapi_setup = &fn_fragments.openapi_modification_code;
 
     let operation_id = handler.sig.ident.to_string().to_case(Case::Camel);
 
@@ -353,8 +354,8 @@ fn generate_openapi_paths_setup_ast(
 }
 
 /// Generates AST to install a new route into Router
-fn generate_route_add_ast(
-    wrapper_name: &Ident,
+fn generate_router_modifier_for_handler(
+    handler_wrapper_name: &Ident,
     route: &RouteArgs,
     mod_fragments: &mut ModuleASTFragments
 ) {
@@ -364,7 +365,7 @@ fn generate_route_add_ast(
     let routing_method = format_ident!("{}", method.to_string());
 
     mod_fragments.routes_setup.push(quote! {
-        .route(#path, ::axum::routing::#routing_method(#wrapper_name))
+        .route(#path, ::axum::routing::#routing_method(#handler_wrapper_name))
     });
 }
 
