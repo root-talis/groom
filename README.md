@@ -77,6 +77,8 @@ fn make_openapi() -> utoipa::openapi::OpenApi {
 }
 ```
 
+Return type of a handler function can also be a `Result<R, E>` with each side, R and E, being a `#[Response()]`.
+
 Each `#[Controller]` module generates two functions:
 
 - `merge_into_router` — registers Groom routes on an existing `Router`.
