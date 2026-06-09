@@ -21,7 +21,7 @@ impl TaskService {
     }
     
     fn validate_title(t: &str) -> Result<(), &'static str> {
-        if t.trim().len() <= 3 {
+        if t.trim().chars().count() <= 3 {
             Err("title is too short")
         } else {
             Ok(())

@@ -1,3 +1,29 @@
+mod validate_title {
+    use super::super::TaskService;
+
+    #[test]
+    fn rejects_titles_with_at_most_three_characters() {
+        assert!(TaskService::validate_title("abc").is_err());
+        assert!(TaskService::validate_title("  ab  ").is_err());
+        assert!(TaskService::validate_title("  日本  ").is_err());
+    }
+
+    #[test]
+    fn accepts_titles_with_more_than_three_characters() {
+        assert!(TaskService::validate_title("abcd").is_ok());
+        assert!(TaskService::validate_title("  abcd  ").is_ok());
+        assert!(TaskService::validate_title("  日本語a  ").is_ok());
+    }
+
+    #[test]
+    fn counts_unicode_characters_not_bytes() {
+        assert!(TaskService::validate_title("🙂🙂🙂").is_err());
+        assert!(TaskService::validate_title("🙂🙂🙂🙂").is_ok());
+        assert!(TaskService::validate_title("日本語").is_err());
+        assert!(TaskService::validate_title("日本語a").is_ok());
+    }
+}
+
 mod add_task {
     use mockall::predicate::eq;
     use assert_matches::assert_matches;
@@ -65,6 +91,17 @@ mod add_task {
 
         let result = svc.add_task(AddTaskRequest { title: String::from("somt") }).await;
         assert_eq!(result.is_ok(), true);
+    }
+
+    #[tokio::test]
+    async fn test_add_task_short_unicode_title() {
+        let r = MockTaskReader::new();
+        let w = MockTaskWriter::new();
+
+        let svc = TaskService::new(Arc::new(r), Arc::new(w));
+
+        let result = svc.add_task(AddTaskRequest { title: String::from("🙂🙂🙂") }).await;
+        assert_matches!(result.unwrap_err(), AddTaskError::InvalidRequest(_));
     }
 }
 
@@ -288,6 +325,19 @@ mod rename_task {
         let svc = TaskService::new(Arc::new(r), Arc::new(w));
 
         let result = svc.rename_task(id, String::from("new")).await;
+        assert_matches!(result.unwrap_err(), RenameTaskError::InvalidRequest(_));
+    }
+
+    #[tokio::test]
+    pub async fn short_unicode_name() {
+        let id = TaskID::from(1234);
+
+        let r = MockTaskReader::new();
+        let w = MockTaskWriter::new();
+
+        let svc = TaskService::new(Arc::new(r), Arc::new(w));
+
+        let result = svc.rename_task(id, String::from("日本語")).await;
         assert_matches!(result.unwrap_err(), RenameTaskError::InvalidRequest(_));
     }
 
