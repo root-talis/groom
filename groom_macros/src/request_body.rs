@@ -281,9 +281,20 @@ mod struct_impl {
         let extract_ty = &context.dto_fragments.extract_ty;
         let pack_dto = &context.dto_fragments.pack_dto;
 
+
+        #[cfg(not(feature = "axum-extra-form"))]
+        let form_extractor: TokenStream = quote! {
+            ::axum::extract::Form::<#extract_ty>
+        };
+
+        #[cfg(feature = "axum-extra-form")]
+        let form_extractor: TokenStream = quote! {
+            ::axum_extra::extract::Form::<#extract_ty>
+        };
+
         context.body_extractors.push(quote! {
             Some(::groom::content_negotiation::BodyContentType::FormUrlEncoded) => {
-                let dto = ::axum::extract::Form::<#extract_ty>::from_request(req, state)
+                let dto = <#form_extractor>::from_request(req, state)
                     .await
                     .map_err(|e| #rejection_ident::FormRejection(e))?
                     .0
@@ -293,8 +304,14 @@ mod struct_impl {
             },
         });
 
+        #[cfg(not(feature = "axum-extra-form"))]
         context.rejection_types.push(quote! {
             FormRejection(::axum::extract::rejection::FormRejection),
+        });
+
+        #[cfg(feature = "axum-extra-form")]
+        context.rejection_types.push(quote! {
+            FormRejection(::axum_extra::extract::FormRejection),
         });
 
         context.rejections_into_response.push(quote! {

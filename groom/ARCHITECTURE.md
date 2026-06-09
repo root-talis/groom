@@ -193,13 +193,14 @@ Proc-macros (`#[Controller]`, `#[Route]`, `#[DTO]`, `#[RequestBody]`, `#[Respons
 | Feature | Enables | Purpose |
 |---------|---------|---------|
 | `axum-extra-query` | optional `axum-extra` (`query`) | `GroomExtractor` for `axum_extra::extract::Query<T>` — array query parameters |
+| `axum-extra-form` | optional `axum-extra` (`form`) | Pulled in when `groom_macros` feature `axum-extra-form` is enabled; switches `#[RequestBody(format(url_encoded))]` to `axum_extra::extract::Form` (no runtime code in this crate) |
 
 ## Dependencies
 
 | Crate | Role |
 |-------|------|
 | `axum` | HTTP types, `Html`, body types used in trait signatures |
-| `axum-extra` (optional) | `Query` extractor with repeated-key / `Vec` support |
+| `axum-extra` (optional) | `Query` / `Form` extractors with repeated-key / `Vec` support (via optional features) |
 | `utoipa` | OpenAPI builder types, `ToSchema`, `IntoParams` |
 | `accept_header` | `Accept` header parsing and preference matching |
 | `mime` | MIME constants and `Content-Type` parsing |

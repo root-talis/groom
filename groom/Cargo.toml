@@ -18,6 +18,7 @@ categories = [
 
 [features]
 axum-extra-query = ["dep:axum-extra", "axum-extra?/query"]
+axum-extra-form  = ["dep:axum-extra", "axum-extra?/form"]
 
 [lints.rust]
 unsafe_code = "forbid"
@@ -28,7 +29,7 @@ unsafe_code = "forbid"
 accept-header = "0.2.3"
 async-trait = "0.1.77"
 axum = "0.8.9"
-axum-extra = { version = "0.12.6", optional = true, features = ["query"] }
+axum-extra = { version = "0.12.6", optional = true, features = ["query", "form"] }
 derive_more = { version = "2.1.1", default-features = false, features = ["as_ref", "deref"] }
 http = "1.0.0"
 mime = "0.3.17"

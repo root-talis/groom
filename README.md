@@ -227,6 +227,34 @@ Raw bodies: `String`, `Bytes`, or a type created with `groom::binary_request_bod
 groom::binary_request_body!(ImageJpeg with content_type "image/jpeg");
 ```
 
+#### Array fields in URL-encoded bodies
+
+Axum's built-in `Form<T>` does not deserialize repeated form keys (for example `status=New&status=Closed`) into `Vec` fields. For that, enable the optional `axum-extra-form` feature on `groom_macros` and add `axum-extra` with its `form` feature:
+
+```toml
+# Cargo.toml
+groom_macros = { version = "0.2", features = ["axum-extra-form"] }
+axum-extra = { version = "0.12", features = ["form"] }
+```
+
+The feature forwards to `groom/axum-extra-form` automatically — you do **not** need to enable it separately on `groom` when using proc-macros. Handler signatures stay the same; `#[RequestBody(format(url_encoded))]` switches the generated extractor to `axum_extra::extract::Form` under the hood:
+
+```rust
+#[RequestBody(format(url_encoded))]
+pub struct StatusFilter {
+    status: Vec<Status>,
+}
+
+#[Route(method = "post", path = "/tasks")]
+pub async fn filter_tasks(body: StatusFilter) -> TaskListResponse {
+    // POST with Content-Type: application/x-www-form-urlencoded
+    // body: status=New&status=Closed
+    todo!()
+}
+```
+
+`Option<Vec<T>>` is supported as well: an empty body yields `None`; repeating the key fills the vector. See `groom_tests/tests/features/request_body.rs` (`test_url_encoded_vec_of_enums`, `test_url_encoded_opt_vec_of_enums`).
+
 ### `#[Response]`
 
 Describes how a handler return type maps to HTTP status codes and content types. Applied to an enum or struct.
@@ -469,7 +497,7 @@ The [groom_tests](groom_tests/tests/features/) crate exercises individual featur
 
 | Test module | Topic |
 |-------------|-------|
-| `request_body` | `RequestBody`, raw bodies, `binary_request_body!` |
+| `request_body` | `RequestBody`, raw bodies, `binary_request_body!`; `Vec` / `Option<Vec>` in url-encoded bodies via `axum-extra-form` |
 | `request_query_params` | `#[DTO(parameters)]` with `Query`; `Vec` / `Option<Vec>` via `axum_extra::extract::Query` |
 | `request_path_params` | Path parameters and enums in paths |
 | `request_headers` | `HeaderMap` extractor |

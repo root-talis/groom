@@ -17,7 +17,8 @@ mod controller {
     };
     use groom_macros::{DTO,Response,RequestBody};
 
-    use utoipa::PartialSchema;
+    use serde::Deserialize;
+    use utoipa::ToSchema;
 
     // ---
 
@@ -100,6 +101,47 @@ mod controller {
             "who knows how many".into(),
             |v| format!("{v}")
         )))
+    }
+
+    // ---
+
+    #[RequestBody(format(url_encoded))]
+    pub struct StatusFilter {
+        status: Vec<Status>,
+    }
+
+    #[RequestBody(format(url_encoded))]
+    pub struct OptStatusFilter {
+        status: Option<Vec<Status>>,
+    }
+
+    #[derive(Default, Deserialize, ToSchema, PartialEq)]
+    pub enum Status {
+        #[default]
+        New,
+        Closed
+    }
+
+    #[Route(method = "post", path = "/url_encoded_vec_enum")]
+    async fn url_encoded_vec_enum(body: StatusFilter) -> StringResponse {
+        StringResponse::Ok(format!(
+            "new: {}, closed: {}",
+            if body.status.contains(&Status::New) {"y"} else {"n"},
+            if body.status.contains(&Status::Closed) {"y"} else {"n"},
+        ))
+    }
+
+    #[Route(method = "post", path = "/url_encoded_opt_vec_enum")]
+    async fn url_encoded_opt_vec_enum(body: OptStatusFilter) -> StringResponse {
+        if let Some(ref status) = body.status {
+            StringResponse::Ok(format!(
+                "new: {}, closed: {}",
+                if status.contains(&Status::New) {"y"} else {"n"},
+                if status.contains(&Status::Closed) {"y"} else {"n"},
+            ))
+        } else {
+            StringResponse::Ok("null".into())
+        }
     }
 
     // todo: Multipart (for multipart/form-data)
@@ -293,6 +335,106 @@ pub async fn test_post_multi_format_url_encoded_unnamed_struct() {
     ;
 }
 
+/// Test that url_encoded RequestBody is correctly read for Vec<Enum>
+#[tokio::test]
+pub async fn test_url_encoded_vec_of_enums() {
+    let r = controller::merge_into_router(Router::new());
+
+    Req::post("/url_encoded_vec_enum")
+        .with_body(
+            ReqBody::new("status=New")
+                .with_content_type("application/x-www-form-urlencoded")
+        )
+        .call(&r)
+        .await
+        .assert_body("new: y, closed: n")
+        .assert_status(200)
+    ;
+
+    Req::post("/url_encoded_vec_enum")
+        .with_body(
+            ReqBody::new("status=Closed")
+                .with_content_type("application/x-www-form-urlencoded")
+        )
+        .call(&r)
+        .await
+        .assert_body("new: n, closed: y")
+        .assert_status(200)
+    ;
+
+    Req::post("/url_encoded_vec_enum")
+        .with_body(
+            ReqBody::new("status=New&status=Closed")
+                .with_content_type("application/x-www-form-urlencoded")
+        )
+        .call(&r)
+        .await
+        .assert_body("new: y, closed: y")
+        .assert_status(200)
+    ;
+
+    Req::post("/url_encoded_vec_enum")
+        .with_body(
+            ReqBody::new("")
+                .with_content_type("application/x-www-form-urlencoded")
+        )
+        .call(&r)
+        .await
+        .assert_body("Failed to deserialize form body: missing field `status`")
+        .assert_status(422)
+    ;
+}
+
+/// Test that url_encoded RequestBody is correctly read for Option<Vec<Enum>>
+#[tokio::test]
+pub async fn test_url_encoded_opt_vec_of_enums() {
+    let r = controller::merge_into_router(Router::new());
+
+    Req::post("/url_encoded_opt_vec_enum")
+        .with_body(
+            ReqBody::new("status=New")
+                .with_content_type("application/x-www-form-urlencoded")
+        )
+        .call(&r)
+        .await
+        .assert_body("new: y, closed: n")
+        .assert_status(200)
+    ;
+
+    Req::post("/url_encoded_opt_vec_enum")
+        .with_body(
+            ReqBody::new("status=Closed")
+                .with_content_type("application/x-www-form-urlencoded")
+        )
+        .call(&r)
+        .await
+        .assert_body("new: n, closed: y")
+        .assert_status(200)
+    ;
+
+    Req::post("/url_encoded_opt_vec_enum")
+        .with_body(
+            ReqBody::new("status=New&status=Closed")
+                .with_content_type("application/x-www-form-urlencoded")
+        )
+        .call(&r)
+        .await
+        .assert_body("new: y, closed: y")
+        .assert_status(200)
+    ;
+
+    Req::post("/url_encoded_opt_vec_enum")
+        .with_body(
+            ReqBody::new("")
+                .with_content_type("application/x-www-form-urlencoded")
+        )
+        .call(&r)
+        .await
+        .assert_body("null")
+        .assert_status(200)
+    ;
+}
+
 
 /// Tests that openapi definition is correctly generated
 #[test]
@@ -341,6 +483,41 @@ pub fn test_openapi() {
                         },
                         "required": [
                             "name",
+                        ],
+                        "type": "object",
+                    },
+                    "OptStatusFilter": {
+                        "properties": {
+                            "status": {
+                                "items": {
+                                    "$ref": "#/components/schemas/Status",
+                                },
+                                "type": [
+                                    "array",
+                                    "null",
+                                ],
+                            },
+                        },
+                        "type": "object",
+                    },
+                    "Status": {
+                        "enum": [
+                            "New",
+                            "Closed",
+                        ],
+                        "type": "string",
+                    },
+                    "StatusFilter": {
+                        "properties": {
+                            "status": {
+                                "items": {
+                                    "$ref": "#/components/schemas/Status",
+                                },
+                                "type": "array",
+                            },
+                        },
+                        "required": [
+                            "status",
                         ],
                         "type": "object",
                     },
@@ -561,6 +738,80 @@ pub fn test_openapi() {
                             },
                         },
                         "summary": "Request consumption: String body",
+                    },
+                },
+                "/url_encoded_opt_vec_enum": {
+                    "post": {
+                        "operationId": ("urlEncodedOptVecEnum"),
+                        "requestBody": {
+                            "content": {
+                                "application/x-www-form-urlencoded": {
+                                    "schema": {
+                                        "$ref": "#/components/schemas/OptStatusFilter",
+                                    },
+                                },
+                            },
+                            "required": true,
+                        },
+                        "responses": {
+                            "200": {
+                                "content": {
+                                    "text/plain; charset=utf-8": {
+                                        "schema": {
+                                            "type": "string",
+                                        },
+                                    },
+                                },
+                                "description": "Everything is ok",
+                            },
+                            "400": {
+                                "content": {
+                                    "text/plain; charset=utf-8": {
+                                        "schema": {
+                                            "type": "string",
+                                        },
+                                    },
+                                },
+                                "description": "Something in the request is not ok",
+                            },
+                        },
+                    },
+                },
+                "/url_encoded_vec_enum": {
+                    "post": {
+                        "operationId": ("urlEncodedVecEnum"),
+                        "requestBody": {
+                            "content": {
+                                "application/x-www-form-urlencoded": {
+                                    "schema": {
+                                        "$ref": "#/components/schemas/StatusFilter",
+                                    },
+                                },
+                            },
+                            "required": true,
+                        },
+                        "responses": {
+                            "200": {
+                                "content": {
+                                    "text/plain; charset=utf-8": {
+                                        "schema": {
+                                            "type": "string",
+                                        },
+                                    },
+                                },
+                                "description": "Everything is ok",
+                            },
+                            "400": {
+                                "content": {
+                                    "text/plain; charset=utf-8": {
+                                        "schema": {
+                                            "type": "string",
+                                        },
+                                    },
+                                },
+                                "description": "Something in the request is not ok",
+                            },
+                        },
                     },
                 },
             },

@@ -16,6 +16,9 @@ unsafe_code = "forbid"
 [lib]
 proc-macro = true
 
+[features]
+axum-extra-form = ["groom/axum-extra-form"]
+
 [dependencies]
 axum = { version = "0.8.9", default-features = false }
 darling = "0.23.0"

@@ -6,6 +6,8 @@ Groom [README.md](https://github.com/root-talis/groom/blob/main/README.md) is a 
 
 For how this crate's proc-macros are structured and what code they generate, see [ARCHITECTURE.md](ARCHITECTURE.md).
 
+Optional Cargo feature `axum-extra-form` switches `#[RequestBody(format(url_encoded))]` to `axum_extra::extract::Form` for repeated form keys → `Vec` fields. It forwards to `groom/axum-extra-form`; enable it here only — see the root [README.md](../README.md#array-fields-in-url-encoded-bodies).
+
 ## Goals:
   - leverage rust's type system to describe and enforce API contracts;
   - abstract out content-type negotiations and serialization/deserialization and allow developer to work with raw data;

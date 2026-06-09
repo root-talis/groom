@@ -15,6 +15,7 @@
         - [ ] **request content type negotiation based on `Content-Type` header:**
             - [x] application/json
             - [x] application/x-www-url-encoded
+                - [x] `Vec` / `Option<Vec>` fields via `axum-extra` (`axum-extra-form` feature on `groom_macros`)
             - [ ] **multipart/form-data**
             - [x] application/octet-stream
                 - [x] macro to generate newtype for `axum::body::Bytes` with custom content-type

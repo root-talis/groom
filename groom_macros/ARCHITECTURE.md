@@ -153,11 +153,13 @@ At least one format is required.
 
 For each enabled format, the macro emits:
 
-- A `match` arm in `FromRequest::from_request` using axum's `Json` or `Form` extractor.
+- A `match` arm in `FromRequest::from_request` using axum's `Json` extractor, or `Form` from axum / `axum-extra` (see below).
 - OpenAPI `request_body` content schema referencing the DTO.
 - A `{Name}Rejection` enum (`BadContentType`, `JsonRejection`, `FormRejection`, …) with `IntoResponse`.
 
 The type also implements `groom::extract::GroomExtractor` to attach the request body to the operation in OpenAPI.
+
+For `format(url_encoded)`, the default is `axum::extract::Form`. With Cargo feature `axum-extra-form` (forwards to `groom/axum-extra-form`), the macro uses `axum_extra::extract::Form` instead so `Vec` and `Option<Vec>` fields deserialize from repeated keys (`status=New&status=Closed`). Enabling the feature on `groom_macros` alone is sufficient — no separate `groom` feature flag is required in application `Cargo.toml`.
 
 ## `#[DTO]`
 
@@ -198,6 +200,12 @@ A typical controller module combines the macros in layers:
 
 **Runtime checks** (status code uniqueness) run once when `merge_into_router` is first called, before routes are registered.
 
+## Cargo features
+
+| Feature | Forwards to | Purpose |
+|---------|-------------|---------|
+| `axum-extra-form` | `groom/axum-extra-form` | Use `axum_extra::extract::Form` in `#[RequestBody(format(url_encoded))]` for repeated form keys → `Vec` fields |
+
 ## Dependencies
 
 | Crate | Role in generated code |
@@ -212,7 +220,7 @@ A typical controller module combines the macros in layers:
 | `darling` | Attribute parsing (macro crate only) |
 | `syn` / `quote` / `proc-macro2` | AST parsing and code generation |
 
-The `groom` path dependency in `Cargo.toml` is used for type references in generated `quote!` blocks; it is not linked into downstream binaries as a runtime dependency of the macro crate itself.
+The `groom` path dependency in `Cargo.toml` is used for type references in generated `quote!` blocks; it is not linked into downstream binaries as a runtime dependency of the macro crate itself. Optional features on `groom_macros` forward to matching `groom` features via `groom/…` feature dependencies.
 
 ## Testing
 
