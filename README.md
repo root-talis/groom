@@ -128,6 +128,8 @@ Multiple controllers compose by chaining `merge_into_router` and `merge_into_ope
 
 ## Core components
 
+Detailed architecture overviews are available for [groom](groom/ARCHITECTURE.md) and [groom_macros](groom_macros/ARCHITECTURE.md) crates.
+
 ### `#[Controller]`
 
 Applied to a module containing route handlers and their supporting types.
@@ -372,10 +374,6 @@ let spec = todos::merge_into_openapi_builder(OpenApiBuilder::from(ApiDoc::openap
 The base `ApiDoc` and Groom controllers share one spec: Groom adds `paths` and `components.schemas`; utoipa retains global metadata. Multiple controllers chain `merge_into_openapi_builder` the same way as routers.
 
 See how the [hello-world](examples/hello-world/src/main.rs) example serves the merged YAML at `/spec.yaml` via an axum `Extension`, and [todo example](examples/todo/backend/src/controller/mod.rs) gates this behind a `--serve-spec` flag.
-
-### Architecture overview
-
-Detailed architecture overviews are available for [groom](groom/ARCHITECTURE.md) and [groom_macros](groom_macros/ARCHITECTURE.md) crates.
 
 ## Companion spec binary
 
