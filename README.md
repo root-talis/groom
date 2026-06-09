@@ -8,7 +8,7 @@ Groom is glue between user-defined controllers, an [axum](https://github.com/tok
 
 Groom is heavily inspired by [poem-openapi](https://github.com/poem-web/poem/blob/3bd9ee79e94b3f8a088a21e16648e7be6eed471c/poem-openapi-derive/src/api.rs).
 
-See also: [quick-example](examples/quick-example) (the code below, as a buildable crate), [hello-world](examples/hello-world) (minimal app), and [todo](examples/todo) (full-stack example with spec generation and a TypeScript client).
+See also: [quick-example](examples/quick-example) (the code below, as a buildable crate), [hello-world](examples/hello-world) (minimal app), [htmx](examples/htmx), and [todo](examples/todo) (full-stack example with spec generation and a TypeScript client).
 
 
 ## Quick example
@@ -24,30 +24,6 @@ mod api {
     use groom::{extract::GroomExtractor, response::Response};
     use groom_macros::{DTO, Response};
 
-    #[DTO(parameters)]
-    pub struct GreetParams {
-        name: Option<String>,
-    }
-
-    #[DTO(response)]
-    pub struct GreetMessage {
-        message: String,
-    }
-
-    #[DTO(response)]
-    pub struct ErrorMessage {
-        error: &'static str,
-    }
-
-    #[Response(format(json))]
-    pub enum HelloResponse {
-        #[Response(code = 200)]
-        Hello(GreetMessage),
-
-        #[Response(code = 400)]
-        BadRequest(ErrorMessage),
-    }
-
     #[Route(method = "get", path = "/hello")]
     pub async fn greet(Query(p): Query<GreetParams>) -> HelloResponse {
         let name = p.name.unwrap_or_else(|| "world".into());
@@ -60,6 +36,30 @@ mod api {
                 message: format!("Hello, {name}!"),
             })
         }
+    }
+
+    #[DTO(parameters)]
+    pub struct GreetParams {
+        name: Option<String>,
+    }
+
+    #[Response(format(json))]
+    pub enum HelloResponse {
+        #[Response(code = 200)]
+        Hello(GreetMessage),
+
+        #[Response(code = 400)]
+        BadRequest(ErrorMessage),
+    }
+
+    #[DTO(response)]
+    pub struct GreetMessage {
+        message: String,
+    }
+
+    #[DTO(response)]
+    pub struct ErrorMessage {
+        error: &'static str,
     }
 }
 
@@ -139,7 +139,7 @@ Generated API:
 - `merge_into_router(router: Router<S>) -> Router<S>`
 - `merge_into_openapi_builder(builder: OpenApiBuilder) -> OpenApiBuilder`
 
-Handlers annotated with `#[Route]` are wrapped to parse the `Accept` header and dispatch to `Response::__groom_into_response`. The original handler function remains a plain `async fn` returning a response type.
+Handlers annotated with `#[Route]` are wrapped to parse the `Accept` header and dispatch to `Response::__groom_into_response`. The original handler function remains a plain `async fn` returning a data structure.
 
 ### `#[Route]`
 
@@ -283,6 +283,7 @@ See `groom_tests/tests/features/response_type_result.rs` for a full example with
 
 HTML is a first-class response format alongside JSON and plain text. Typical use cases:
 
+- **HTMX applications** - with easy to set up well-typed controllers.
 - **Human-readable status or health pages** — operators hit `/status` in a browser while monitoring tools call the same route with `Accept: application/json`.
 - **Lightweight admin or debug UIs** — expose a read-only view of internal state without a separate frontend build.
 - **Mixed clients on one contract** — declare `format(json, html)` on a response type so API consumers and browsers share handlers and OpenAPI paths.

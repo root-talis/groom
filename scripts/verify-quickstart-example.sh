@@ -2,11 +2,11 @@
 set -euo pipefail
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-quickstart="${repo_root}/QUICKSTART.md"
+quickstart="${repo_root}/README.md"
 snippet="${repo_root}/examples/quick-example/src/quickstart_snippet.rs"
 
 if [[ ! -f "$quickstart" ]]; then
-  echo "Missing QUICKSTART.md at ${quickstart}"
+  echo "Missing README.md at ${quickstart}"
   exit 1
 fi
 
@@ -26,8 +26,8 @@ awk '
 ' "$quickstart" > "$tmp"
 
 if ! diff -u "$tmp" "$snippet"; then
-  echo "QUICKSTART.md Quick example code does not match examples/quick-example/src/quickstart_snippet.rs"
+  echo "README.md Quick example code does not match examples/quick-example/src/quickstart_snippet.rs"
   exit 1
 fi
 
-echo "QUICKSTART.md Quick example matches examples/quick-example/src/quickstart_snippet.rs"
+echo "README.md Quick example matches examples/quick-example/src/quickstart_snippet.rs"

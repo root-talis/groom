@@ -27,7 +27,7 @@ jobs:
             exit 1
           fi
 
-      - name: Verify QUICKSTART quick example matches examples/quick-example
+      - name: Verify README quick example matches examples/quick-example
         run: bash scripts/verify-quickstart-example.sh
 
       - name: Set crate versions from tag

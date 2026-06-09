@@ -8,30 +8,6 @@ mod api {
     use groom::{extract::GroomExtractor, response::Response};
     use groom_macros::{DTO, Response};
 
-    #[DTO(parameters)]
-    pub struct GreetParams {
-        name: Option<String>,
-    }
-
-    #[DTO(response)]
-    pub struct GreetMessage {
-        message: String,
-    }
-
-    #[DTO(response)]
-    pub struct ErrorMessage {
-        error: &'static str,
-    }
-
-    #[Response(format(json))]
-    pub enum HelloResponse {
-        #[Response(code = 200)]
-        Hello(GreetMessage),
-
-        #[Response(code = 400)]
-        BadRequest(ErrorMessage),
-    }
-
     #[Route(method = "get", path = "/hello")]
     pub async fn greet(Query(p): Query<GreetParams>) -> HelloResponse {
         let name = p.name.unwrap_or_else(|| "world".into());
@@ -44,6 +20,30 @@ mod api {
                 message: format!("Hello, {name}!"),
             })
         }
+    }
+
+    #[DTO(parameters)]
+    pub struct GreetParams {
+        name: Option<String>,
+    }
+
+    #[Response(format(json))]
+    pub enum HelloResponse {
+        #[Response(code = 200)]
+        Hello(GreetMessage),
+
+        #[Response(code = 400)]
+        BadRequest(ErrorMessage),
+    }
+
+    #[DTO(response)]
+    pub struct GreetMessage {
+        message: String,
+    }
+
+    #[DTO(response)]
+    pub struct ErrorMessage {
+        error: &'static str,
     }
 }
 
