@@ -24,6 +24,7 @@
             - [ ] **application/cbor**
     - [ ] **thin wrappers around axum standard extractors:**
         - [x] Query
+        - [x] Query with `Vec` / `Option<Vec>` fields via `axum-extra` (`axum-extra-query` feature)
         - [ ] Query<HashMap> - we can't possibly type it, though
         - [x] Path<struct>
         - [x] HeaderMap

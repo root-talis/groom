@@ -55,6 +55,24 @@ mod controller {
         Status
     }
 
+
+    #[DTO(parameters)]
+    pub struct StatusFilter {
+        status: Vec<Status>,
+    }
+
+    #[DTO(parameters)]
+    pub struct OptStatusFilter {
+        status: Option<Vec<Status>>,
+    }
+
+    #[derive(Default, Deserialize, ToSchema, PartialEq)]
+    pub enum Status {
+        #[default]
+        New,
+        Closed
+    }
+
     // ---
 
     #[Route(method = "get", path = "/two_query_inputs")]
@@ -94,6 +112,28 @@ mod controller {
                 SortBy::Status => "status",
             }
         ))
+    }
+
+    #[Route(method = "get", path = "/vec_enum")]
+    pub async fn vec_enum(query: axum_extra::extract::Query<StatusFilter>) -> Resp {
+        Resp::Ok(format!(
+            "new: {}, closed: {}",
+            if query.status.contains(&Status::New) {"y"} else {"n"},
+            if query.status.contains(&Status::Closed) {"y"} else {"n"},
+        ))
+    }
+
+    #[Route(method = "get", path = "/opt_vec_enum")]
+    pub async fn opt_vec_enum(query: axum_extra::extract::Query<OptStatusFilter>) -> Resp {
+        if let Some(ref status) = query.status {
+            Resp::Ok(format!(
+                "new: {}, closed: {}",
+                if status.contains(&Status::New) {"y"} else {"n"},
+                if status.contains(&Status::Closed) {"y"} else {"n"},
+            ))
+        } else {
+            Resp::Ok("null".into())
+        }
     }
 }
 
@@ -164,6 +204,58 @@ pub async fn test_query_enum() {
     ;
 }
 
+/// Test that Query parameters are correctly read for Vec<Enum>
+#[tokio::test]
+pub async fn test_query_vec_of_enums() {
+    let r = controller::merge_into_router(Router::new());
+
+    Req::get("/vec_enum?status=New").call(&r).await
+        .assert_body("new: y, closed: n")
+        .assert_status(200)
+    ;
+
+    Req::get("/vec_enum?status=Closed").call(&r).await
+        .assert_body("new: n, closed: y")
+        .assert_status(200)
+    ;
+
+    Req::get("/vec_enum?status=New&status=Closed").call(&r).await
+        .assert_body("new: y, closed: y")
+        .assert_status(200)
+    ;
+
+    Req::get("/vec_enum").call(&r).await
+        .assert_body("Failed to deserialize query string: missing field `status`")
+        .assert_status(400)
+    ;
+}
+
+/// Test that Query parameters are correctly read for Option<Vec<Enum>>
+#[tokio::test]
+pub async fn test_query_opt_vec_of_enums() {
+    let r = controller::merge_into_router(Router::new());
+
+    Req::get("/opt_vec_enum?status=New").call(&r).await
+        .assert_body("new: y, closed: n")
+        .assert_status(200)
+    ;
+
+    Req::get("/opt_vec_enum?status=Closed").call(&r).await
+        .assert_body("new: n, closed: y")
+        .assert_status(200)
+    ;
+
+    Req::get("/opt_vec_enum?status=New&status=Closed").call(&r).await
+        .assert_body("new: y, closed: y")
+        .assert_status(200)
+    ;
+
+    Req::get("/opt_vec_enum").call(&r).await
+        .assert_body("null")
+        .assert_status(200)
+    ;
+}
+
 // Todo: HashMap in query
 
 /// Tests that openapi definition is correctly generated
@@ -187,6 +279,13 @@ pub fn test_openapi() {
                             ("Id"),
                             ("Title"),
                             ("Status"),
+                        ],
+                        "type": ("string"),
+                    },
+                    "Status": {
+                        "enum": [
+                            ("New"),
+                            ("Closed"),
                         ],
                         "type": ("string"),
                     },
@@ -289,6 +388,89 @@ pub fn test_openapi() {
                          },
                      },
                  },
+                "/opt_vec_enum": {
+                    "get": {
+                        "operationId": ("optVecEnum"),
+                        "parameters": [
+                            {
+                                "in": ("query"),
+                                "name": ("status"),
+                                "required": (false),
+                                "schema": {
+                                    "items": {
+                                        "$ref": ("#/components/schemas/Status"),
+                                    },
+                                    "type": [
+                                        "array",
+                                        "null",
+                                    ],
+                                },
+                            },
+                        ],
+                        "responses": {
+                            "200": {
+                                "content": {
+                                    "text/plain; charset=utf-8": {
+                                        "schema": {
+                                            "type": ("string"),
+                                        },
+                                    },
+                                },
+                                "description": (""),
+                            },
+                            "400": {
+                                "content": {
+                                    "text/plain; charset=utf-8": {
+                                        "schema": {
+                                            "type": ("string"),
+                                        },
+                                    },
+                                },
+                                "description": (""),
+                            },
+                        },
+                    },
+                },
+                "/vec_enum": {
+                    "get": {
+                        "operationId": ("vecEnum"),
+                        "parameters": [
+                            {
+                                "in": ("query"),
+                                "name": ("status"),
+                                "required": (true),
+                                "schema": {
+                                    "items": {
+                                        "$ref": ("#/components/schemas/Status"),
+                                    },
+                                    "type": ("array"),
+                                },
+                            },
+                        ],
+                        "responses": {
+                            "200": {
+                                "content": {
+                                    "text/plain; charset=utf-8": {
+                                        "schema": {
+                                            "type": ("string"),
+                                        },
+                                    },
+                                },
+                                "description": (""),
+                            },
+                            "400": {
+                                "content": {
+                                    "text/plain; charset=utf-8": {
+                                        "schema": {
+                                            "type": ("string"),
+                                        },
+                                    },
+                                },
+                                "description": (""),
+                            },
+                        },
+                    },
+                },
             },
         })
     );

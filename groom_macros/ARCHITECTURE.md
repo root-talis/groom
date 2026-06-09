@@ -186,6 +186,8 @@ Depending on flags, the macro adds:
 
 Works on both structs and enums.
 
+Parameter structs with `Vec` or `Option<Vec>` fields are used with `axum_extra::extract::Query` (not axum's `Query`) when the client sends repeated keys; enable the `groom` feature `axum-extra-query` and see the root README.
+
 ## How the pieces fit together
 
 A typical controller module combines the macros in layers:

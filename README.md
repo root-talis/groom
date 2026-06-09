@@ -109,7 +109,7 @@ Groom does not own the HTTP server or the OpenAPI document. You start with infra
 
 **Runtime.** The merged router is served with `axum::serve`. HTTP clients call API endpoints directly. The merged OpenAPI document can optionally be exposed at runtime (for example `/spec.yaml` behind a flag, as in the [todo example](examples/todo/backend/src/controller/mod.rs)).
 
-**Spec export (fork).** The same merged `OpenApi` value can also be made available offline: a simple companion `spec` binary calls `build()` / `to_yaml()` and prints the document. That output is committed as `spec.yaml` in the repository. Frontend tooling (`openapi-ts`, other code generators) reads the committed file and produces a typed HTTP client at build time — without running the server.
+**Spec export (fork).** The same merged `OpenApi` value can also be made available offline: a simple companion `spec` binary calls `build()` / `to_yaml()` and prints the document. That output is committed as `spec.yaml` in the repository. Frontend tooling ([orval](https://orval.dev), other code generators) reads the committed file and produces a typed HTTP client at build time — without running the server.
 
 The dashed line in the diagram marks contract alignment: the generated client and the live API share one spec, so breaking changes show up in `spec.yaml` diffs and compile-time checks on the backend.
 
@@ -173,6 +173,33 @@ Combine arguments: `#[DTO(request, response)]`, `#[DTO(parameters)]`, etc. At le
 Use `#[DTO(parameters)]` with `Query<T>` or `Path<T>`. Field doc comments and `serde` attributes (`rename`, `default`, …) are reflected in the schema.
 
 Enums with variants (unit, tuple, struct) are supported as response DTOs; see `groom_tests/tests/features/value_objects.rs`.
+
+#### Array query parameters
+
+Axum's built-in `Query<T>` does not deserialize repeated query keys (for example `?status=New&status=Closed`) into `Vec` fields. For that, enable the optional `axum-extra-query` feature on `groom`, add `axum-extra` with its `query` feature, and use `axum_extra::extract::Query<T>` in the handler:
+
+```toml
+# Cargo.toml
+groom = { version = "0.2", features = ["axum-extra-query"] }
+axum-extra = { version = "0.12", features = ["query"] }
+```
+
+```rust
+use axum_extra::extract::Query;
+
+#[DTO(parameters)]
+pub struct StatusFilter {
+    status: Vec<Status>,
+}
+
+#[Route(method = "get", path = "/tasks")]
+pub async fn list_tasks(Query(filters): Query<StatusFilter>) -> TaskListResponse {
+    // GET /tasks?status=New&status=Closed
+    todo!()
+}
+```
+
+`Option<Vec<T>>` is supported as well: omitting the parameter yields `None`; repeating the key fills the vector. OpenAPI generation produces an `array` schema (or `array` + `null` for optional fields) with the same `#[DTO(parameters)]` struct. See `groom_tests/tests/features/request_query_params.rs` (`test_query_vec_of_enums`, `test_query_opt_vec_of_enums`).
 
 ### `#[RequestBody]`
 
@@ -409,14 +436,14 @@ Build and run:
 cargo run --bin spec > spec.yaml
 ```
 
-See how the [justfile of todo example](examples/todo/justfile) defines `generate-api-spec` and chains it before `generate-api-client` (`npx openapi-ts` against `spec.yaml`).
+See how the [justfile of todo example](examples/todo/justfile) defines `generate-api-spec` and chains it before `generate-api-client` (`npm run generate:api` / `orval` against `spec.yaml`, configured in [orval.config.ts](examples/todo/frontend/orval.config.ts)).
 
 ### Suggested contract-first workflow
 
 1. **Define stubs** — Backend and frontend agree on controller modules with handler signatures, DTOs, and response enums. Implement handlers with `todo!()` or minimal placeholders.
 2. **Generate spec** — Run the spec binary; commit `spec.yaml` (or JSON) to the repository.
 3. **Review** — Both teams review the generated OpenAPI document. Adjust Rust types (field names, variants, status codes, doc comments) until the contract is acceptable. Regenerate until approved.
-4. **Parallel implementation** — Frontend generates a client from the committed spec (e.g. `@hey-api/openapi-ts` as in [todo/frontend](examples/todo/frontend)). Backend fills in service and repository logic. Types on both sides stay aligned with the same source of truth.
+4. **Parallel implementation** — Frontend generates a client from the committed spec (e.g. [orval](https://orval.dev) as in [todo/frontend](examples/todo/frontend)). Backend fills in service and repository logic. Types on both sides stay aligned with the same source of truth.
 5. **CI** — Add a check that `cargo run --bin spec` output matches the committed file, so API changes are explicit in diffs.
 
 Because the spec is derived from Rust types, refactors that break the contract fail at compile time on the backend; the committed spec diff signals breaking changes to the frontend.
@@ -443,7 +470,7 @@ The [groom_tests](groom_tests/tests/features/) crate exercises individual featur
 | Test module | Topic |
 |-------------|-------|
 | `request_body` | `RequestBody`, raw bodies, `binary_request_body!` |
-| `request_query_params` | `#[DTO(parameters)]` with `Query` |
+| `request_query_params` | `#[DTO(parameters)]` with `Query`; `Vec` / `Option<Vec>` via `axum_extra::extract::Query` |
 | `request_path_params` | Path parameters and enums in paths |
 | `request_headers` | `HeaderMap` extractor |
 | `request_methods` | All HTTP methods on one path |

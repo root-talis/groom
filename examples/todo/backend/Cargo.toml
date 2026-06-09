@@ -19,9 +19,10 @@ static-assets = []
 accept-header = "0.2.3"
 async-trait = "0.1.89"
 axum = { version = "0.8.9", features = ["macros"] }
+axum-extra = { version = "0.12.6", features = ["query"] }
 clap = { version = "4.6.1", features = ["derive", "env"] }
 color-eyre = "0.6.5"
-groom = {path = "../../../groom" }
+groom = {path = "../../../groom", features = ["axum-extra-query"] }
 groom_macros = {path = "../../../groom_macros" }
 mime = "0.3.17"
 mime_guess = "2.0.5"

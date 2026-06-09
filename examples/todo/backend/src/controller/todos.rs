@@ -16,7 +16,8 @@ pub fn setup_spec(spec_builder: OpenApiBuilder) -> OpenApiBuilder {
 mod controller {
     use std::sync::Arc;
 
-    use axum::{Extension, extract::{Path, Query}, response::IntoResponse};
+    use axum::{Extension, extract::{Path}, response::IntoResponse};
+    use axum_extra::extract::Query;
 
     use groom::{
         // GroomExtractor is the trait that enables types to describe themselves into openapi spec.
@@ -41,6 +42,7 @@ mod controller {
         // Response macro generates implementations for enums and structs as responses.
         Response
     };
+use tracing::debug;
 
     use crate::service::{
         model::{Status, Task, TaskID},
@@ -59,6 +61,7 @@ mod controller {
         Extension(task_service): Extension<Arc<TaskService>>,
         Query(filters): Query<TaskListFilters>
     ) -> TaskListResponse {
+        debug!("Filters parsed: {:?}", filters);
         match task_service.list_tasks(filters.into()).await {
             Ok(l) => {
                 let tasks: Result<Vec<TaskViewModel>, ()> = l.iter()
@@ -77,6 +80,7 @@ mod controller {
 
     /// Task list filters
     #[DTO(parameters)]
+    #[derive(Debug)]
     pub struct TaskListFilters {
         pub title:  Option<String>,
         pub status: Option<Vec<Status>>,
@@ -400,7 +404,7 @@ mod model {
     // TasksSortBy
     //
 
-    #[derive(Default, Deserialize, ToSchema)]
+    #[derive(Default, Debug, Deserialize, ToSchema)]
     #[serde(rename_all = "lowercase")]
     pub enum TasksSortBy {
         #[default]
@@ -423,7 +427,7 @@ mod model {
     // SortDirection
     //
 
-    #[derive(Default, Deserialize, ToSchema)]
+    #[derive(Default, Debug, Deserialize, ToSchema)]
     #[serde(rename_all = "lowercase")]
     pub enum SortDirection {
         #[default]

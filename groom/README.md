@@ -8,6 +8,8 @@ Groom [README.md](https://github.com/root-talis/groom/blob/main/README.md) is a 
 
 For how this crate's modules, traits, and runtime behavior fit together, see [ARCHITECTURE.md](ARCHITECTURE.md). Proc-macro code generation is documented in [groom_macros/ARCHITECTURE.md](../groom_macros/ARCHITECTURE.md).
 
+Optional Cargo feature `axum-extra-query` wires OpenAPI for `axum_extra::extract::Query` so handlers can accept repeated query keys as `Vec` fields — see the root [README.md](../README.md#array-query-parameters).
+
 ## Goals:
   - leverage rust's type system to describe and enforce API contracts;
   - abstract out content-type negotiations and serialization/deserialization and allow developer to work with raw data;

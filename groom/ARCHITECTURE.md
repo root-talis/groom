@@ -21,7 +21,7 @@ groom/
 │   ├── extract/
 │   │   ├── mod.rs              # GroomExtractor trait, binary_request_body!
 │   │   ├── components_registry.rs
-│   │   ├── parameters.rs       # Path<T> / Query<T> OpenAPI wiring
+│   │   ├── parameters.rs       # Path<T> / Query<T> OpenAPI wiring (+ axum-extra Query)
 │   │   └── std_types.rs        # Built-in axum extractors
 │   └── response/
 │       ├── mod.rs              # Response trait
@@ -74,6 +74,7 @@ Implementations in this crate:
 | Type | OpenAPI effect |
 |------|----------------|
 | `Query<T>` where `T: DTO + IntoParams` | Query parameters from `T::into_params` |
+| `axum_extra::extract::Query<T>` where `T: DTO + IntoParams` | Same as `Query<T>`; requires feature `axum-extra-query` (repeated keys → `Vec` fields) |
 | `Path<T>` where `T: DTO + IntoParams` | Path parameters from `T::into_params` |
 | `String` | Request body `text/plain` |
 | `Bytes` | Request body `application/octet-stream` (binary) |
@@ -100,6 +101,8 @@ When building OpenAPI, nested DTO schemas must be registered under `#/components
 5. Merges into an existing `utoipa::openapi::Components` via `into_components`, detecting duplicate definitions across controllers.
 
 `parameters.rs` uses the registry when wiring `Path<T>` and `Query<T>`: parameter schemas are matched to registered components so operations reference `$ref` instead of duplicating inline schemas.
+
+Axum's `Query` cannot deserialize repeated query keys into `Vec` fields. The optional Cargo feature `axum-extra-query` adds a `GroomExtractor` impl for `axum_extra::extract::Query<T>` with identical OpenAPI folding; handlers that need `Vec` or `Option<Vec>` in a `#[DTO(parameters)]` struct should use that extractor and depend on `axum-extra` with the `query` feature.
 
 ## Responses (`response/`)
 
@@ -185,11 +188,18 @@ Checks run when `merge_into_router` is first invoked, before routes are register
 
 Proc-macros (`#[Controller]`, `#[Route]`, `#[DTO]`, `#[RequestBody]`, `#[Response]`) are re-exported from `groom_macros`, not this crate.
 
+## Cargo features
+
+| Feature | Enables | Purpose |
+|---------|---------|---------|
+| `axum-extra-query` | optional `axum-extra` (`query`) | `GroomExtractor` for `axum_extra::extract::Query<T>` — array query parameters |
+
 ## Dependencies
 
 | Crate | Role |
 |-------|------|
 | `axum` | HTTP types, `Html`, body types used in trait signatures |
+| `axum-extra` (optional) | `Query` extractor with repeated-key / `Vec` support |
 | `utoipa` | OpenAPI builder types, `ToSchema`, `IntoParams` |
 | `accept_header` | `Accept` header parsing and preference matching |
 | `mime` | MIME constants and `Content-Type` parsing |

@@ -64,3 +64,16 @@ impl<T: DTO + IntoParams> GroomExtractor for Query<T> {
             })
     }
 }
+
+#[cfg(feature="axum-extra-query")]
+impl<T: DTO + IntoParams> GroomExtractor for axum_extra::extract::Query<T> {
+    fn __openapi_modify_operation(op: OperationBuilder, registry: &mut ComponentsRegistry) -> OperationBuilder {
+        let schemas = get_schemas::<T>(registry);
+
+        T::into_params(|| Some(ParameterIn::Query))
+            .into_iter()
+            .fold(op, |op, p| {
+                fold_parameter(op, p, &schemas)
+            })
+    }
+}
