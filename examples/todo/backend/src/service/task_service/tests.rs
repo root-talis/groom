@@ -37,73 +37,105 @@ mod add_task {
     use super::super::*;
 
     #[tokio::test]
-    async fn test_add_task() {
-        let expected_add_task = Task::new("something to do", Status::Pending);
+    async fn add_task() {
+        // given:
+        let task_for_repository = Task::new("something to do", Status::Pending);
+        let expected_task = Task::new("something to do", Status::Pending)
+            .set_id(TaskID::from(123))
+            .to_owned();
 
+        // setup:
         let r = MockTaskReader::new();
-        let mut w = MockTaskWriter::new();
-        w.expect_add_task()
-            .with(eq(expected_add_task.clone()))
+        let mut writer = MockTaskWriter::new();
+        writer.expect_add_task()
+            .with(eq(task_for_repository))
             .once()
             .returning(|mut v| {
                 v.set_id(TaskID::from(123));
                 Ok(v.clone())
             });
+        let svc = TaskService::new(Arc::new(r), Arc::new(writer));
 
-        let result = TaskService::new(Arc::new(r), Arc::new(w))
-            .add_task(AddTaskRequest { title: String::from("something to do") }).await;
+        // when:
+        let result = svc
+            .add_task(AddTaskRequest {
+                title: String::from("something to do"),
+            })
+            .await;
 
-        let mut expected_result = expected_add_task.clone();
-        expected_result.set_id(TaskID::from(123));
-
-        assert_eq!(result.unwrap(), expected_result)
+        // then:
+        assert_eq!(result.unwrap(), expected_task);
     }
 
     #[tokio::test]
-    async fn test_add_task_duplicate() {
+    async fn fail_when_task_is_a_duplicate() {
+        // setup:
         let r = MockTaskReader::new();
-        let mut w = MockTaskWriter::new();
-        w.expect_add_task()
+        let mut writer = MockTaskWriter::new();
+        writer.expect_add_task()
             .once()
             .returning(|_| Err(repository::AddError::NotUnique));
+        let svc = TaskService::new(Arc::new(r), Arc::new(writer));
 
-        let result = TaskService::new(Arc::new(r), Arc::new(w))
-            .add_task(AddTaskRequest { title: String::from("something to do") }).await;
+        // when:
+        let result = svc
+            .add_task(AddTaskRequest {
+                title: String::from("something to do"),
+            })
+            .await;
 
-        assert_matches!(result.unwrap_err(), AddTaskError::Duplicate)
+        // then:
+        assert_matches!(result.unwrap_err(), AddTaskError::Duplicate);
     }
 
     #[tokio::test]
-    async fn test_add_task_short_name() {
-        let r = MockTaskReader::new();
-        let mut w = MockTaskWriter::new();
+    async fn fail_when_title_is_short() {
+        // given:
+        let task_for_repository = Task::new("somt", Status::Pending);
 
-        w.expect_add_task()
-            .with(eq(Task::new("somt", Status::Pending)))
+        // setup:
+        let r = MockTaskReader::new();
+        let mut writer = MockTaskWriter::new();
+        writer.expect_add_task()
+            .with(eq(task_for_repository))
             .once()
             .returning(|mut v| {
                 v.set_id(TaskID::from(123));
                 Ok(v.clone())
+            });
+        let svc = TaskService::new(Arc::new(r), Arc::new(writer));
+
+        // when / then:
+        let result = svc
+            .add_task(AddTaskRequest {
+                title: String::from("som"),
             })
-        ;
-
-        let svc = TaskService::new(Arc::new(r), Arc::new(w));
-
-        let result = svc.add_task(AddTaskRequest { title: String::from("som") }).await;
+            .await;
         assert_matches!(result.unwrap_err(), AddTaskError::InvalidRequest(_));
 
-        let result = svc.add_task(AddTaskRequest { title: String::from("somt") }).await;
+        let result = svc
+            .add_task(AddTaskRequest {
+                title: String::from("somt"),
+            })
+            .await;
         assert_eq!(result.is_ok(), true);
     }
 
     #[tokio::test]
-    async fn test_add_task_short_unicode_title() {
+    async fn fail_when_title_is_short_unicode() {
+        // setup:
         let r = MockTaskReader::new();
         let w = MockTaskWriter::new();
-
         let svc = TaskService::new(Arc::new(r), Arc::new(w));
 
-        let result = svc.add_task(AddTaskRequest { title: String::from("🙂🙂🙂") }).await;
+        // when:
+        let result = svc
+            .add_task(AddTaskRequest {
+                title: String::from("🙂🙂🙂"),
+            })
+            .await;
+
+        // then:
         assert_matches!(result.unwrap_err(), AddTaskError::InvalidRequest(_));
     }
 }
@@ -121,63 +153,71 @@ mod get_task_by_id {
     use super::super::*;
 
     #[tokio::test]
-    async fn test_get_task_by_id() {
+    async fn return_task() {
+        // given:
         let id = TaskID::from(1234);
+        let stored_task = Task::new("some task", Status::Done)
+            .set_id(id)
+            .to_owned();
         let expected_task = Task::new("some task", Status::Done)
-            .set_id(TaskID::from(1234))
+            .set_id(id)
             .to_owned();
 
-        let mut r = MockTaskReader::new();
+        // setup:
+        let mut reader = MockTaskReader::new();
         let w = MockTaskWriter::new();
-
-        let t = expected_task.clone();
-        r.expect_get_task_by_id()
+        reader.expect_get_task_by_id()
             .with(eq(id))
             .once()
-            .returning(move |_| Ok(Some(t.clone())))
-        ;
+            .returning(move |_| Ok(Some(stored_task.clone())));
+        let svc = TaskService::new(Arc::new(reader), Arc::new(w));
 
-        let svc = TaskService::new(Arc::new(r), Arc::new(w));
-
+        // when:
         let result = svc.get_task_by_id(id).await;
+
+        // then:
         assert_eq!(result.unwrap(), Some(expected_task));
     }
 
     #[tokio::test]
-    async fn test_get_task_by_id_not_found() {
+    async fn return_none_when_task_not_found() {
+        // given:
         let id = TaskID::from(1234);
 
-        let mut r = MockTaskReader::new();
+        // setup:
+        let mut reader = MockTaskReader::new();
         let w = MockTaskWriter::new();
-
-        r.expect_get_task_by_id()
+        reader.expect_get_task_by_id()
             .with(eq(id))
             .once()
-            .returning(move |_| Ok(None))
-        ;
+            .returning(move |_| Ok(None));
+        let svc = TaskService::new(Arc::new(reader), Arc::new(w));
 
-        let svc = TaskService::new(Arc::new(r), Arc::new(w));
-
+        // when:
         let result = svc.get_task_by_id(id).await;
+
+        // then:
         assert_eq!(result.unwrap(), None);
     }
 
     #[tokio::test]
-    async fn test_get_task_by_id_error() {
+    async fn fail_on_reader_error() {
+        // given:
         let id = TaskID::from(1234);
 
-        let mut r = MockTaskReader::new();
+        // setup:
+        let mut reader = MockTaskReader::new();
         let w = MockTaskWriter::new();
-
-        r.expect_get_task_by_id()
+        reader.expect_get_task_by_id()
             .with(eq(id))
             .once()
-            .returning(move |_| Err(repository::ReadError::DatabaseFailure))
-        ;
+            .returning(move |_| Err(repository::ReadError::DatabaseFailure));
+        let svc = TaskService::new(Arc::new(reader), Arc::new(w));
 
-        let svc = TaskService::new(Arc::new(r), Arc::new(w));
-
+        // when:
         let result = svc.get_task_by_id(id).await;
+
+        // then:
         let err = result.unwrap_err();
         assert_matches!(err, GetTaskError::StorageError(_));
 
@@ -197,85 +237,104 @@ mod list_tasks {
 
     use crate::service::{
         model::{Status, Task},
-        port::repository::{self, GetTasksQuery as RepositoryListTasksRequest, MockTaskReader, MockTaskWriter},
+        port::repository::{
+            self, GetTasksQuery as RepositoryListTasksRequest, MockTaskReader, MockTaskWriter,
+        },
     };
 
     use super::super::*;
 
     #[tokio::test]
-    async fn test_list_tasks() {
-        let mut req = ListTasksRequest::default();
-        req.title = Some("remind Joe".into());
-
-        let mut expected_req = RepositoryListTasksRequest::default();
-        expected_req.title = Some("remind Joe".into());
-
-        let mut r = MockTaskReader::new();
-        let w = MockTaskWriter::new();
-
-        r.expect_get_tasks()
-            .with(eq(expected_req))
-            .once()
-            .returning(|_| Ok(vec![
-                Task::new("hello 1", Status::Done),
-                Task::new("hello 2", Status::Cancelled),
-                Task::new("hello 2", Status::Pending),
-            ]))
-        ;
-
-        let svc = TaskService::new(Arc::new(r), Arc::new(w));
-
-        let result = svc.list_tasks(req).await;
-        assert_eq!(result.unwrap(), vec![
+    async fn return_list_of_tasks() {
+        // given:
+        let req = ListTasksRequest {
+            title: Some("remind Joe".into()),
+            ..ListTasksRequest::default()
+        };
+        let repository_query = RepositoryListTasksRequest {
+            title: Some("remind Joe".into()),
+            ..RepositoryListTasksRequest::default()
+        };
+        let stored_tasks = vec![
             Task::new("hello 1", Status::Done),
             Task::new("hello 2", Status::Cancelled),
             Task::new("hello 2", Status::Pending),
-        ]);
+        ];
+        let expected_tasks = vec![
+            Task::new("hello 1", Status::Done),
+            Task::new("hello 2", Status::Cancelled),
+            Task::new("hello 2", Status::Pending),
+        ];
+
+        // setup:
+        let mut reader = MockTaskReader::new();
+        let w = MockTaskWriter::new();
+        reader.expect_get_tasks()
+            .with(eq(repository_query))
+            .once()
+            .returning(move |_| Ok(stored_tasks.clone()));
+        let svc = TaskService::new(Arc::new(reader), Arc::new(w));
+
+        // when:
+        let result = svc.list_tasks(req).await;
+
+        // then:
+        assert_eq!(result.unwrap(), expected_tasks);
     }
 
     #[tokio::test]
-    async fn test_list_tasks_empty() {
-        let mut req = ListTasksRequest::default();
-        req.title = Some("remind Joe".into());
+    async fn return_empty_list() {
+        // given:
+        let req = ListTasksRequest {
+            title: Some("remind Joe".into()),
+            ..ListTasksRequest::default()
+        };
+        let repository_query = RepositoryListTasksRequest {
+            title: Some("remind Joe".into()),
+            ..RepositoryListTasksRequest::default()
+        };
 
-        let mut expected_req = RepositoryListTasksRequest::default();
-        expected_req.title = Some("remind Joe".into());
-
-        let mut r = MockTaskReader::new();
+        // setup:
+        let mut reader = MockTaskReader::new();
         let w = MockTaskWriter::new();
-
-        r.expect_get_tasks()
-            .with(eq(expected_req))
+        reader.expect_get_tasks()
+            .with(eq(repository_query))
             .once()
-            .returning(|_| Ok(vec![]))
-        ;
+            .returning(|_| Ok(vec![]));
+        let svc = TaskService::new(Arc::new(reader), Arc::new(w));
 
-        let svc = TaskService::new(Arc::new(r), Arc::new(w));
-
+        // when:
         let result = svc.list_tasks(req).await;
+
+        // then:
         assert_eq!(result.unwrap(), vec![]);
     }
 
     #[tokio::test]
-    async fn test_list_tasks_err() {
-        let mut req = ListTasksRequest::default();
-        req.title = Some("remind Joe".into());
+    async fn fail_on_reader_error() {
+        // given:
+        let req = ListTasksRequest {
+            title: Some("remind Joe".into()),
+            ..ListTasksRequest::default()
+        };
+        let repository_query = RepositoryListTasksRequest {
+            title: Some("remind Joe".into()),
+            ..RepositoryListTasksRequest::default()
+        };
 
-        let mut expected_req = RepositoryListTasksRequest::default();
-        expected_req.title = Some("remind Joe".into());
-
-        let mut r = MockTaskReader::new();
+        // setup:
+        let mut reader = MockTaskReader::new();
         let w = MockTaskWriter::new();
-
-        r.expect_get_tasks()
-            .with(eq(expected_req))
+        reader.expect_get_tasks()
+            .with(eq(repository_query))
             .once()
-            .returning(|_| Err(repository::ReadError::DatabaseFailure))
-        ;
+            .returning(|_| Err(repository::ReadError::DatabaseFailure));
+        let svc = TaskService::new(Arc::new(reader), Arc::new(w));
 
-        let svc = TaskService::new(Arc::new(r), Arc::new(w));
-
+        // when:
         let result = svc.list_tasks(req).await;
+
+        // then:
         let err = result.unwrap_err();
         assert_matches!(err, ListTasksError::StorageError(_));
 
@@ -294,7 +353,7 @@ mod rename_task {
     use assert_matches::assert_matches;
 
     use crate::service::{
-        model::{Status, Task},
+        model::{Status, Task, TaskID},
         port::repository::{self, MockTaskReader, MockTaskWriter},
     };
 
@@ -302,110 +361,120 @@ mod rename_task {
 
     #[tokio::test]
     pub async fn rename_task() {
+        // given:
         let id = TaskID::from(1234);
-        let existing_task = Task::new("some task", Status::Done)
-            .set_id(TaskID::from(1234))
+        let stored_task = Task::new("some task", Status::Done)
+            .set_id(id)
+            .to_owned();
+        let task_for_update = Task::new("new title", Status::Done)
+            .set_id(id)
+            .to_owned();
+        let expected_task = Task::new("new title", Status::Done)
+            .set_id(id)
+            .to_owned();
+        let repository_response = Task::new("new title", Status::Done)
+            .set_id(id)
             .to_owned();
 
-        let expected_task = existing_task.clone().set_title("new title".into()).to_owned();
-
-        let mut r = MockTaskReader::new();
-        let mut w = MockTaskWriter::new();
-
-        let t = existing_task.clone();
-        r.expect_get_task_by_id()
+        // setup:
+        let mut reader = MockTaskReader::new();
+        let mut writer = MockTaskWriter::new();
+        reader.expect_get_task_by_id()
             .with(eq(id))
             .once()
-            .returning(move |_| Ok(Some(t.clone())))
-        ;
-
-        let t = expected_task.clone();
-        w.expect_update_task()
-            .with(eq(expected_task.clone()))
+            .returning(move |_| Ok(Some(stored_task.clone())));
+        writer.expect_update_task()
+            .with(eq(task_for_update))
             .once()
-            .returning(move |_| Ok(t.clone()))
-        ;
+            .returning(move |_| Ok(repository_response.clone()));
+        let svc = TaskService::new(Arc::new(reader), Arc::new(writer));
 
-        let svc = TaskService::new(Arc::new(r), Arc::new(w));
-
+        // when:
         let result = svc.rename_task(id, String::from("new title")).await;
+
+        // then:
         assert_eq!(result.unwrap(), expected_task);
     }
 
     #[tokio::test]
-    pub async fn return_not_found() {
+    pub async fn fail_when_task_not_found() {
+        // given:
         let id = TaskID::from(1234);
 
-        let mut r = MockTaskReader::new();
+        // setup:
+        let mut reader = MockTaskReader::new();
         let w = MockTaskWriter::new();
-
-        r.expect_get_task_by_id()
+        reader.expect_get_task_by_id()
             .with(eq(id))
             .once()
-            .returning(move |_| Ok(None))
-        ;
+            .returning(move |_| Ok(None));
+        let svc = TaskService::new(Arc::new(reader), Arc::new(w));
 
-        let svc = TaskService::new(Arc::new(r), Arc::new(w));
-
+        // when:
         let result = svc.rename_task(id, String::from("new title")).await;
+
+        // then:
         assert_matches!(result.unwrap_err(), RenameTaskError::NotFound);
     }
 
-
     #[tokio::test]
-    pub async fn short_name() {
-        let id = TaskID::from(1234);
-
+    pub async fn fail_if_name_is_too_short() {
+        // setup:
         let r = MockTaskReader::new();
         let w = MockTaskWriter::new();
-
         let svc = TaskService::new(Arc::new(r), Arc::new(w));
 
+        // when:
+        let id = TaskID::from(1234);
         let result = svc.rename_task(id, String::from("new")).await;
+
+        // then:
         assert_matches!(result.unwrap_err(), RenameTaskError::InvalidRequest(_));
     }
 
     #[tokio::test]
-    pub async fn short_unicode_name() {
-        let id = TaskID::from(1234);
-
+    pub async fn fail_if_name_is_too_short_unicode() {
+        // setup:
         let r = MockTaskReader::new();
         let w = MockTaskWriter::new();
-
         let svc = TaskService::new(Arc::new(r), Arc::new(w));
 
+        // when:
+        let id = TaskID::from(1234);
         let result = svc.rename_task(id, String::from("日本語")).await;
+
+        // then:
         assert_matches!(result.unwrap_err(), RenameTaskError::InvalidRequest(_));
     }
 
     #[tokio::test]
-    pub async fn duplicate() {
+    pub async fn fail_if_task_becomes_a_pending_duplicate() {
+        // given:
         let id = TaskID::from(1234);
-        let existing_task = Task::new("some task", Status::Done)
-            .set_id(TaskID::from(1234))
+        let stored_task = Task::new("some task", Status::Done)
+            .set_id(id)
+            .to_owned();
+        let task_for_update = Task::new("new title", Status::Done)
+            .set_id(id)
             .to_owned();
 
-        let expected_task = existing_task.clone().set_title("new title".into()).to_owned();
-
-        let mut r = MockTaskReader::new();
-        let mut w = MockTaskWriter::new();
-
-        let t = existing_task.clone();
-        r.expect_get_task_by_id()
+        // setup:
+        let mut reader = MockTaskReader::new();
+        let mut writer = MockTaskWriter::new();
+        reader.expect_get_task_by_id()
             .with(eq(id))
             .once()
-            .returning(move |_| Ok(Some(t.clone())))
-        ;
-
-        w.expect_update_task()
-            .with(eq(expected_task.clone()))
+            .returning(move |_| Ok(Some(stored_task.clone())));
+        writer.expect_update_task()
+            .with(eq(task_for_update))
             .once()
-            .returning(move |_| Err(repository::UpdateError::NotUnique))
-        ;
+            .returning(|_| Err(repository::UpdateError::NotUnique));
+        let svc = TaskService::new(Arc::new(reader), Arc::new(writer));
 
-        let svc = TaskService::new(Arc::new(r), Arc::new(w));
-
+        // when:
         let result = svc.rename_task(id, String::from("new title")).await;
+
+        // then:
         assert_matches!(result.unwrap_err(), RenameTaskError::Duplicate);
     }
 }
@@ -416,7 +485,7 @@ mod change_status {
     use assert_matches::assert_matches;
 
     use crate::service::{
-        model::{Status, Task},
+        model::{Status, Task, TaskID},
         port::repository::{self, MockTaskReader, MockTaskWriter},
     };
 
@@ -424,83 +493,90 @@ mod change_status {
 
     #[tokio::test]
     pub async fn change_status() {
+        // given:
         let id = TaskID::from(1234);
-        let existing_task = Task::new("some task", Status::Pending)
-            .set_id(TaskID::from(1234))
+        let stored_task = Task::new("some task", Status::Pending)
+            .set_id(id)
+            .to_owned();
+        let task_for_update = Task::new("some task", Status::Done)
+            .set_id(id)
+            .to_owned();
+        let expected_task = Task::new("some task", Status::Done)
+            .set_id(id)
+            .to_owned();
+        let repository_response = Task::new("some task", Status::Done)
+            .set_id(id)
             .to_owned();
 
-        let expected_task = existing_task.clone().set_status(Status::Done).to_owned();
-
-        let mut r = MockTaskReader::new();
-        let mut w = MockTaskWriter::new();
-
-        let t = existing_task.clone();
-        r.expect_get_task_by_id()
+        // setup:
+        let mut reader = MockTaskReader::new();
+        let mut writer = MockTaskWriter::new();
+        reader.expect_get_task_by_id()
             .with(eq(id))
             .once()
-            .returning(move |_| Ok(Some(t.clone())))
-        ;
-
-        let t = expected_task.clone();
-        w.expect_update_task()
-            .with(eq(expected_task.clone()))
+            .returning(move |_| Ok(Some(stored_task.clone())));
+        writer.expect_update_task()
+            .with(eq(task_for_update))
             .once()
-            .returning(move |_| Ok(t.clone()))
-        ;
+            .returning(move |_| Ok(repository_response.clone()));
+        let svc = TaskService::new(Arc::new(reader), Arc::new(writer));
 
-        let svc = TaskService::new(Arc::new(r), Arc::new(w));
-
+        // when:
         let result = svc.change_status(id, Status::Done).await;
+
+        // then:
         assert_eq!(result.unwrap(), expected_task);
     }
 
     #[tokio::test]
-    pub async fn return_not_found() {
+    pub async fn fail_when_task_not_found() {
+        // given:
         let id = TaskID::from(1234);
 
-        let mut r = MockTaskReader::new();
+        // setup:
+        let mut reader = MockTaskReader::new();
         let w = MockTaskWriter::new();
-
-        r.expect_get_task_by_id()
+        reader.expect_get_task_by_id()
             .with(eq(id))
             .once()
-            .returning(move |_| Ok(None))
-        ;
+            .returning(move |_| Ok(None));
+        let svc = TaskService::new(Arc::new(reader), Arc::new(w));
 
-        let svc = TaskService::new(Arc::new(r), Arc::new(w));
-
+        // when:
         let result = svc.change_status(id, Status::Done).await;
+
+        // then:
         assert_matches!(result.unwrap_err(), ChangeStatusError::NotFound);
     }
 
     #[tokio::test]
-    pub async fn duplicate() {
+    pub async fn fail_if_task_becomes_a_pending_duplicate() {
+        // given:
         let id = TaskID::from(1234);
-        let existing_task = Task::new("some task", Status::Done)
-            .set_id(TaskID::from(1234))
+        let stored_task = Task::new("some task", Status::Done)
+            .set_id(id)
+            .to_owned();
+        let task_for_update = Task::new("some task", Status::Pending)
+            .set_id(id)
             .to_owned();
 
-        let expected_task = existing_task.clone().set_status(Status::Pending).to_owned();
-
-        let mut r = MockTaskReader::new();
-        let mut w = MockTaskWriter::new();
-
-        let t = existing_task.clone();
-        r.expect_get_task_by_id()
+        // setup:
+        let mut reader = MockTaskReader::new();
+        let mut writer = MockTaskWriter::new();
+        reader.expect_get_task_by_id()
             .with(eq(id))
             .once()
-            .returning(move |_| Ok(Some(t.clone())))
-        ;
-
-        w.expect_update_task()
-            .with(eq(expected_task.clone()))
+            .returning(move |_| Ok(Some(stored_task.clone())));
+        writer.expect_update_task()
+            .with(eq(task_for_update))
             .once()
-            .returning(move |_| Err(repository::UpdateError::NotUnique))
-        ;
+            .returning(|_| Err(repository::UpdateError::NotUnique));
+        let svc = TaskService::new(Arc::new(reader), Arc::new(writer));
 
-        let svc = TaskService::new(Arc::new(r), Arc::new(w));
-
+        // when:
         let result = svc.change_status(id, Status::Pending).await;
+
+        // then:
         assert_matches!(result.unwrap_err(), ChangeStatusError::Duplicate);
     }
 }
