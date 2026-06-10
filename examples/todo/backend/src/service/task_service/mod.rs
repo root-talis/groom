@@ -1,8 +1,12 @@
 use std::sync::Arc;
 
-use crate::service::{model::{Status, Task, TaskID}, repository::{TaskAddRepositoryError, TaskFilter, TaskReadRepositoryError, TaskReader, TaskWriter}};
+use crate::service::{
+    error::StorageError,
+    model::{self, Status, Task, TaskID},
+    port::repository::{self, TaskReader, TaskWriter},
+};
 
-use super::repository::{TaskReadRepositoryError::DatabaseFailure, TaskUpdateRepositoryError};
+use repository::{AddError, ReadError::DatabaseFailure, UpdateError};
 
 
 #[cfg(test)]
@@ -45,7 +49,7 @@ pub enum AddTaskError {
     InvalidRequest(&'static str),
 
     #[error("storage error")]
-    StorareError(#[source] TaskAddRepositoryError),
+    StorageError(#[from] StorageError),
 }
 
 impl TaskService {
@@ -53,14 +57,14 @@ impl TaskService {
         Self::validate_title(&req.title).map_err(AddTaskError::InvalidRequest)?;
 
         self.writer
-            .add_task(Task::new(req.title, Status::Pending))
+            .add_task(model::Task::new(req.title, Status::Pending))
             .await
             .map_err(|e| match e {
-                TaskAddRepositoryError::NotUnique => 
+                AddError::NotUnique =>
                     AddTaskError::Duplicate,
 
-                TaskAddRepositoryError::DatabaseFailure => 
-                    AddTaskError::StorareError(e),
+                AddError::DatabaseFailure =>
+                    AddTaskError::StorageError(StorageError::new(e)),
             })
     }
 }
@@ -74,13 +78,13 @@ impl TaskService {
 #[derive(Debug, thiserror::Error)]
 pub enum GetTaskError {
     #[error("storage error")]
-    StorareError(#[source] TaskReadRepositoryError),
+    StorageError(#[from] StorageError),
 }
 
 impl TaskService {
     pub async fn get_task_by_id(&self, id: TaskID) -> Result<Option<Task>, GetTaskError> {
         self.reader.get_task_by_id(id).await.map_err(|e| match e {
-            DatabaseFailure => GetTaskError::StorareError(e),
+            DatabaseFailure => GetTaskError::StorageError(StorageError::new(e)),
         })
     }
 }
@@ -91,22 +95,66 @@ impl TaskService {
 // region: list_tasks
 //
 
+#[derive(Debug, Clone, Default, PartialEq, Eq)]
+pub struct ListTasksRequest {
+    pub title:  Option<String>,
+    pub status: Option<Vec<Status>>,
+
+    pub sort_by: TaskSortField,
+    pub order:   SortOrder,
+}
+
+impl Into<repository::GetTasksQuery> for ListTasksRequest {
+    fn into(self) -> repository::GetTasksQuery {
+        repository::GetTasksQuery {
+            title:   self.title,
+            status:  self.status,
+            sort_by: match self.sort_by {
+                TaskSortField::Id     => repository::TaskSortField::Id,
+                TaskSortField::Title  => repository::TaskSortField::Title,
+                TaskSortField::Status => repository::TaskSortField::Status,
+            },
+            order: match self.order {
+                SortOrder::Ascending  => repository::SortOrder::Ascending,
+                SortOrder::Descending => repository::SortOrder::Descending,
+            },
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
+pub enum TaskSortField {
+    #[default]
+    Id,
+    Title,
+    Status,
+}
+
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
+pub enum SortOrder {
+    #[default]
+    Ascending,
+    Descending,
+}
+
 #[derive(Debug, thiserror::Error)]
 pub enum ListTasksError {
     #[error("storage error")]
-    StorareError(#[source] TaskReadRepositoryError),
+    StorageError(#[from] StorageError),
 }
 
 impl TaskService {
-    pub async fn list_tasks(&self, filter: TaskFilter) -> Result<Vec<Task>, ListTasksError> {
-        self.reader.get_tasks(filter).await.map_err(|e| match e {
-            DatabaseFailure => ListTasksError::StorareError(e),
-        })
+    pub async fn list_tasks(&self, req: ListTasksRequest) -> Result<Vec<Task>, ListTasksError> {
+        self.reader.get_tasks(req.into())
+            .await
+            .map_err(|e| match e {
+                DatabaseFailure => ListTasksError::StorageError(StorageError::new(e)),
+            })
     }
 }
 
 //
-// endregion: get_task_by_id
+// endregion: list_tasks
 
 // region: rename task
 //
@@ -118,7 +166,7 @@ impl TaskService {
         let mut task = self.reader.get_task_by_id(task_id)
             .await
             .map_err(|e| match e {
-                DatabaseFailure => RenameTaskError::StorageReadError(e),
+                DatabaseFailure => RenameTaskError::StorageReadError(StorageError::new(e)),
             })?
             .ok_or(RenameTaskError::NotFound)?
         ;
@@ -126,9 +174,10 @@ impl TaskService {
         task.set_title(title);
 
         self.writer.update_task(task).await.map_err(|e| match e {
-            TaskUpdateRepositoryError::NotFound => RenameTaskError::NotFound,
-            TaskUpdateRepositoryError::NotUnique => RenameTaskError::Duplicate,
-            TaskUpdateRepositoryError::DatabaseFailure => RenameTaskError::StorageWriteError(e),
+            UpdateError::NotFound => RenameTaskError::NotFound,
+            UpdateError::NotUnique => RenameTaskError::Duplicate,
+            UpdateError::DatabaseFailure =>
+                RenameTaskError::StorageWriteError(StorageError::new(e)),
         })
     }
 }
@@ -145,10 +194,10 @@ pub enum RenameTaskError {
     Duplicate,
 
     #[error("storage error while fetching task")]
-    StorageReadError(#[source] TaskReadRepositoryError),
+    StorageReadError(#[source] StorageError),
 
     #[error("storage error while updating task")]
-    StorageWriteError(#[source] TaskUpdateRepositoryError),
+    StorageWriteError(#[source] StorageError),
 }
 
 //
@@ -162,7 +211,7 @@ impl TaskService {
         let mut task = self.reader.get_task_by_id(task_id)
             .await
             .map_err(|e| match e {
-                DatabaseFailure => ChangeStatusError::StorageReadError(e),
+                DatabaseFailure => ChangeStatusError::StorageReadError(StorageError::new(e)),
             })?
             .ok_or(ChangeStatusError::NotFound)?
         ;
@@ -170,9 +219,10 @@ impl TaskService {
         task.set_status(status);
 
         self.writer.update_task(task).await.map_err(|e| match e {
-            TaskUpdateRepositoryError::NotFound => ChangeStatusError::NotFound,
-            TaskUpdateRepositoryError::NotUnique => ChangeStatusError::Duplicate,
-            TaskUpdateRepositoryError::DatabaseFailure => ChangeStatusError::StorageWriteError(e),
+            UpdateError::NotFound => ChangeStatusError::NotFound,
+            UpdateError::NotUnique => ChangeStatusError::Duplicate,
+            UpdateError::DatabaseFailure =>
+                ChangeStatusError::StorageWriteError(StorageError::new(e)),
         })
     }
 }
@@ -186,10 +236,10 @@ pub enum ChangeStatusError {
     Duplicate,
 
     #[error("storage error while fetching task")]
-    StorageReadError(#[source] TaskReadRepositoryError),
+    StorageReadError(#[source] StorageError),
 
     #[error("storage error while updating task")]
-    StorageWriteError(#[source] TaskUpdateRepositoryError),
+    StorageWriteError(#[source] StorageError),
 }
 
 //

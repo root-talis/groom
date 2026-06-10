@@ -29,7 +29,10 @@ mod add_task {
     use assert_matches::assert_matches;
     use pretty_assertions::assert_eq;
 
-    use crate::service::{model::{Status, Task, TaskID}, repository::{MockTaskReader, MockTaskWriter}};
+    use crate::service::{
+        model::{Status, Task, TaskID},
+        port::repository::{self, MockTaskReader, MockTaskWriter},
+    };
 
     use super::super::*;
 
@@ -62,7 +65,7 @@ mod add_task {
         let mut w = MockTaskWriter::new();
         w.expect_add_task()
             .once()
-            .returning(|_| Err(TaskAddRepositoryError::NotUnique));
+            .returning(|_| Err(repository::AddError::NotUnique));
 
         let result = TaskService::new(Arc::new(r), Arc::new(w))
             .add_task(AddTaskRequest { title: String::from("something to do") }).await;
@@ -110,7 +113,10 @@ mod get_task_by_id {
     use assert_matches::assert_matches;
     use pretty_assertions::assert_eq;
 
-    use crate::service::{model::{Status, Task, TaskID}, repository::{MockTaskReader, MockTaskWriter}};
+    use crate::service::{
+        model::{Status, Task, TaskID},
+        port::repository::{self, MockTaskReader, MockTaskWriter},
+    };
 
     use super::super::*;
 
@@ -166,13 +172,21 @@ mod get_task_by_id {
         r.expect_get_task_by_id()
             .with(eq(id))
             .once()
-            .returning(move |_| Err(TaskReadRepositoryError::DatabaseFailure))
+            .returning(move |_| Err(repository::ReadError::DatabaseFailure))
         ;
 
         let svc = TaskService::new(Arc::new(r), Arc::new(w));
 
         let result = svc.get_task_by_id(id).await;
-        assert_matches!(result.unwrap_err(), GetTaskError::StorareError(TaskReadRepositoryError::DatabaseFailure));
+        let err = result.unwrap_err();
+        assert_matches!(err, GetTaskError::StorageError(_));
+
+        let storage_err = std::error::Error::source(&err).unwrap();
+        let repo_err = std::error::Error::source(storage_err).unwrap();
+        assert_matches!(
+            repo_err.downcast_ref::<repository::ReadError>(),
+            Some(repository::ReadError::DatabaseFailure)
+        );
     }
 }
 
@@ -181,20 +195,26 @@ mod list_tasks {
     use assert_matches::assert_matches;
     use pretty_assertions::assert_eq;
 
-    use crate::service::{model::{Status, Task}, repository::{MockTaskReader, MockTaskWriter}};
+    use crate::service::{
+        model::{Status, Task},
+        port::repository::{self, GetTasksQuery as RepositoryListTasksRequest, MockTaskReader, MockTaskWriter},
+    };
 
     use super::super::*;
 
     #[tokio::test]
     async fn test_list_tasks() {
-        let mut filter = TaskFilter::default();
-        filter.title = Some("remind Joe".into());
+        let mut req = ListTasksRequest::default();
+        req.title = Some("remind Joe".into());
+
+        let mut expected_req = RepositoryListTasksRequest::default();
+        expected_req.title = Some("remind Joe".into());
 
         let mut r = MockTaskReader::new();
         let w = MockTaskWriter::new();
 
         r.expect_get_tasks()
-            .with(eq(filter.clone()))
+            .with(eq(expected_req))
             .once()
             .returning(|_| Ok(vec![
                 Task::new("hello 1", Status::Done),
@@ -205,7 +225,7 @@ mod list_tasks {
 
         let svc = TaskService::new(Arc::new(r), Arc::new(w));
 
-        let result = svc.list_tasks(filter).await;
+        let result = svc.list_tasks(req).await;
         assert_eq!(result.unwrap(), vec![
             Task::new("hello 1", Status::Done),
             Task::new("hello 2", Status::Cancelled),
@@ -215,42 +235,56 @@ mod list_tasks {
 
     #[tokio::test]
     async fn test_list_tasks_empty() {
-        let mut filter = TaskFilter::default();
-        filter.title = Some("remind Joe".into());
+        let mut req = ListTasksRequest::default();
+        req.title = Some("remind Joe".into());
+
+        let mut expected_req = RepositoryListTasksRequest::default();
+        expected_req.title = Some("remind Joe".into());
 
         let mut r = MockTaskReader::new();
         let w = MockTaskWriter::new();
 
         r.expect_get_tasks()
-            .with(eq(filter.clone()))
+            .with(eq(expected_req))
             .once()
             .returning(|_| Ok(vec![]))
         ;
 
         let svc = TaskService::new(Arc::new(r), Arc::new(w));
 
-        let result = svc.list_tasks(filter).await;
+        let result = svc.list_tasks(req).await;
         assert_eq!(result.unwrap(), vec![]);
     }
 
     #[tokio::test]
     async fn test_list_tasks_err() {
-        let mut filter = TaskFilter::default();
-        filter.title = Some("remind Joe".into());
+        let mut req = ListTasksRequest::default();
+        req.title = Some("remind Joe".into());
+
+        let mut expected_req = RepositoryListTasksRequest::default();
+        expected_req.title = Some("remind Joe".into());
 
         let mut r = MockTaskReader::new();
         let w = MockTaskWriter::new();
 
         r.expect_get_tasks()
-            .with(eq(filter.clone()))
+            .with(eq(expected_req))
             .once()
-            .returning(|_| Err(TaskReadRepositoryError::DatabaseFailure))
+            .returning(|_| Err(repository::ReadError::DatabaseFailure))
         ;
 
         let svc = TaskService::new(Arc::new(r), Arc::new(w));
 
-        let result = svc.list_tasks(filter).await;
-        assert_matches!(result.unwrap_err(), ListTasksError::StorareError(TaskReadRepositoryError::DatabaseFailure));
+        let result = svc.list_tasks(req).await;
+        let err = result.unwrap_err();
+        assert_matches!(err, ListTasksError::StorageError(_));
+
+        let storage_err = std::error::Error::source(&err).unwrap();
+        let repo_err = std::error::Error::source(storage_err).unwrap();
+        assert_matches!(
+            repo_err.downcast_ref::<repository::ReadError>(),
+            Some(repository::ReadError::DatabaseFailure)
+        );
     }
 }
 
@@ -259,7 +293,10 @@ mod rename_task {
     use pretty_assertions::assert_eq;
     use assert_matches::assert_matches;
 
-    use crate::service::{model::{Status, Task}, repository::{MockTaskReader, MockTaskWriter, TaskUpdateRepositoryError}};
+    use crate::service::{
+        model::{Status, Task},
+        port::repository::{self, MockTaskReader, MockTaskWriter},
+    };
 
     use super::super::*;
 
@@ -363,7 +400,7 @@ mod rename_task {
         w.expect_update_task()
             .with(eq(expected_task.clone()))
             .once()
-            .returning(move |_| Err(TaskUpdateRepositoryError::NotUnique))
+            .returning(move |_| Err(repository::UpdateError::NotUnique))
         ;
 
         let svc = TaskService::new(Arc::new(r), Arc::new(w));
@@ -378,7 +415,10 @@ mod change_status {
     use pretty_assertions::assert_eq;
     use assert_matches::assert_matches;
 
-    use crate::service::{model::{Status, Task}, repository::{MockTaskReader, MockTaskWriter, TaskUpdateRepositoryError}};
+    use crate::service::{
+        model::{Status, Task},
+        port::repository::{self, MockTaskReader, MockTaskWriter},
+    };
 
     use super::super::*;
 
@@ -455,7 +495,7 @@ mod change_status {
         w.expect_update_task()
             .with(eq(expected_task.clone()))
             .once()
-            .returning(move |_| Err(TaskUpdateRepositoryError::NotUnique))
+            .returning(move |_| Err(repository::UpdateError::NotUnique))
         ;
 
         let svc = TaskService::new(Arc::new(r), Arc::new(w));

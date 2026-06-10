@@ -45,12 +45,11 @@ mod controller {
     use tracing::debug;
 
     use crate::service::{
-        model::{Status, Task, TaskID},
-        repository::TaskFilter,
-        task_service::{self, AddTaskError, ChangeStatusError, RenameTaskError, TaskService}
+        model::{self, Status, TaskID},
+        task_service::{self, TaskService},
     };
 
-    use super::model::{SortDirection, TaskViewModel, TasksSortBy};
+    use super::model::{SortOrder, Task, TaskSortField};
 
     // region: list tasks
     //
@@ -59,58 +58,58 @@ mod controller {
     #[Route(method="get", path="/tasks")]
     pub async fn list_tasks(
         Extension(task_service): Extension<Arc<TaskService>>,
-        Query(filters): Query<TaskListFilters>
-    ) -> TaskListResponse {
-        debug!("Filters parsed: {:?}", filters);
-        match task_service.list_tasks(filters.into()).await {
+        Query(req): Query<ListTasksRequest>
+    ) -> ListTasksResponse {
+        debug!("List tasks request: {:?}", req);
+        match task_service.list_tasks(req.into()).await {
             Ok(l) => {
-                let tasks: Result<Vec<TaskViewModel>, ()> = l.iter()
-                    .map(|t| TaskViewModel::try_from(t.clone()))
+                let tasks: Result<Vec<Task>, ()> = l.iter()
+                    .map(|t| Task::try_from(t.clone()))
                     .collect()
                 ;
 
                 match tasks {
-                    Ok(v)  => TaskListResponse::Ok(TaskList(v)),
-                    Err(_) => TaskListResponse::ServerError,
+                    Ok(v)  => ListTasksResponse::Ok(TasksList(v)),
+                    Err(_) => ListTasksResponse::ServerError,
                 }
             },
-            Err(_) => TaskListResponse::ServerError,
+            Err(_) => ListTasksResponse::ServerError,
         }
     }
 
-    /// Task list filters
+    /// Query parameters for listing tasks.
     #[DTO(parameters)]
     #[derive(Debug)]
-    pub struct TaskListFilters {
+    pub struct ListTasksRequest {
         pub title:  Option<String>,
         pub status: Option<Vec<Status>>,
 
         #[serde(default)]
-        pub sort_by: TasksSortBy,
+        pub sort_by: TaskSortField,
 
         #[serde(default)]
-        pub order:   SortDirection,
+        pub order:   SortOrder,
     }
 
-    impl From<TaskListFilters> for TaskFilter {
-        fn from(val: TaskListFilters) -> Self {
-            TaskFilter {
-                title:   val.title,
-                status:  val.status,
-                sort_by: val.sort_by.into(),
-                order:   val.order.into(),
+    impl From<ListTasksRequest> for task_service::ListTasksRequest {
+        fn from(req: ListTasksRequest) -> Self {
+            task_service::ListTasksRequest {
+                title:   req.title,
+                status:  req.status,
+                sort_by: req.sort_by.into(),
+                order:   req.order.into(),
             }
         }
     }
 
     #[DTO(response)]
-    pub struct TaskList(Vec::<TaskViewModel>);
+    pub struct TasksList(Vec<Task>);
 
     /// List of tasks.
     #[Response(format(json))]
-    pub enum TaskListResponse {
+    pub enum ListTasksResponse {
         #[Response(code = 200)]
-        Ok(TaskList),
+        Ok(TasksList),
 
         #[Response(code = 500)]
         ServerError,
@@ -126,7 +125,7 @@ mod controller {
     #[Route(method="get", path="/tasks/{task_id}")]
     pub async fn get_task(
         Extension(task_service): Extension<Arc<TaskService>>,
-        Path(path): Path<TaskIdentifier>
+        Path(path): Path<TaskId>
     ) -> GetTaskResponse {
         match task_service.get_task_by_id(TaskID::from(path.task_id)).await {
             Ok(maybe) => match maybe {
@@ -141,9 +140,9 @@ mod controller {
         }
     }
 
-    /// Params to get a single task
+    /// Path parameter identifying a task.
     #[DTO(parameters)]
-    pub struct TaskIdentifier {
+    pub struct TaskId {
         pub task_id: u64,
     }
 
@@ -151,7 +150,7 @@ mod controller {
     #[Response(format(json))]
     pub enum GetTaskResponse {
         #[Response(code = 200)]
-        Ok(TaskViewModel),
+        Ok(Task),
 
         #[Response(code = 404)]
         NotFound,
@@ -172,7 +171,7 @@ mod controller {
         Extension(task_service): Extension<Arc<TaskService>>,
         req: AddTaskRequest
     ) -> AddTaskResponse {
-        let req = task_service::AddTaskRequest{
+        let req = task_service::AddTaskRequest {
             title: req.title,
         };
 
@@ -183,14 +182,14 @@ mod controller {
             },
 
             Err(e) => match e {
-                AddTaskError::Duplicate =>
+                task_service::AddTaskError::Duplicate =>
                     AddTaskResponse::AlreadyExists,
 
-                AddTaskError::InvalidRequest(reason) => 
+                task_service::AddTaskError::InvalidRequest(reason) => 
                     AddTaskResponse::MalformedRequest(reason.into()),
 
-                AddTaskError::StorareError(task_add_error) => {
-                    tracing::error!(err = task_add_error.to_string(), "storage error when adding task");
+                task_service::AddTaskError::StorageError(err) => {
+                    tracing::error!(err = %err, "storage error when adding task");
                     AddTaskResponse::ServerError
                 },
             },
@@ -208,7 +207,7 @@ mod controller {
     pub enum AddTaskResponse {
         /// Task added successfully
         #[Response(code = 200)]
-        Ok(TaskViewModel),
+        Ok(Task),
 
         /// Task already exists with the same title
         #[Response(code = 409)]
@@ -233,29 +232,30 @@ mod controller {
     #[Route(method="put", path="/tasks/{task_id}/name")]
     pub async fn rename_task(
         Extension(task_service): Extension<Arc<TaskService>>,
-        Path(task_id): Path<TaskIdentifier>,
+        Path(task_id): Path<TaskId>,
         req: RenameTaskRequest
     ) -> RenameTaskResponse {
         let result = task_service.rename_task(TaskID::from(task_id.task_id), req.title).await;
         match result {
             Ok(t) => 
-                match TaskViewModel::try_from(t) {
+                match Task::try_from(t) {
                     Ok(d)  => RenameTaskResponse::Ok(d),
                     Err(_) => RenameTaskResponse::ServerError,
                 }
             ,
 
             Err(e) => match e {
-                RenameTaskError::InvalidRequest(d) =>
+                task_service::RenameTaskError::InvalidRequest(d) =>
                     RenameTaskResponse::MalformedRequest(d.into()),
 
-                RenameTaskError::NotFound => 
+                task_service::RenameTaskError::NotFound => 
                     RenameTaskResponse::NotFound,
 
-                RenameTaskError::Duplicate => 
+                task_service::RenameTaskError::Duplicate => 
                     RenameTaskResponse::AlreadyExists,
 
-                RenameTaskError::StorageReadError(_) | RenameTaskError::StorageWriteError(_) => 
+                task_service::RenameTaskError::StorageReadError(_)
+                | task_service::RenameTaskError::StorageWriteError(_) => 
                     RenameTaskResponse::ServerError,
             },
         }
@@ -271,7 +271,7 @@ mod controller {
     #[Response(format(json))]
     pub enum RenameTaskResponse {
         #[Response(code = 200)]
-        Ok(TaskViewModel),
+        Ok(Task),
 
         #[Response(code = 404)]
         NotFound,
@@ -296,7 +296,7 @@ mod controller {
     #[Route(method="put", path="/tasks/{task_id}/status/done")]
     pub async fn set_done(
         Extension(task_service): Extension<Arc<TaskService>>,
-        Path(task_id): Path<TaskIdentifier>
+        Path(task_id): Path<TaskId>
     ) -> ChangeStatusResponse {
         let result = task_service.change_status(task_id.task_id.into(), Status::Done).await;
         map_change_status_result(result)
@@ -306,7 +306,7 @@ mod controller {
     #[Route(method="put", path="/tasks/{task_id}/status/pending")]
     pub async fn set_pending(
         Extension(task_service): Extension<Arc<TaskService>>,
-        Path(task_id): Path<TaskIdentifier>
+        Path(task_id): Path<TaskId>
     ) -> ChangeStatusResponse {
         let result = task_service.change_status(task_id.task_id.into(), Status::Pending).await;
         map_change_status_result(result)
@@ -316,7 +316,7 @@ mod controller {
     #[Route(method="put", path="/tasks/{task_id}/status/cancel")]
     pub async fn set_cancelled(
         Extension(task_service): Extension<Arc<TaskService>>,
-        Path(task_id): Path<TaskIdentifier>
+        Path(task_id): Path<TaskId>
     ) -> ChangeStatusResponse {
         let result = task_service.change_status(task_id.task_id.into(), Status::Cancelled).await;
         map_change_status_result(result)
@@ -326,7 +326,7 @@ mod controller {
     #[Response(format(json))]
     pub enum ChangeStatusResponse {
         #[Response(code = 200)]
-        Ok(TaskViewModel),
+        Ok(Task),
 
         #[Response(code = 404)]
         NotFound,
@@ -338,23 +338,24 @@ mod controller {
         ServerError,
     }
 
-    fn map_change_status_result(r: Result<Task, ChangeStatusError>) -> ChangeStatusResponse {
+    fn map_change_status_result(r: Result<model::Task, task_service::ChangeStatusError>) -> ChangeStatusResponse {
         match r {
             Ok(t) => 
-                match TaskViewModel::try_from(t) {
+                match Task::try_from(t) {
                     Ok(d)  => ChangeStatusResponse::Ok(d),
                     Err(_) => ChangeStatusResponse::ServerError,
                 }
             ,
 
             Err(e) => match e {
-                ChangeStatusError::NotFound => 
+                task_service::ChangeStatusError::NotFound => 
                     ChangeStatusResponse::NotFound,
 
-                ChangeStatusError::Duplicate => 
+                task_service::ChangeStatusError::Duplicate => 
                     ChangeStatusResponse::Duplicate,
 
-                ChangeStatusError::StorageReadError(_) | ChangeStatusError::StorageWriteError(_) => 
+                task_service::ChangeStatusError::StorageReadError(_)
+                | task_service::ChangeStatusError::StorageWriteError(_) => 
                     ChangeStatusResponse::ServerError,
             },
         }
@@ -364,30 +365,30 @@ mod controller {
     // endregion: change status
 }
 
-/// View models for HTTP layer
+/// HTTP-layer models.
 mod model {
     use groom_macros::DTO;
     use serde::Deserialize;
     use utoipa::ToSchema;
 
-    use crate::service::{model::{Status, Task}, repository::{Order, TaskOrderField}};
+    use crate::service::{model, task_service};
 
     //
-    // TaskViewModel
+    // Task
     //
 
     #[DTO(response)]
-    pub struct TaskViewModel {
+    pub struct Task {
         pub id:     u64,
         pub title:  String,
-        pub status: Status,
+        pub status: model::Status,
     }
 
-    impl TryFrom<Task> for TaskViewModel {
+    impl TryFrom<model::Task> for Task {
         type Error = ();
         
-        fn try_from(t: Task) -> Result<Self, Self::Error> {
-            Ok(TaskViewModel {
+        fn try_from(t: model::Task) -> Result<Self, Self::Error> {
+            Ok(Task {
                 id: if let Some(id) = t.id() {
                         id.value()
                     } else {
@@ -401,45 +402,48 @@ mod model {
     }
 
     //
-    // TasksSortBy
+    // TaskSortField
     //
 
     #[derive(Default, Debug, Deserialize, ToSchema)]
     #[serde(rename_all = "lowercase")]
-    pub enum TasksSortBy {
+    pub enum TaskSortField {
         #[default]
         Id,
         Title,
-        Status
+        Status,
     }
 
-    impl From<TasksSortBy> for TaskOrderField {
-        fn from(val: TasksSortBy) -> Self {
-            match val {
-                TasksSortBy::Id     => TaskOrderField::Id,
-                TasksSortBy::Title  => TaskOrderField::Title,
-                TasksSortBy::Status => TaskOrderField::Status,
+    impl From<TaskSortField> for task_service::TaskSortField {
+        fn from(field: TaskSortField) -> Self {
+            match field {
+                TaskSortField::Id     => task_service::TaskSortField::Id,
+                TaskSortField::Title  => task_service::TaskSortField::Title,
+                TaskSortField::Status => task_service::TaskSortField::Status,
             }
         }
     }
 
     //
-    // SortDirection
+    // SortOrder
     //
 
     #[derive(Default, Debug, Deserialize, ToSchema)]
     #[serde(rename_all = "lowercase")]
-    pub enum SortDirection {
+    pub enum SortOrder {
         #[default]
-        Asc,
-        Desc
+        #[serde(rename = "asc")]
+        Ascending,
+
+        #[serde(rename = "desc")]
+        Descending,
     }
 
-    impl From<SortDirection> for Order {
-        fn from(val: SortDirection) -> Self {
-            match val {
-                SortDirection::Asc  => Order::Ascending,
-                SortDirection::Desc => Order::Descending,
+    impl From<SortOrder> for task_service::SortOrder {
+        fn from(order: SortOrder) -> Self {
+            match order {
+                SortOrder::Ascending  => task_service::SortOrder::Ascending,
+                SortOrder::Descending => task_service::SortOrder::Descending,
             }
         }
     }

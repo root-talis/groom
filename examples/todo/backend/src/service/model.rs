@@ -1,6 +1,9 @@
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
+// region: Task
+//
+
 #[derive(Debug, Serialize, Clone, PartialEq)]
 pub struct Task {
     id:     Option<TaskID>,
@@ -41,6 +44,12 @@ impl Task {
     }
 }
 
+//
+// endregion: Task
+
+// region: TaskID
+//
+
 #[derive(Serialize, Clone, Copy, Debug, PartialEq, Eq, Ord, PartialOrd, Hash)]
 pub struct TaskID(u64);
 
@@ -62,6 +71,12 @@ impl From<TaskID> for u64 {
     }
 }
 
+//
+// endregion: TaskID
+
+// region: Status
+//
+
 #[derive(
     Debug, Clone, Copy,
     PartialEq, Eq, PartialOrd, Ord,
@@ -72,3 +87,6 @@ pub enum Status {
     Done,
     Cancelled
 }
+
+//
+// endregion: Status

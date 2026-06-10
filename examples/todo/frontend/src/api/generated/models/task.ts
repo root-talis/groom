@@ -5,11 +5,11 @@
  * Shows how to structure backend with three-layer architecture and generate spec for frontend.
  * OpenAPI spec version: 0.0.1
  */
+import type { Status } from './status';
 
-export type SortDirection = typeof SortDirection[keyof typeof SortDirection];
-
-
-export const SortDirection = {
-  asc: 'asc',
-  desc: 'desc',
-} as const;
+export interface Task {
+  /** @minimum 0 */
+  id: number;
+  status: Status;
+  title: string;
+}

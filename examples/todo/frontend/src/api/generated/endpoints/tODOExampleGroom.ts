@@ -9,8 +9,8 @@ import type {
   AddTaskRequest,
   ListTasksParams,
   RenameTaskRequest,
-  TaskList,
-  TaskViewModel
+  Task,
+  TasksList
 } from '../models';
 
 import { customInstance } from '../../mutator';
@@ -25,8 +25,8 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
  */
 export const listTasks = (
     params?: ListTasksParams,
- options?: SecondParameter<typeof customInstance<TaskList>>,) => {
-      return customInstance<TaskList>(
+ options?: SecondParameter<typeof customInstance<TasksList>>,) => {
+      return customInstance<TasksList>(
       {url: `/tasks`, method: 'GET',
         params
     },
@@ -38,8 +38,8 @@ export const listTasks = (
  */
 export const addTask = (
     addTaskRequest: BodyType<AddTaskRequest>,
- options?: SecondParameter<typeof customInstance<TaskViewModel>>,) => {
-      return customInstance<TaskViewModel>(
+ options?: SecondParameter<typeof customInstance<Task>>,) => {
+      return customInstance<Task>(
       {url: `/tasks`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
       data: addTaskRequest
@@ -52,8 +52,8 @@ export const addTask = (
  */
 export const getTask = (
     taskId: number,
- options?: SecondParameter<typeof customInstance<TaskViewModel>>,) => {
-      return customInstance<TaskViewModel>(
+ options?: SecondParameter<typeof customInstance<Task>>,) => {
+      return customInstance<Task>(
       {url: `/tasks/${taskId}`, method: 'GET'
     },
       options);
@@ -65,8 +65,8 @@ export const getTask = (
 export const renameTask = (
     taskId: number,
     renameTaskRequest: BodyType<RenameTaskRequest>,
- options?: SecondParameter<typeof customInstance<TaskViewModel>>,) => {
-      return customInstance<TaskViewModel>(
+ options?: SecondParameter<typeof customInstance<Task>>,) => {
+      return customInstance<Task>(
       {url: `/tasks/${taskId}/name`, method: 'PUT',
       headers: {'Content-Type': 'application/json', },
       data: renameTaskRequest
@@ -79,8 +79,8 @@ export const renameTask = (
  */
 export const setCancelled = (
     taskId: number,
- options?: SecondParameter<typeof customInstance<TaskViewModel>>,) => {
-      return customInstance<TaskViewModel>(
+ options?: SecondParameter<typeof customInstance<Task>>,) => {
+      return customInstance<Task>(
       {url: `/tasks/${taskId}/status/cancel`, method: 'PUT'
     },
       options);
@@ -91,8 +91,8 @@ export const setCancelled = (
  */
 export const setDone = (
     taskId: number,
- options?: SecondParameter<typeof customInstance<TaskViewModel>>,) => {
-      return customInstance<TaskViewModel>(
+ options?: SecondParameter<typeof customInstance<Task>>,) => {
+      return customInstance<Task>(
       {url: `/tasks/${taskId}/status/done`, method: 'PUT'
     },
       options);
@@ -103,8 +103,8 @@ export const setDone = (
  */
 export const setPending = (
     taskId: number,
- options?: SecondParameter<typeof customInstance<TaskViewModel>>,) => {
-      return customInstance<TaskViewModel>(
+ options?: SecondParameter<typeof customInstance<Task>>,) => {
+      return customInstance<Task>(
       {url: `/tasks/${taskId}/status/pending`, method: 'PUT'
     },
       options);

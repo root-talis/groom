@@ -4,7 +4,7 @@ pub use models::*;
 mod interfaces {
     use crate::service::{
         model::{Task, TaskID},
-        repository::{TaskAddRepositoryError, TaskFilter, TaskReadRepositoryError, TaskUpdateRepositoryError}
+        port::repository::{AddError, GetTasksQuery, ReadError, UpdateError},
     };
 
     #[cfg(test)]
@@ -13,15 +13,15 @@ mod interfaces {
     #[cfg_attr(test, automock)]
     #[async_trait::async_trait]
     pub trait TaskReader: Send + Sync {
-        async fn get_tasks(&self, filter: TaskFilter) -> Result<Vec<Task>, TaskReadRepositoryError>;
-        async fn get_task_by_id(&self, id: TaskID) -> Result<Option<Task>, TaskReadRepositoryError>;
+        async fn get_tasks(&self, query: GetTasksQuery) -> Result<Vec<Task>, ReadError>;
+        async fn get_task_by_id(&self, id: TaskID) -> Result<Option<Task>, ReadError>;
     }
 
     #[cfg_attr(test, automock)]
     #[async_trait::async_trait]
     pub trait TaskWriter: Send + Sync {
-        async fn add_task(&self, task: Task) -> Result<Task, TaskAddRepositoryError>;
-        async fn update_task(&self, task: Task) -> Result<Task, TaskUpdateRepositoryError>;
+        async fn add_task(&self, task: Task) -> Result<Task, AddError>;
+        async fn update_task(&self, task: Task) -> Result<Task, UpdateError>;
     }
 }
 
@@ -31,46 +31,46 @@ mod models {
     use crate::service::model::Status;
 
     #[derive(Debug, Clone, Deserialize, Default, PartialEq, Eq)]
-    pub struct TaskFilter {
-        pub title: Option<String>,
+    pub struct GetTasksQuery {
+        pub title:  Option<String>,
         pub status: Option<Vec<Status>>,
 
-        pub sort_by: TaskOrderField,
-        pub order: Order,
+        pub sort_by: TaskSortField,
+        pub order:   SortOrder,
     }
 
     #[derive(Debug, Clone, Copy, Deserialize, Default, PartialEq, Eq)]
-    pub enum TaskOrderField {
+    pub enum TaskSortField {
         #[default]
         Id,
         Title,
-        Status
+        Status,
     }
 
     #[derive(Debug, Clone, Copy, Deserialize, Default, PartialEq, Eq)]
-    pub enum Order {
+    pub enum SortOrder {
         #[default]
         Ascending,
-        Descending
+        Descending,
     }
 
     #[derive(Debug, thiserror::Error)]
-    pub enum TaskReadRepositoryError {
+    pub enum ReadError {
         #[error("database failure")]
-        DatabaseFailure
+        DatabaseFailure,
     }
 
     #[derive(Debug, thiserror::Error)]
-    pub enum TaskAddRepositoryError {
+    pub enum AddError {
         #[error("task already exists")]
         NotUnique,
 
         #[error("database failure")]
-        DatabaseFailure
+        DatabaseFailure,
     }
 
     #[derive(Debug, thiserror::Error)]
-    pub enum TaskUpdateRepositoryError {
+    pub enum UpdateError {
         #[error("task not found")]
         NotFound,
 
@@ -78,6 +78,6 @@ mod models {
         NotUnique,
 
         #[error("database failure")]
-        DatabaseFailure
+        DatabaseFailure,
     }
 }

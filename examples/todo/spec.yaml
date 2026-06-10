@@ -35,19 +35,19 @@ paths:
         in: query
         required: false
         schema:
-          $ref: '#/components/schemas/TasksSortBy'
+          $ref: '#/components/schemas/TaskSortField'
       - name: order
         in: query
         required: false
         schema:
-          $ref: '#/components/schemas/SortDirection'
+          $ref: '#/components/schemas/SortOrder'
       responses:
         '200':
           description: ''
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TaskList'
+                $ref: '#/components/schemas/TasksList'
         '500':
           description: ''
     post:
@@ -69,7 +69,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TaskViewModel'
+                $ref: '#/components/schemas/Task'
         '400':
           description: Malformed request, e.g. missing title or title is too long.
           content:
@@ -98,7 +98,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TaskViewModel'
+                $ref: '#/components/schemas/Task'
         '404':
           description: ''
         '500':
@@ -131,7 +131,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TaskViewModel'
+                $ref: '#/components/schemas/Task'
         '400':
           description: ''
           content:
@@ -162,7 +162,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TaskViewModel'
+                $ref: '#/components/schemas/Task'
         '404':
           description: ''
         '409':
@@ -187,7 +187,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TaskViewModel'
+                $ref: '#/components/schemas/Task'
         '404':
           description: ''
         '409':
@@ -212,7 +212,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TaskViewModel'
+                $ref: '#/components/schemas/Task'
         '404':
           description: ''
         '409':
@@ -237,7 +237,7 @@ components:
       properties:
         title:
           type: string
-    SortDirection:
+    SortOrder:
       type: string
       enum:
       - asc
@@ -248,11 +248,7 @@ components:
       - Pending
       - Done
       - Cancelled
-    TaskList:
-      type: array
-      items:
-        $ref: '#/components/schemas/TaskViewModel'
-    TaskViewModel:
+    Task:
       type: object
       required:
       - id
@@ -267,9 +263,13 @@ components:
           $ref: '#/components/schemas/Status'
         title:
           type: string
-    TasksSortBy:
+    TaskSortField:
       type: string
       enum:
       - id
       - title
       - status
+    TasksList:
+      type: array
+      items:
+        $ref: '#/components/schemas/Task'

@@ -5,9 +5,9 @@
  * Shows how to structure backend with three-layer architecture and generate spec for frontend.
  * OpenAPI spec version: 0.0.1
  */
-import type { SortDirection } from './sortDirection';
+import type { SortOrder } from './sortOrder';
 import type { Status } from './status';
-import type { TasksSortBy } from './tasksSortBy';
+import type { TaskSortField } from './taskSortField';
 
 export type ListTasksParams = {
 /**
@@ -18,6 +18,6 @@ title?: string | null;
  * @nullable
  */
 status?: Status[] | null;
-sort_by?: TasksSortBy;
-order?: SortDirection;
+sort_by?: TaskSortField;
+order?: SortOrder;
 };

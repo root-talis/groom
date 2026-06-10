@@ -2,7 +2,13 @@ use std::collections::HashMap;
 
 use tokio::sync::Mutex;
 
-use crate::service::{model::{Status, Task, TaskID}, repository::{Order, TaskAddRepositoryError, TaskFilter, TaskOrderField, TaskReadRepositoryError, TaskReader, TaskUpdateRepositoryError, TaskWriter}};
+use crate::service::{
+    model::{Status, Task, TaskID},
+    port::repository::{
+        AddError, GetTasksQuery, ReadError, SortOrder, TaskReader, TaskSortField, TaskWriter,
+        UpdateError,
+    },
+};
 
 /// Thread safe in-memory implementation of TaskReader and TaskWriter
 pub struct InMemoryTaskRepository {
@@ -25,22 +31,22 @@ impl InMemoryTaskRepository {
 
 #[async_trait::async_trait]
 impl TaskReader for InMemoryTaskRepository {
-    async fn get_tasks(&self, filter: TaskFilter) -> Result<Vec<Task>, TaskReadRepositoryError> {
-        self.store.lock().await.get_tasks(filter)
+    async fn get_tasks(&self, query: GetTasksQuery) -> Result<Vec<Task>, ReadError> {
+        self.store.lock().await.get_tasks(query)
     }
 
-    async fn get_task_by_id(&self, id: TaskID) -> Result<Option<Task>, TaskReadRepositoryError> {
+    async fn get_task_by_id(&self, id: TaskID) -> Result<Option<Task>, ReadError> {
         self.store.lock().await.get_task_by_id(id)
     }
 }
 
 #[async_trait::async_trait]
 impl TaskWriter for InMemoryTaskRepository {
-    async fn add_task(&self, task: Task) -> Result<Task, TaskAddRepositoryError> {
+    async fn add_task(&self, task: Task) -> Result<Task, AddError> {
         self.store.lock().await.add_task(task)
     }
 
-    async fn update_task(&self, task: Task) -> Result<Task, TaskUpdateRepositoryError> {
+    async fn update_task(&self, task: Task) -> Result<Task, UpdateError> {
         self.store.lock().await.update_task(task)
     }
 }
@@ -70,9 +76,9 @@ impl Store {
             .is_some()
     }
 
-    pub fn add_task(&mut self, mut task: Task) -> Result<Task, TaskAddRepositoryError> {
+    pub fn add_task(&mut self, mut task: Task) -> Result<Task, AddError> {
         if self.is_duplicate(&task) {
-            return Err(TaskAddRepositoryError::NotUnique);
+            return Err(AddError::NotUnique);
         }
 
         let id = self.next_id;
@@ -88,40 +94,40 @@ impl Store {
         Ok(task)
     }
 
-    pub fn update_task(&mut self, task: Task) -> Result<Task, TaskUpdateRepositoryError> {
+    pub fn update_task(&mut self, task: Task) -> Result<Task, UpdateError> {
         if self.is_duplicate(&task) {
-            return Err(TaskUpdateRepositoryError::NotUnique);
+            return Err(UpdateError::NotUnique);
         }
 
         let id = match task.id() {
             Some(id) => id,
-            None => return Err(TaskUpdateRepositoryError::NotFound),
+            None => return Err(UpdateError::NotFound),
         };
 
         if !self.tasks.contains_key(&id) {
-            return Err(TaskUpdateRepositoryError::NotFound);
+            return Err(UpdateError::NotFound);
         }
 
         self.tasks.insert(id, task.clone());
         Ok(task)
     }
 
-    pub fn get_task_by_id(&self, id: TaskID) -> Result<Option<Task>, TaskReadRepositoryError> {
+    pub fn get_task_by_id(&self, id: TaskID) -> Result<Option<Task>, ReadError> {
         Ok(self.tasks.get(&id).cloned())
     }
 
-    pub fn get_tasks(&self, filter: TaskFilter) -> Result<Vec<Task>, TaskReadRepositoryError> {
+    pub fn get_tasks(&self, query: GetTasksQuery) -> Result<Vec<Task>, ReadError> {
         let mut t: Vec<Task> = self.tasks
             .values()
             .filter(|t| {
-                if let Some(status) = &filter.status {
+                if let Some(status) = &query.status {
                     status.contains(&t.status())
                 } else {
                     true
                 }
             })
             .filter(|t| {
-                if let Some(title) = &filter.title {
+                if let Some(title) = &query.title {
                     t.title().contains(title)
                 } else {
                     true
@@ -133,15 +139,15 @@ impl Store {
 
         t.sort_by(|a, b| {
             let by_id = a.id().cmp(&b.id());
-            let ordering = match filter.sort_by {
-                TaskOrderField::Id     => by_id,
-                TaskOrderField::Title  => a.title().cmp(&b.title()).then(by_id),
-                TaskOrderField::Status => a.status().cmp(&b.status()).then(by_id),
+            let ordering = match query.sort_by {
+                TaskSortField::Id     => by_id,
+                TaskSortField::Title  => a.title().cmp(&b.title()).then(by_id),
+                TaskSortField::Status => a.status().cmp(&b.status()).then(by_id),
             };
 
-            match filter.order {
-                Order::Ascending =>  ordering,
-                Order::Descending => ordering.reverse(),
+            match query.order {
+                SortOrder::Ascending  => ordering,
+                SortOrder::Descending => ordering.reverse(),
             }
         });
 
@@ -157,12 +163,11 @@ mod tests {
         repository::tasks_repository::InMemoryTaskRepository,
         service::{
             model::{Status, Task},
-            repository::{
-                TaskReader, TaskWriter,
-                TaskFilter, TaskOrderField, Order,
-                TaskAddRepositoryError, TaskReadRepositoryError, TaskUpdateRepositoryError
-            }
-        }
+            port::repository::{
+                AddError, GetTasksQuery, ReadError, SortOrder, TaskReader, TaskSortField,
+                TaskWriter, UpdateError,
+            },
+        },
     };
     use assert_matches::assert_matches;
 
@@ -229,7 +234,7 @@ mod tests {
             Task::new("do something", Status::Pending)
         ).await;
 
-        assert_matches!(result, Err(TaskAddRepositoryError::NotUnique));
+        assert_matches!(result, Err(AddError::NotUnique));
     }
 
     #[tokio::test]
@@ -293,7 +298,7 @@ mod tests {
             "should save unmodified pending task");
 
         first_task.set_title(String::from("pending task 1"));
-        assert_matches!(r.update_task(first_task.clone()).await,Err(TaskUpdateRepositoryError::NotUnique),
+        assert_matches!(r.update_task(first_task.clone()).await, Err(UpdateError::NotUnique),
             "should not save pending task with the title of another pending task");
 
         first_task.set_title(String::from("cancelled task 1"));
@@ -312,7 +317,7 @@ mod tests {
         assert_eq!(true, r.update_task(first_task.clone()).await.is_ok(),
             "should save done task with the title of another pending task");
 
-        let read_tasks = r.get_tasks(TaskFilter::default()).await;
+        let read_tasks = r.get_tasks(GetTasksQuery::default()).await;
         assert_eq!(true, read_tasks.is_ok(),
             "should read all tasks");
         assert_eq!(read_tasks.unwrap(), tasks, "should read asks as they were saved");
@@ -329,40 +334,40 @@ mod tests {
         r.add_task(Task::new("done task 2", Status::Done)).await.unwrap();
         r.add_task(Task::new("pending task 1", Status::Pending)).await.unwrap();
         
-        let ids = |r: Result<Vec<Task>, TaskReadRepositoryError>| -> Vec<u64> {
+        let ids = |r: Result<Vec<Task>, ReadError>| -> Vec<u64> {
             r.unwrap().iter().map(|v| v.id().unwrap().value()).collect()
         };
 
-        let filter = |f: fn(f: &mut TaskFilter) -> ()| { 
-            let mut tf = TaskFilter::default();
-            f(&mut tf);
-            tf 
+        let req = |f: fn(req: &mut GetTasksQuery) -> ()| {
+            let mut req = GetTasksQuery::default();
+            f(&mut req);
+            req
         };
 
         // by id
         assert_eq!(
-            ids(r.get_tasks(TaskFilter::default()).await),
+            ids(r.get_tasks(GetTasksQuery::default()).await),
             vec![1, 2, 3, 4, 5, 6],
             "by id asc"
         );
         assert_eq!(
-            ids(r.get_tasks(filter(|f| f.order = Order::Descending)).await),
+            ids(r.get_tasks(req(|r| r.order = SortOrder::Descending)).await),
             vec![6, 5, 4, 3, 2, 1],
             "by id desc"
         );
 
         // by title
         assert_eq!(
-            ids(r.get_tasks(filter(|f| {
-                f.sort_by = TaskOrderField::Title
+            ids(r.get_tasks(req(|r| {
+                r.sort_by = TaskSortField::Title
             })).await),
             vec![2, 3, 4, 5, 1, 6],
             "by title asc"
         );
         assert_eq!(
-            ids(r.get_tasks(filter(|f| {
-                f.sort_by = TaskOrderField::Title;
-                f.order = Order::Descending
+            ids(r.get_tasks(req(|r| {
+                r.sort_by = TaskSortField::Title;
+                r.order = SortOrder::Descending
             })).await),
             vec![6, 1, 5, 4, 3, 2],
             "by title desc"
@@ -370,16 +375,16 @@ mod tests {
 
         // by status
         assert_eq!(
-            ids(r.get_tasks(filter(|f| {
-                f.sort_by = TaskOrderField::Status
+            ids(r.get_tasks(req(|r| {
+                r.sort_by = TaskSortField::Status
             })).await),
             vec![1, 6, 4, 5, 2, 3],
             "by status asc"
         );
         assert_eq!(
-            ids(r.get_tasks(filter(|f| {
-                f.sort_by = TaskOrderField::Status;
-                f.order = Order::Descending
+            ids(r.get_tasks(req(|r| {
+                r.sort_by = TaskSortField::Status;
+                r.order = SortOrder::Descending
             })).await),
             vec![3, 2, 5, 4, 6, 1],
             "by status desc"
@@ -397,38 +402,38 @@ mod tests {
         r.add_task(Task::new("done task 2", Status::Done)).await.unwrap();
         r.add_task(Task::new("pending task 1", Status::Pending)).await.unwrap();
 
-        let ids = |r: Result<Vec<Task>, TaskReadRepositoryError>| -> Vec<u64> {
+        let ids = |r: Result<Vec<Task>, ReadError>| -> Vec<u64> {
             r.unwrap().iter().map(|v| v.id().unwrap().value()).collect()
         };
 
-        let filter = |f: fn(f: &mut TaskFilter) -> ()| { 
-            let mut tf = TaskFilter::default();
-            f(&mut tf);
-            tf 
+        let req = |f: fn(req: &mut GetTasksQuery) -> ()| {
+            let mut req = GetTasksQuery::default();
+            f(&mut req);
+            req
         };
 
         // title:
 
         assert_eq!(
-            ids(r.get_tasks(TaskFilter::default()).await),
+            ids(r.get_tasks(GetTasksQuery::default()).await),
             vec![1, 2, 3, 4, 5, 6],
             "default"
         );
 
         assert_eq!(
-            ids(r.get_tasks(filter(|f| f.title = Some(String::from("first")))).await),
+            ids(r.get_tasks(req(|r| r.title = Some(String::from("first")))).await),
             vec![1],
             "title = \"first\""
         );
 
         assert_eq!(
-            ids(r.get_tasks(filter(|f| f.title = Some(String::from("done")))).await),
+            ids(r.get_tasks(req(|r| r.title = Some(String::from("done")))).await),
             vec![4, 5],
             "title = \"done\""
         );
 
         assert_eq!(
-            ids(r.get_tasks(filter(|f| f.title = Some(String::from("non-existent")))).await),
+            ids(r.get_tasks(req(|r| r.title = Some(String::from("non-existent")))).await),
             Vec::<u64>::new(),
             "title = \"non-existent\""
         );
@@ -436,31 +441,31 @@ mod tests {
         // status:
 
         assert_eq!(
-            ids(r.get_tasks(filter(|f| f.status = Some(vec![Status::Pending]))).await),
+            ids(r.get_tasks(req(|r| r.status = Some(vec![Status::Pending]))).await),
             vec![1, 6],
             "status = [pending]"
         );
 
         assert_eq!(
-            ids(r.get_tasks(filter(|f| f.status = Some(vec![Status::Cancelled]))).await),
+            ids(r.get_tasks(req(|r| r.status = Some(vec![Status::Cancelled]))).await),
             vec![2, 3],
             "status = [cancelled]"
         );
 
         assert_eq!(
-            ids(r.get_tasks(filter(|f| f.status = Some(vec![Status::Cancelled, Status::Done]))).await),
+            ids(r.get_tasks(req(|r| r.status = Some(vec![Status::Cancelled, Status::Done]))).await),
             vec![2, 3, 4, 5],
             "status = [cancelled, done]"
         );
 
         assert_eq!(
-            ids(r.get_tasks(filter(|f| f.status = Some(vec![Status::Pending, Status::Cancelled, Status::Done]))).await),
+            ids(r.get_tasks(req(|r| r.status = Some(vec![Status::Pending, Status::Cancelled, Status::Done]))).await),
             vec![1, 2, 3, 4, 5, 6],
             "status = [pending, cancelled, done]"
         );
 
         assert_eq!(
-            ids(r.get_tasks(filter(|f| f.status = Some(vec![]))).await),
+            ids(r.get_tasks(req(|r| r.status = Some(vec![]))).await),
             Vec::<u64>::new(),
             "status = []"
         );
@@ -468,9 +473,9 @@ mod tests {
         // title + status:
 
         assert_eq!(
-            ids(r.get_tasks(filter(|f| {
-                f.status = Some(vec![Status::Pending, Status::Done]);
-                f.title = Some(String::from("1"));
+            ids(r.get_tasks(req(|r| {
+                r.status = Some(vec![Status::Pending, Status::Done]);
+                r.title = Some(String::from("1"));
             })).await),
             vec![4, 6],
             "status = [pending, done] && title = \"1\""

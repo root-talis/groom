@@ -6,10 +6,10 @@
  * OpenAPI spec version: 0.0.1
  */
 
-export type TasksSortBy = typeof TasksSortBy[keyof typeof TasksSortBy];
+export type TaskSortField = typeof TaskSortField[keyof typeof TaskSortField];
 
 
-export const TasksSortBy = {
+export const TaskSortField = {
   id: 'id',
   title: 'title',
   status: 'status',

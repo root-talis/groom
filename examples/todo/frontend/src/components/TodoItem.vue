@@ -2,15 +2,14 @@
 import TaskStatusIcon from '@/components/TaskStatusIcon.vue';
 import ErrorBar from '@/components/ErrorBar.vue';
 import InlineEditor from '@/components/InlineEditor.vue';
-import client from '@/services/axios'
 import { ref } from 'vue';
 import { useMutation, useQueryClient } from '@tanstack/vue-query';
 import FloppyDiskIcon from './icons/IconFloppyDisk.vue';
 import IconButton from './IconButton.vue';
-import type { TaskViewModel } from '@/api/generated/models/index.ts';
-import { renameTask, setCancelled, setDone, setPending } from '@/api/generated/endpoints/tODOExampleGroom.ts';
+import type { Task } from '@/api/generated/models';
+import { renameTask, setCancelled, setDone, setPending } from '@/api/generated/endpoints/tODOExampleGroom';
 
-const props = defineProps<{item: TaskViewModel}>()
+const props = defineProps<{item: Task}>()
 
 const currentStatus = ref(props.item.status)
 const statusKey = ref(0)
@@ -28,7 +27,7 @@ function showError(message: string) {
 }
 
 const { mutate: updateTaskStatus } = useMutation({
-  mutationFn: (status: TaskViewModel['status']) => {
+  mutationFn: (status: Task['status']) => {
     let res;
 
     if (status === 'Done') {
@@ -119,7 +118,7 @@ function handleTitleEdited(name: string) {
   doRenameTask(name);
 }
 
-function handleStatusChanged(status: TaskViewModel['status']) {
+function handleStatusChanged(status: Task['status']) {
   updateTaskStatus(status);
 }
 </script>

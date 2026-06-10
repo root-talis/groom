@@ -5,6 +5,6 @@
  * Shows how to structure backend with three-layer architecture and generate spec for frontend.
  * OpenAPI spec version: 0.0.1
  */
-import type { TaskViewModel } from './taskViewModel';
+import type { Task } from './task';
 
-export type TaskList = TaskViewModel[];
+export type TasksList = Task[];
