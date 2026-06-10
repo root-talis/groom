@@ -7,7 +7,6 @@
     "dev": "vite",
     "build": "run-p type-check \"build-only {@}\" --",
     "preview": "vite preview",
-    "test:e2e": "playwright test",
     "build-only": "vite build",
     "type-check": "vue-tsc --build",
     "lint": "run-s lint:*",
@@ -24,7 +23,6 @@
     "vue-router": "^5.0.4"
   },
   "devDependencies": {
-    "@playwright/test": "^1.59.1",
     "@tsconfig/node24": "^24.0.4",
     "@types/node": "^24.12.2",
     "@types/qs": "^6.15.1",
@@ -35,7 +33,6 @@
     "eslint": "^10.2.1",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-oxlint": "~1.60.0",
-    "eslint-plugin-playwright": "^2.10.1",
     "eslint-plugin-vue": "~10.8.0",
     "jiti": "^2.6.1",
     "npm-run-all2": "^8.0.4",
