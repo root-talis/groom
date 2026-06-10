@@ -77,3 +77,6 @@ pub fn make_router(app: Bootstrap, serve_spec: bool, origin: Option<CorsOrigin>)
 
     Ok(router.layer(TraceLayer::new_for_http()))
 }
+
+#[cfg(test)]
+mod tests;
