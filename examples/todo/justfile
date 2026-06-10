@@ -9,7 +9,7 @@ test:
 
 # Runs the example
 run: build
-    backend/target/release/backend
+    RUST_LOG=debug backend/target/release/backend
 
 # Builds everything
 build:

@@ -26,7 +26,6 @@ groom = {path = "../../../groom", features = ["axum-extra-query"] }
 groom_macros = {path = "../../../groom_macros" }
 mime = "0.3.17"
 mime_guess = "2.0.5"
-pretty_assertions = "1.4.1"
 rust-embed = { version = "8.11.0", features = ["mime_guess", "axum"] }
 serde = { version = "1.0.228", features = ["derive"] }
 serde_json = "1.0.149"
@@ -36,7 +35,7 @@ tokio = { version = "1.52.1", features = ["full"] }
 tower = "0.5.3"
 tower-http = { version = "0.6.8", features = ["cors", "trace"] }
 tracing = "0.1.44"
-tracing-subscriber = { version = "0.3.23" }
+tracing-subscriber = { version = "0.3.23", features = ["env-filter"] }
 utoipa = { version = "5.4.0", features = ["yaml"] }
 
 [dev-dependencies]
@@ -44,3 +43,4 @@ assert_matches = "1.5.0"
 http-body-util = "0.1.0"
 mockall = "0.14.0"
 tower = { version = "0.5.3", features = ["util"] }
+pretty_assertions = "1.4.1"

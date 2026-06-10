@@ -53,7 +53,7 @@ async fn full_stack_handles_task_lifecycle() {
     .await;
 
     // then:
-    assert_eq!(created.status, StatusCode::OK);
+    assert_eq!(created.status, StatusCode::CREATED);
     let created_task: serde_json::Value = serde_json::from_str(&created.body).unwrap();
     assert_eq!(created_task["title"], "Buy milk");
     assert_eq!(created_task["status"], "Pending");
@@ -131,4 +131,145 @@ async fn get_missing_task_returns_not_found() {
 
     // then:
     assert_eq!(response.status, StatusCode::NOT_FOUND);
+}
+
+#[tokio::test]
+async fn post_with_short_title_returns_bad_request() {
+    // setup:
+    let router = test_router();
+
+    // when:
+    let response = send(
+        &router,
+        Method::POST,
+        "/tasks",
+        Some(r#"{"title":"ab"}"#),
+    )
+    .await;
+
+    // then:
+    assert_eq!(response.status, StatusCode::BAD_REQUEST);
+    assert_eq!(
+        serde_json::from_str::<String>(&response.body).unwrap(),
+        "title is too short"
+    );
+}
+
+#[tokio::test]
+async fn post_with_too_long_title_returns_bad_request() {
+    // setup:
+    let router = test_router();
+    let title = "a".repeat(513);
+    let body = serde_json::json!({ "title": title }).to_string();
+
+    // when:
+    let response = send(&router, Method::POST, "/tasks", Some(&body)).await;
+
+    // then:
+    assert_eq!(response.status, StatusCode::BAD_REQUEST);
+    assert_eq!(
+        serde_json::from_str::<String>(&response.body).unwrap(),
+        "title is too long"
+    );
+}
+
+#[tokio::test]
+async fn post_duplicate_pending_task_returns_conflict() {
+    // setup:
+    let router = test_router();
+    let first = send(
+        &router,
+        Method::POST,
+        "/tasks",
+        Some(r#"{"title":"Buy groceries"}"#),
+    )
+    .await;
+    assert_eq!(first.status, StatusCode::CREATED);
+
+    // when: same title after whitespace normalization
+    let duplicate = send(
+        &router,
+        Method::POST,
+        "/tasks",
+        Some(r#"{"title":"  Buy groceries  "}"#),
+    )
+    .await;
+
+    // then:
+    assert_eq!(duplicate.status, StatusCode::CONFLICT);
+    assert!(duplicate.body.is_empty());
+}
+
+#[tokio::test]
+async fn rename_to_duplicate_pending_title_returns_conflict() {
+    // setup:
+    let router = test_router();
+    let first = send(
+        &router,
+        Method::POST,
+        "/tasks",
+        Some(r#"{"title":"First task"}"#),
+    )
+    .await;
+    assert_eq!(first.status, StatusCode::CREATED);
+
+    let second = send(
+        &router,
+        Method::POST,
+        "/tasks",
+        Some(r#"{"title":"Second task"}"#),
+    )
+    .await;
+    assert_eq!(second.status, StatusCode::CREATED);
+    let second_id = serde_json::from_str::<serde_json::Value>(&second.body)
+        .unwrap()["id"]
+        .as_u64()
+        .unwrap();
+
+    // when:
+    let response = send(
+        &router,
+        Method::PUT,
+        &format!("/tasks/{second_id}/name"),
+        Some(r#"{"title":"First task"}"#),
+    )
+    .await;
+
+    // then:
+    assert_eq!(response.status, StatusCode::CONFLICT);
+    assert!(response.body.is_empty());
+}
+
+#[tokio::test]
+async fn rename_with_short_title_returns_bad_request() {
+    // setup:
+    let router = test_router();
+    let created = send(
+        &router,
+        Method::POST,
+        "/tasks",
+        Some(r#"{"title":"Rename me"}"#),
+    )
+    .await;
+    assert_eq!(created.status, StatusCode::CREATED);
+    let id = serde_json::from_str::<serde_json::Value>(&created.body)
+        .unwrap()["id"]
+        .as_u64()
+        .unwrap();
+
+    // when:
+    let response = send(
+        &router,
+        Method::PUT,
+        &format!("/tasks/{id}/name"),
+        Some(r#"{"title":"ab"}"#),
+    )
+    .await;
+
+    // then:
+    assert_eq!(response.status, StatusCode::BAD_REQUEST);
+    assert_eq!(
+        serde_json::from_str::<String>(&response.body).unwrap(),
+        "title is too short"
+    );
 }

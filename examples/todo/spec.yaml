@@ -64,7 +64,7 @@ paths:
               $ref: '#/components/schemas/AddTaskRequest'
         required: true
       responses:
-        '200':
+        '201':
           description: Task added successfully
           content:
             application/json:
@@ -166,7 +166,7 @@ paths:
         '404':
           description: ''
         '409':
-          description: ''
+          description: Returned if the operation would result in a duplicated task in Pending status.
         '500':
           description: ''
   /tasks/{task_id}/status/done:
@@ -191,7 +191,7 @@ paths:
         '404':
           description: ''
         '409':
-          description: ''
+          description: Returned if the operation would result in a duplicated task in Pending status.
         '500':
           description: ''
   /tasks/{task_id}/status/pending:
@@ -216,7 +216,7 @@ paths:
         '404':
           description: ''
         '409':
-          description: ''
+          description: Returned if the operation would result in a duplicated task in Pending status.
         '500':
           description: ''
 components:

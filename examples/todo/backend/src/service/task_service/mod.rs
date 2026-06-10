@@ -12,6 +12,7 @@ use repository::{AddError, ReadError::DatabaseFailure, UpdateError};
 #[cfg(test)]
 mod tests;
 
+const MAX_TITLE_LEN: usize = 512;
 
 #[derive(Clone)]
 pub struct TaskService {
@@ -24,11 +25,15 @@ impl TaskService {
         Self { reader, writer }
     }
     
-    fn validate_title(t: &str) -> Result<(), &'static str> {
-        if t.trim().chars().count() <= 3 {
+    fn normalize_title(t: &str) -> Result<String, &'static str> {
+        let trimmed = t.trim();
+        let len = trimmed.chars().count();
+        if len <= 3 {
             Err("title is too short")
+        } else if len > MAX_TITLE_LEN {
+            Err("title is too long")
         } else {
-            Ok(())
+            Ok(trimmed.to_owned())
         }
     }
 }
@@ -54,10 +59,10 @@ pub enum AddTaskError {
 
 impl TaskService {
     pub async fn add_task(&self, req: AddTaskRequest) -> Result<Task, AddTaskError> {
-        Self::validate_title(&req.title).map_err(AddTaskError::InvalidRequest)?;
+        let title = Self::normalize_title(&req.title).map_err(AddTaskError::InvalidRequest)?;
 
         self.writer
-            .add_task(model::Task::new(req.title, Status::Pending))
+            .add_task(model::Task::new(title, Status::Pending))
             .await
             .map_err(|e| match e {
                 AddError::NotUnique =>
@@ -161,7 +166,7 @@ impl TaskService {
 
 impl TaskService {
     pub async fn rename_task(&self, task_id: TaskID, title: String) -> Result<Task, RenameTaskError> {
-        Self::validate_title(&title).map_err(RenameTaskError::InvalidRequest)?;
+        let title = Self::normalize_title(&title).map_err(RenameTaskError::InvalidRequest)?;
 
         let mut task = self.reader.get_task_by_id(task_id)
             .await

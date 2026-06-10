@@ -1,26 +1,41 @@
-mod validate_title {
+mod normalize_title {
     use super::super::TaskService;
 
     #[test]
     fn rejects_titles_with_at_most_three_characters() {
-        assert!(TaskService::validate_title("abc").is_err());
-        assert!(TaskService::validate_title("  ab  ").is_err());
-        assert!(TaskService::validate_title("  日本  ").is_err());
+        assert!(TaskService::normalize_title("abc").is_err());
+        assert!(TaskService::normalize_title("  ab  ").is_err());
+        assert!(TaskService::normalize_title("  日本  ").is_err());
     }
 
     #[test]
     fn accepts_titles_with_more_than_three_characters() {
-        assert!(TaskService::validate_title("abcd").is_ok());
-        assert!(TaskService::validate_title("  abcd  ").is_ok());
-        assert!(TaskService::validate_title("  日本語a  ").is_ok());
+        assert_eq!(TaskService::normalize_title("abcd").unwrap(), "abcd");
+        assert_eq!(TaskService::normalize_title("  abcd  ").unwrap(), "abcd");
+        assert_eq!(TaskService::normalize_title("  日本語a  ").unwrap(), "日本語a");
     }
 
     #[test]
     fn counts_unicode_characters_not_bytes() {
-        assert!(TaskService::validate_title("🙂🙂🙂").is_err());
-        assert!(TaskService::validate_title("🙂🙂🙂🙂").is_ok());
-        assert!(TaskService::validate_title("日本語").is_err());
-        assert!(TaskService::validate_title("日本語a").is_ok());
+        assert!(TaskService::normalize_title("🙂🙂🙂").is_err());
+        assert_eq!(TaskService::normalize_title("🙂🙂🙂🙂").unwrap(), "🙂🙂🙂🙂");
+        assert!(TaskService::normalize_title("日本語").is_err());
+        assert_eq!(TaskService::normalize_title("日本語a").unwrap(), "日本語a");
+    }
+
+    #[test]
+    fn rejects_titles_longer_than_512_unicode_characters() {
+        let title = "a".repeat(512);
+        assert_eq!(TaskService::normalize_title(&title).unwrap(), title);
+
+        let title = "a".repeat(513);
+        assert!(TaskService::normalize_title(&title).is_err());
+
+        let title = "🙂".repeat(512);
+        assert_eq!(TaskService::normalize_title(&title).unwrap(), title);
+
+        let title = "🙂".repeat(513);
+        assert!(TaskService::normalize_title(&title).is_err());
     }
 }
 
@@ -122,6 +137,37 @@ mod add_task {
     }
 
     #[tokio::test]
+    async fn trims_surrounding_whitespace_before_persisting() {
+        // given:
+        let task_for_repository = Task::new("something to do", Status::Pending);
+        let expected_task = Task::new("something to do", Status::Pending)
+            .set_id(TaskID::from(123))
+            .to_owned();
+
+        // setup:
+        let r = MockTaskReader::new();
+        let mut writer = MockTaskWriter::new();
+        writer.expect_add_task()
+            .with(eq(task_for_repository))
+            .once()
+            .returning(|mut v| {
+                v.set_id(TaskID::from(123));
+                Ok(v.clone())
+            });
+        let svc = TaskService::new(Arc::new(r), Arc::new(writer));
+
+        // when:
+        let result = svc
+            .add_task(AddTaskRequest {
+                title: String::from("  something to do  "),
+            })
+            .await;
+
+        // then:
+        assert_eq!(result.unwrap(), expected_task);
+    }
+
+    #[tokio::test]
     async fn fail_when_title_is_short_unicode() {
         // setup:
         let r = MockTaskReader::new();
@@ -132,6 +178,24 @@ mod add_task {
         let result = svc
             .add_task(AddTaskRequest {
                 title: String::from("🙂🙂🙂"),
+            })
+            .await;
+
+        // then:
+        assert_matches!(result.unwrap_err(), AddTaskError::InvalidRequest(_));
+    }
+
+    #[tokio::test]
+    async fn fail_when_title_is_too_long() {
+        // setup:
+        let r = MockTaskReader::new();
+        let w = MockTaskWriter::new();
+        let svc = TaskService::new(Arc::new(r), Arc::new(w));
+
+        // when:
+        let result = svc
+            .add_task(AddTaskRequest {
+                title: "a".repeat(513),
             })
             .await;
 
@@ -418,6 +482,43 @@ mod rename_task {
     }
 
     #[tokio::test]
+    pub async fn trims_surrounding_whitespace_before_persisting() {
+        // given:
+        let id = TaskID::from(1234);
+        let stored_task = Task::new("some task", Status::Done)
+            .set_id(id)
+            .to_owned();
+        let task_for_update = Task::new("new title", Status::Done)
+            .set_id(id)
+            .to_owned();
+        let expected_task = Task::new("new title", Status::Done)
+            .set_id(id)
+            .to_owned();
+        let repository_response = Task::new("new title", Status::Done)
+            .set_id(id)
+            .to_owned();
+
+        // setup:
+        let mut reader = MockTaskReader::new();
+        let mut writer = MockTaskWriter::new();
+        reader.expect_get_task_by_id()
+            .with(eq(id))
+            .once()
+            .returning(move |_| Ok(Some(stored_task.clone())));
+        writer.expect_update_task()
+            .with(eq(task_for_update))
+            .once()
+            .returning(move |_| Ok(repository_response.clone()));
+        let svc = TaskService::new(Arc::new(reader), Arc::new(writer));
+
+        // when:
+        let result = svc.rename_task(id, String::from("  new title  ")).await;
+
+        // then:
+        assert_eq!(result.unwrap(), expected_task);
+    }
+
+    #[tokio::test]
     pub async fn fail_if_name_is_too_short() {
         // setup:
         let r = MockTaskReader::new();
@@ -442,6 +543,21 @@ mod rename_task {
         // when:
         let id = TaskID::from(1234);
         let result = svc.rename_task(id, String::from("日本語")).await;
+
+        // then:
+        assert_matches!(result.unwrap_err(), RenameTaskError::InvalidRequest(_));
+    }
+
+    #[tokio::test]
+    pub async fn fail_if_name_is_too_long() {
+        // setup:
+        let r = MockTaskReader::new();
+        let w = MockTaskWriter::new();
+        let svc = TaskService::new(Arc::new(r), Arc::new(w));
+
+        // when:
+        let id = TaskID::from(1234);
+        let result = svc.rename_task(id, "a".repeat(513)).await;
 
         // then:
         assert_matches!(result.unwrap_err(), RenameTaskError::InvalidRequest(_));

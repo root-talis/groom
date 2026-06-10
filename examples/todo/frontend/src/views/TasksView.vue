@@ -43,7 +43,7 @@ const { mutate: doAddTask, isPending: isAdding } = useMutation({
   }),
   onSuccess: (data) => {
     switch (data.status) {
-      case 200:
+      case 201:
         title.value = "";
         searchTitle.value = "";
         if (searchTimeout) {

@@ -23,14 +23,13 @@ async fn assets_handler(uri: Uri) -> impl axum::response::IntoResponse {
     match Assets::get(&path) {
         Some(content) => {
             let body = axum::body::Body::from(content.data);
+            let mime = mime_guess::from_path(path).first_or_octet_stream();
             axum::response::Response::builder()
-                .header("Content-Type", mime_guess::from_path(path).first_or_octet_stream().as_ref())
+                .header("Content-Type", mime.as_ref())
                 .body(body)
-                .unwrap()
         },
         None => axum::response::Response::builder()
             .status(404)
             .body(Body::empty())
-            .unwrap(),
-    }
+    }.expect("static response is expected to be built")
 }

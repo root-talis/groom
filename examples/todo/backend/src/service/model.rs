@@ -25,8 +25,8 @@ impl Task {
         self
     }
 
-    pub fn title(&self) -> String {
-        self.title.clone()
+    pub fn title(&self) -> &str {
+        self.title.as_str()
     }
 
     pub fn set_title(&mut self, title: String) -> &mut Self {

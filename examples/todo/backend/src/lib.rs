@@ -1,3 +1,5 @@
+use std::str::FromStr;
+
 use color_eyre::eyre::Result;
 
 use tower_http::{cors::{AllowHeaders, AllowMethods, AllowOrigin, CorsLayer}, trace::TraceLayer};
@@ -15,26 +17,43 @@ pub mod repository;
 #[cfg(feature = "static-assets")]
 pub mod static_assets;
 
+#[derive(Debug, thiserror::Error)]
+#[error("{0}")]
+pub struct CorsOriginParseError(String);
+
 #[derive(Debug, Clone)]
 pub enum CorsOrigin {
     Any,
-    List(Vec<String>),
+    List(Vec<HeaderValue>),
 }
 
-impl From<String> for CorsOrigin {
-    fn from(value: String) -> Self {
+impl FromStr for CorsOrigin {
+    type Err = CorsOriginParseError;
+
+    fn from_str(value: &str) -> Result<Self, Self::Err> {
         if value == "any" {
-            return Self::Any;
+            return Ok(Self::Any);
         }
 
-        Self::List(
-            value
-                .split(',')
-                .map(|v| v.trim())
-                .filter(|v| !v.is_empty())
-                .map(String::from)
-                .collect()
-        )
+        let items: Result<Vec<_>, _> = value
+            .split(',')
+            .map(str::trim)
+            .filter(|v| !v.is_empty())
+            .map(|origin| {
+                origin.parse::<HeaderValue>().map_err(|_| {
+                    CorsOriginParseError(format!("invalid CORS origin `{origin}`"))
+                })
+            })
+            .collect();
+
+        let items = items?;
+        if items.is_empty() {
+            return Err(CorsOriginParseError(
+                "expected `any` or a comma-separated list of origins".into(),
+            ));
+        }
+
+        Ok(Self::List(items))
     }
 }
 
@@ -42,14 +61,7 @@ impl From<CorsOrigin> for AllowOrigin {
     fn from(val: CorsOrigin) -> Self {
         match val {
             CorsOrigin::Any => AllowOrigin::mirror_request(),
-            CorsOrigin::List(items) => AllowOrigin::list(
-                items
-                    .into_iter()
-                    .map(|s| 
-                        s.parse::<HeaderValue>()
-                            .unwrap_or_else(|_| panic!("Error parsing `{}` as CORS header value.", s))
-                    )
-            ),
+            CorsOrigin::List(items) => AllowOrigin::list(items),
         }
     }
 }

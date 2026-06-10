@@ -7,6 +7,7 @@ use tokio::signal;
 
 use groom_example_todo_backend::{bootstrap::Bootstrap, server::run_server};
 use tracing::info;
+use tracing_subscriber::EnvFilter;
 
 
 #[derive(Parser)]
@@ -29,7 +30,7 @@ async fn main() -> Result<()> {
     color_eyre::install()?;
 
     tracing_subscriber::fmt()
-        .with_max_level(tracing::Level::DEBUG)
+        .with_env_filter(EnvFilter::from_default_env())
         .init();
 
     let args = Args::parse();

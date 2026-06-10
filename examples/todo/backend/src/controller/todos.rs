@@ -45,6 +45,7 @@ mod controller {
     use tracing::debug;
 
     use crate::service::{
+        error::StorageError,
         model::{self, Status, TaskID},
         task_service::{self, TaskService},
     };
@@ -64,7 +65,7 @@ mod controller {
         match task_service.list_tasks(req.into()).await {
             Ok(l) => {
                 let tasks: Result<Vec<Task>, ()> = l.iter()
-                    .map(|t| Task::try_from(t.clone()))
+                    .map(|t| Task::try_from(t))
                     .collect()
                 ;
 
@@ -73,7 +74,10 @@ mod controller {
                     Err(_) => ListTasksResponse::ServerError,
                 }
             },
-            Err(_) => ListTasksResponse::ServerError,
+            Err(task_service::ListTasksError::StorageError(err)) => {
+                log_storage_error(&err, "storage error when listing tasks");
+                ListTasksResponse::ServerError
+            },
         }
     }
 
@@ -131,12 +135,15 @@ mod controller {
             Ok(maybe) => match maybe {
                 None => GetTaskResponse::NotFound,
                 Some(t) => 
-                    match t.try_into() {
+                    match Task::try_from(&t) {
                         Ok(v)  => GetTaskResponse::Ok(v),
                         Err(_) => GetTaskResponse::ServerError,
                     },
             },
-            Err(_) => todo!(),
+            Err(task_service::GetTaskError::StorageError(err)) => {
+                log_storage_error(&err, "storage error when getting task");
+                GetTaskResponse::ServerError
+            },
         }
     }
 
@@ -176,8 +183,8 @@ mod controller {
         };
 
         match task_service.add_task(req).await {
-            Ok(t) => match t.try_into() {
-                Ok(v)  => AddTaskResponse::Ok(v),
+            Ok(t) => match Task::try_from(&t) {
+                Ok(v)  => AddTaskResponse::Created(v),
                 Err(_) => AddTaskResponse::ServerError,
             },
 
@@ -189,7 +196,7 @@ mod controller {
                     AddTaskResponse::MalformedRequest(reason.into()),
 
                 task_service::AddTaskError::StorageError(err) => {
-                    tracing::error!(err = %err, "storage error when adding task");
+                    log_storage_error(&err, "storage error when adding task");
                     AddTaskResponse::ServerError
                 },
             },
@@ -206,14 +213,14 @@ mod controller {
     #[Response(format(json))]
     pub enum AddTaskResponse {
         /// Task added successfully
-        #[Response(code = 200)]
-        Ok(Task),
+        #[Response(code = 201)]
+        Created(Task),
 
         /// Task already exists with the same title
         #[Response(code = 409)]
         AlreadyExists,
 
-        /// Malformed request, e.g. missing title or title is too long.
+        /// Malformed request, e.g. missing title or title is too short or too long.
         #[Response(code = 400)]
         MalformedRequest(String),
 
@@ -238,7 +245,7 @@ mod controller {
         let result = task_service.rename_task(TaskID::from(task_id.task_id), req.title).await;
         match result {
             Ok(t) => 
-                match Task::try_from(t) {
+                match Task::try_from(&t) {
                     Ok(d)  => RenameTaskResponse::Ok(d),
                     Err(_) => RenameTaskResponse::ServerError,
                 }
@@ -254,9 +261,11 @@ mod controller {
                 task_service::RenameTaskError::Duplicate => 
                     RenameTaskResponse::AlreadyExists,
 
-                task_service::RenameTaskError::StorageReadError(_)
-                | task_service::RenameTaskError::StorageWriteError(_) => 
-                    RenameTaskResponse::ServerError,
+                task_service::RenameTaskError::StorageReadError(err)
+                | task_service::RenameTaskError::StorageWriteError(err) => {
+                    log_storage_error(&err, "storage error when renaming task");
+                    RenameTaskResponse::ServerError
+                },
             },
         }
     }
@@ -331,6 +340,7 @@ mod controller {
         #[Response(code = 404)]
         NotFound,
 
+        /// Returned if the operation would result in a duplicated task in Pending status.
         #[Response(code = 409)]
         Duplicate,
 
@@ -341,7 +351,7 @@ mod controller {
     fn map_change_status_result(r: Result<model::Task, task_service::ChangeStatusError>) -> ChangeStatusResponse {
         match r {
             Ok(t) => 
-                match Task::try_from(t) {
+                match Task::try_from(&t) {
                     Ok(d)  => ChangeStatusResponse::Ok(d),
                     Err(_) => ChangeStatusResponse::ServerError,
                 }
@@ -354,11 +364,17 @@ mod controller {
                 task_service::ChangeStatusError::Duplicate => 
                     ChangeStatusResponse::Duplicate,
 
-                task_service::ChangeStatusError::StorageReadError(_)
-                | task_service::ChangeStatusError::StorageWriteError(_) => 
-                    ChangeStatusResponse::ServerError,
+                task_service::ChangeStatusError::StorageReadError(err)
+                | task_service::ChangeStatusError::StorageWriteError(err) => {
+                    log_storage_error(&err, "storage error when changing task status");
+                    ChangeStatusResponse::ServerError
+                },
             },
         }
+    }
+
+    fn log_storage_error(err: &StorageError, message: &'static str) {
+        tracing::error!(err = %err, message);
     }
 
     //
@@ -384,10 +400,10 @@ mod model {
         pub status: model::Status,
     }
 
-    impl TryFrom<model::Task> for Task {
+    impl TryFrom<&model::Task> for Task {
         type Error = ();
         
-        fn try_from(t: model::Task) -> Result<Self, Self::Error> {
+        fn try_from(t: &model::Task) -> Result<Self, Self::Error> {
             Ok(Task {
                 id: if let Some(id) = t.id() {
                         id.value()
@@ -395,7 +411,7 @@ mod model {
                         tracing::error!("task_id is expected to be set");
                         return Err(())
                     },
-                title: t.title(),
+                title: t.title().to_owned(),
                 status: t.status(),
             })
         }
