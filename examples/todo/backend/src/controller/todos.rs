@@ -42,7 +42,6 @@ mod controller {
         // Response macro generates implementations for enums and structs as responses.
         Response
     };
-    use tracing::debug;
 
     use crate::service::{
         error::StorageError,
@@ -60,8 +59,7 @@ mod controller {
     pub async fn list_tasks(
         Extension(task_service): Extension<Arc<TaskService>>,
         Query(req): Query<ListTasksRequest>
-    ) -> ListTasksResponse {
-        debug!("List tasks request: {:?}", req);
+    ) -> Result<ListTasksOk, ListTasksError> {
         match task_service.list_tasks(req.into()).await {
             Ok(l) => {
                 let tasks: Result<Vec<Task>, ()> = l.iter()
@@ -70,13 +68,13 @@ mod controller {
                 ;
 
                 match tasks {
-                    Ok(v)  => ListTasksResponse::Ok(TasksList(v)),
-                    Err(_) => ListTasksResponse::ServerError,
+                    Ok(v)  => Ok(ListTasksOk(TasksList(v))),
+                    Err(_) => Err(ListTasksError::ServerError),
                 }
             },
             Err(task_service::ListTasksError::StorageError(err)) => {
                 log_storage_error(&err, "storage error when listing tasks");
-                ListTasksResponse::ServerError
+                Err(ListTasksError::ServerError)
             },
         }
     }
@@ -106,18 +104,17 @@ mod controller {
         }
     }
 
-    #[DTO(response)]
-    pub struct TasksList(Vec<Task>);
+    #[Response(format(json), code = 200)]
+    pub struct ListTasksOk(TasksList);
 
-    /// List of tasks.
     #[Response(format(json))]
-    pub enum ListTasksResponse {
-        #[Response(code = 200)]
-        Ok(TasksList),
-
+    pub enum ListTasksError {
         #[Response(code = 500)]
         ServerError,
     }
+
+    #[DTO(response)]
+    pub struct TasksList(Vec<Task>);
 
     //
     // endregion: list tasks
@@ -130,19 +127,19 @@ mod controller {
     pub async fn get_task(
         Extension(task_service): Extension<Arc<TaskService>>,
         Path(path): Path<TaskId>
-    ) -> GetTaskResponse {
+    ) -> Result<Task, GetTaskError> {
         match task_service.get_task_by_id(TaskID::from(path.task_id)).await {
             Ok(maybe) => match maybe {
-                None => GetTaskResponse::NotFound,
+                None => Err(GetTaskError::NotFound),
                 Some(t) => 
                     match Task::try_from(&t) {
-                        Ok(v)  => GetTaskResponse::Ok(v),
-                        Err(_) => GetTaskResponse::ServerError,
+                        Ok(v)  => Ok(v),
+                        Err(_) => Err(GetTaskError::ServerError),
                     },
             },
             Err(task_service::GetTaskError::StorageError(err)) => {
                 log_storage_error(&err, "storage error when getting task");
-                GetTaskResponse::ServerError
+                Err(GetTaskError::ServerError)
             },
         }
     }
@@ -153,12 +150,8 @@ mod controller {
         pub task_id: u64,
     }
 
-    /// Single task.
     #[Response(format(json))]
-    pub enum GetTaskResponse {
-        #[Response(code = 200)]
-        Ok(Task),
-
+    pub enum GetTaskError {
         #[Response(code = 404)]
         NotFound,
 
@@ -177,27 +170,27 @@ mod controller {
     pub async fn add_task(
         Extension(task_service): Extension<Arc<TaskService>>,
         req: AddTaskRequest
-    ) -> AddTaskResponse {
+    ) -> Result<AddTaskOk, AddTaskError> {
         let req = task_service::AddTaskRequest {
             title: req.title,
         };
 
         match task_service.add_task(req).await {
             Ok(t) => match Task::try_from(&t) {
-                Ok(v)  => AddTaskResponse::Created(v),
-                Err(_) => AddTaskResponse::ServerError,
+                Ok(v)  => Ok(AddTaskOk(v)),
+                Err(_) => Err(AddTaskError::ServerError),
             },
 
             Err(e) => match e {
                 task_service::AddTaskError::Duplicate =>
-                    AddTaskResponse::AlreadyExists,
+                    Err(AddTaskError::AlreadyExists),
 
                 task_service::AddTaskError::InvalidRequest(reason) => 
-                    AddTaskResponse::MalformedRequest(reason.into()),
+                    Err(AddTaskError::MalformedRequest(reason.into())),
 
                 task_service::AddTaskError::StorageError(err) => {
                     log_storage_error(&err, "storage error when adding task");
-                    AddTaskResponse::ServerError
+                    Err(AddTaskError::ServerError)
                 },
             },
         }
@@ -209,18 +202,17 @@ mod controller {
         pub title: String,
     }
 
-    /// Result of adding a task
-    #[Response(format(json))]
-    pub enum AddTaskResponse {
-        /// Task added successfully
-        #[Response(code = 201)]
-        Created(Task),
+    /// Task added successfully
+    #[Response(format(json), code = 201)]
+    pub struct AddTaskOk(Task);
 
+    #[Response(format(json))]
+    pub enum AddTaskError {
         /// Task already exists with the same title
         #[Response(code = 409)]
         AlreadyExists,
 
-        /// Malformed request, e.g. missing title or title is too short or too long.
+        /// Malformed request, e.g. missing title or title is too long.
         #[Response(code = 400)]
         MalformedRequest(String),
 
@@ -241,32 +233,29 @@ mod controller {
         Extension(task_service): Extension<Arc<TaskService>>,
         Path(task_id): Path<TaskId>,
         req: RenameTaskRequest
-    ) -> RenameTaskResponse {
-        let result = task_service.rename_task(TaskID::from(task_id.task_id), req.title).await;
-        match result {
-            Ok(t) => 
-                match Task::try_from(&t) {
-                    Ok(d)  => RenameTaskResponse::Ok(d),
-                    Err(_) => RenameTaskResponse::ServerError,
-                }
-            ,
+    ) -> Result<Task, RenameTaskError> {
+        match task_service.rename_task(TaskID::from(task_id.task_id), req.title).await {
+            Ok(t) => match Task::try_from(&t) {
+                Ok(v)  => Ok(v),
+                Err(_) => Err(RenameTaskError::ServerError),
+            },
 
-            Err(e) => match e {
+            Err(e) => Err(match e {
                 task_service::RenameTaskError::InvalidRequest(d) =>
-                    RenameTaskResponse::MalformedRequest(d.into()),
+                    RenameTaskError::MalformedRequest(d.into()),
 
                 task_service::RenameTaskError::NotFound => 
-                    RenameTaskResponse::NotFound,
+                    RenameTaskError::NotFound,
 
                 task_service::RenameTaskError::Duplicate => 
-                    RenameTaskResponse::AlreadyExists,
+                    RenameTaskError::AlreadyExists,
 
                 task_service::RenameTaskError::StorageReadError(err)
                 | task_service::RenameTaskError::StorageWriteError(err) => {
                     log_storage_error(&err, "storage error when renaming task");
-                    RenameTaskResponse::ServerError
+                    RenameTaskError::ServerError
                 },
-            },
+            }),
         }
     }
 
@@ -276,12 +265,8 @@ mod controller {
         pub title: String,
     }
 
-    /// Result of renaming a task
     #[Response(format(json))]
-    pub enum RenameTaskResponse {
-        #[Response(code = 200)]
-        Ok(Task),
-
+    pub enum RenameTaskError {
         #[Response(code = 404)]
         NotFound,
 
@@ -306,7 +291,7 @@ mod controller {
     pub async fn set_done(
         Extension(task_service): Extension<Arc<TaskService>>,
         Path(task_id): Path<TaskId>
-    ) -> ChangeStatusResponse {
+    ) -> Result<Task, ChangeStatusError> {
         let result = task_service.change_status(task_id.task_id.into(), Status::Done).await;
         map_change_status_result(result)
     }
@@ -316,7 +301,7 @@ mod controller {
     pub async fn set_pending(
         Extension(task_service): Extension<Arc<TaskService>>,
         Path(task_id): Path<TaskId>
-    ) -> ChangeStatusResponse {
+    ) -> Result<Task, ChangeStatusError> {
         let result = task_service.change_status(task_id.task_id.into(), Status::Pending).await;
         map_change_status_result(result)
     }
@@ -326,17 +311,13 @@ mod controller {
     pub async fn set_cancelled(
         Extension(task_service): Extension<Arc<TaskService>>,
         Path(task_id): Path<TaskId>
-    ) -> ChangeStatusResponse {
+    ) -> Result<Task, ChangeStatusError> {
         let result = task_service.change_status(task_id.task_id.into(), Status::Cancelled).await;
         map_change_status_result(result)
     }
 
-    /// Result of changing the status of task
     #[Response(format(json))]
-    pub enum ChangeStatusResponse {
-        #[Response(code = 200)]
-        Ok(Task),
-
+    pub enum ChangeStatusError {
         #[Response(code = 404)]
         NotFound,
 
@@ -348,26 +329,26 @@ mod controller {
         ServerError,
     }
 
-    fn map_change_status_result(r: Result<model::Task, task_service::ChangeStatusError>) -> ChangeStatusResponse {
+    fn map_change_status_result(r: Result<model::Task, task_service::ChangeStatusError>) -> Result<Task, ChangeStatusError> {
         match r {
             Ok(t) => 
                 match Task::try_from(&t) {
-                    Ok(d)  => ChangeStatusResponse::Ok(d),
-                    Err(_) => ChangeStatusResponse::ServerError,
+                    Ok(d)  => Ok(d),
+                    Err(_) => Err(ChangeStatusError::ServerError),
                 }
             ,
 
             Err(e) => match e {
                 task_service::ChangeStatusError::NotFound => 
-                    ChangeStatusResponse::NotFound,
+                    Err(ChangeStatusError::NotFound),
 
                 task_service::ChangeStatusError::Duplicate => 
-                    ChangeStatusResponse::Duplicate,
+                    Err(ChangeStatusError::Duplicate),
 
                 task_service::ChangeStatusError::StorageReadError(err)
                 | task_service::ChangeStatusError::StorageWriteError(err) => {
                     log_storage_error(&err, "storage error when changing task status");
-                    ChangeStatusResponse::ServerError
+                    Err(ChangeStatusError::ServerError)
                 },
             },
         }
@@ -383,8 +364,10 @@ mod controller {
 
 /// HTTP-layer models.
 mod model {
-    use groom_macros::DTO;
+    use axum::response::IntoResponse;
+    use groom_macros::{DTO, Response};
     use serde::Deserialize;
+    use static_assertions::assert_impl_any;
     use utoipa::ToSchema;
 
     use crate::service::{model, task_service};
@@ -393,7 +376,7 @@ mod model {
     // Task
     //
 
-    #[DTO(response)]
+    #[Response(format(json), code = 200)]
     pub struct Task {
         pub id:     u64,
         pub title:  String,
@@ -403,6 +386,9 @@ mod model {
     impl TryFrom<&model::Task> for Task {
         type Error = ();
         
+        /// Converts Task domain model into HTTP viewmodel. If conversion is unsuccessful, logs the error.
+        /// 
+        /// The conversion may fail if domain model has null id. This should never happen in production
         fn try_from(t: &model::Task) -> Result<Self, Self::Error> {
             Ok(Task {
                 id: if let Some(id) = t.id() {
