@@ -7,6 +7,7 @@ mod test_utils;
 
 mod dependency_injection;
 mod multiple_controllers;
+mod nesting_controllers;
 
 //
 // endregion: project structuring

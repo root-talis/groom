@@ -4,7 +4,7 @@ use tower_http::trace::TraceLayer;
 use tokio::{net::TcpListener, signal};
 use axum::{Extension, Router, http::StatusCode, response::IntoResponse, routing::get};
 use groom_macros::Controller;
-use utoipa::{OpenApi, openapi::OpenApiBuilder};
+use utoipa::OpenApi;
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -26,7 +26,10 @@ async fn main() -> Result<()> {
 
 fn make_router() -> Result<Router> {
     Ok(
-        controller::merge_into_router(Router::new())
+        controller::into_router()
+            .validate()
+            .expect("GroomRouter validation failed for hello-world controller")
+            .to_axum_router()
             .route("/spec.yaml", get(get_spec))
             .layer(Extension(make_spec()?))
             .layer(TraceLayer::new_for_http())
@@ -113,11 +116,11 @@ fn make_spec() -> Result<Spec> {
     struct ApiDoc;
 
     Ok(Spec(
-        controller::merge_into_openapi_builder(
-            OpenApiBuilder::from(ApiDoc::openapi())
-        )
-        .build()
-        .to_yaml()?
+        controller::into_router()
+            .validate()
+            .expect("GroomRouter validation failed for hello-world controller")
+            .to_openapi(ApiDoc::openapi())
+            .to_yaml()?
     ))
 }
 

@@ -1,4 +1,3 @@
-use axum::Router;
 use serde_json::json;
 
 use crate::{
@@ -113,7 +112,7 @@ mod controller {
 
 #[tokio::test]
 pub async fn test_enum_responses() {
-    let r = controller::merge_into_router(Router::new());
+    let r = controller::into_router().validate().unwrap().to_axum_router();
 
     Req::get("/enum/unit").call(&r).await
         .assert_status(200)
@@ -136,7 +135,7 @@ pub async fn test_enum_responses() {
 
 #[tokio::test]
 pub async fn test_wrapped_responses() {
-    let r = controller::merge_into_router(Router::new());
+    let r = controller::into_router().validate().unwrap().to_axum_router();
 
     Req::get("/wrapped/unit").call(&r).await
         .assert_status(202)
@@ -161,7 +160,7 @@ pub async fn test_wrapped_responses() {
 #[test]
 pub fn test_openapi() {
    assert_openapi_doc(
-       |b| controller::merge_into_openapi_builder(b),
+        |api| controller::into_router().validate().unwrap().to_openapi(api),
        json!({
             "components": {
                 "schemas": {

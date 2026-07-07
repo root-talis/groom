@@ -1342,20 +1342,17 @@ mod result_struct_struct {
             &mut codes,
         );
     }
-    pub fn merge_into_router(other: ::axum::Router<()>) -> ::axum::Router<()> {
+    pub fn into_router() -> ::groom::router::GroomRouter<()> {
         __groom_runtime_checks();
-        let this_router = ::axum::Router::new()
+        let this_router: ::axum::Router<()> = ::axum::Router::new()
             .route("/", ::axum::routing::get(__groom_wrapper_foo));
-        other.merge(this_router)
-    }
-    pub fn merge_into_openapi_builder(
-        other: ::utoipa::openapi::OpenApiBuilder,
-    ) -> ::utoipa::openapi::OpenApiBuilder {
-        let mut paths = ::utoipa::openapi::path::PathsBuilder::new();
         let mut components = ::groom::extract::ComponentsRegistry::new();
-        paths = paths
-            .path(
-                "/",
+        let mut __groom_paths: ::std::vec::Vec<
+            (::std::string::String, ::utoipa::openapi::path::PathItem),
+        > = ::std::vec::Vec::new();
+        __groom_paths
+            .push((
+                "/".to_string(),
                 {
                     let mut op_builder = ::utoipa::openapi::path::OperationBuilder::new()
                         .summary(None as Option<String>)
@@ -1372,21 +1369,57 @@ mod result_struct_struct {
                         )
                         .build()
                 },
-            );
-        let mut b = other.build();
-        let c = b
-            .components
-            .as_ref()
-            .map(|v| v.clone())
-            .unwrap_or(utoipa::openapi::Components::new());
-        let c = components.into_components(c);
-        b.merge(
-            ::utoipa::openapi::OpenApiBuilder::new()
-                .components(Some(c))
-                .paths(paths)
-                .build(),
+            ));
+        ::groom::router::GroomRouter::from_controller_parts(
+            this_router,
+            components,
+            __groom_paths,
+        )
+    }
+    pub fn merge_into_router(
+        other: impl Into<::groom::router::GroomRouter<()>>,
+    ) -> ::groom::router::GroomRouter<()> {
+        __groom_runtime_checks();
+        let this_router: ::axum::Router<()> = ::axum::Router::new()
+            .route("/", ::axum::routing::get(__groom_wrapper_foo));
+        let mut components = ::groom::extract::ComponentsRegistry::new();
+        let mut __groom_paths: ::std::vec::Vec<
+            (::std::string::String, ::utoipa::openapi::path::PathItem),
+        > = ::std::vec::Vec::new();
+        __groom_paths
+            .push((
+                "/".to_string(),
+                {
+                    let mut op_builder = ::utoipa::openapi::path::OperationBuilder::new()
+                        .summary(None as Option<String>)
+                        .description(None as Option<String>)
+                        .operation_id(Some("foo"));
+                    op_builder = <Result<
+                        Success,
+                        Error,
+                    >>::__openapi_modify_operation(op_builder, &mut components);
+                    ::utoipa::openapi::path::PathItemBuilder::new()
+                        .operation(
+                            ::utoipa::openapi::path::HttpMethod::Get,
+                            op_builder.build(),
+                        )
+                        .build()
+                },
+            ));
+        let __groom_this = ::groom::router::GroomRouter::from_controller_parts(
+            this_router,
+            components,
+            __groom_paths,
         );
-        b.into()
+        let __groom_other = other.into();
+        match __groom_other.merge(__groom_this) {
+            ::std::result::Result::Ok(r) => r,
+            ::std::result::Result::Err(e) => {
+                ::core::panicking::panic_fmt(
+                    format_args!("GroomRouter merge failed: {0}", e),
+                );
+            }
+        }
     }
     const _: fn() = || {
         fn assert_impl_all<T: ?Sized + ::groom::response::Response>() {}
@@ -1645,20 +1678,17 @@ mod result_struct_enum {
             &mut codes,
         );
     }
-    pub fn merge_into_router(other: ::axum::Router<()>) -> ::axum::Router<()> {
+    pub fn into_router() -> ::groom::router::GroomRouter<()> {
         __groom_runtime_checks();
-        let this_router = ::axum::Router::new()
+        let this_router: ::axum::Router<()> = ::axum::Router::new()
             .route("/", ::axum::routing::get(__groom_wrapper_foo));
-        other.merge(this_router)
-    }
-    pub fn merge_into_openapi_builder(
-        other: ::utoipa::openapi::OpenApiBuilder,
-    ) -> ::utoipa::openapi::OpenApiBuilder {
-        let mut paths = ::utoipa::openapi::path::PathsBuilder::new();
         let mut components = ::groom::extract::ComponentsRegistry::new();
-        paths = paths
-            .path(
-                "/",
+        let mut __groom_paths: ::std::vec::Vec<
+            (::std::string::String, ::utoipa::openapi::path::PathItem),
+        > = ::std::vec::Vec::new();
+        __groom_paths
+            .push((
+                "/".to_string(),
                 {
                     let mut op_builder = ::utoipa::openapi::path::OperationBuilder::new()
                         .summary(None as Option<String>)
@@ -1675,21 +1705,57 @@ mod result_struct_enum {
                         )
                         .build()
                 },
-            );
-        let mut b = other.build();
-        let c = b
-            .components
-            .as_ref()
-            .map(|v| v.clone())
-            .unwrap_or(utoipa::openapi::Components::new());
-        let c = components.into_components(c);
-        b.merge(
-            ::utoipa::openapi::OpenApiBuilder::new()
-                .components(Some(c))
-                .paths(paths)
-                .build(),
+            ));
+        ::groom::router::GroomRouter::from_controller_parts(
+            this_router,
+            components,
+            __groom_paths,
+        )
+    }
+    pub fn merge_into_router(
+        other: impl Into<::groom::router::GroomRouter<()>>,
+    ) -> ::groom::router::GroomRouter<()> {
+        __groom_runtime_checks();
+        let this_router: ::axum::Router<()> = ::axum::Router::new()
+            .route("/", ::axum::routing::get(__groom_wrapper_foo));
+        let mut components = ::groom::extract::ComponentsRegistry::new();
+        let mut __groom_paths: ::std::vec::Vec<
+            (::std::string::String, ::utoipa::openapi::path::PathItem),
+        > = ::std::vec::Vec::new();
+        __groom_paths
+            .push((
+                "/".to_string(),
+                {
+                    let mut op_builder = ::utoipa::openapi::path::OperationBuilder::new()
+                        .summary(None as Option<String>)
+                        .description(None as Option<String>)
+                        .operation_id(Some("foo"));
+                    op_builder = <Result<
+                        Success,
+                        Error,
+                    >>::__openapi_modify_operation(op_builder, &mut components);
+                    ::utoipa::openapi::path::PathItemBuilder::new()
+                        .operation(
+                            ::utoipa::openapi::path::HttpMethod::Get,
+                            op_builder.build(),
+                        )
+                        .build()
+                },
+            ));
+        let __groom_this = ::groom::router::GroomRouter::from_controller_parts(
+            this_router,
+            components,
+            __groom_paths,
         );
-        b.into()
+        let __groom_other = other.into();
+        match __groom_other.merge(__groom_this) {
+            ::std::result::Result::Ok(r) => r,
+            ::std::result::Result::Err(e) => {
+                ::core::panicking::panic_fmt(
+                    format_args!("GroomRouter merge failed: {0}", e),
+                );
+            }
+        }
     }
     const _: fn() = || {
         fn assert_impl_all<T: ?Sized + ::groom::response::Response>() {}
@@ -2126,20 +2192,17 @@ mod wrapped_enum {
             &mut codes,
         );
     }
-    pub fn merge_into_router(other: ::axum::Router<()>) -> ::axum::Router<()> {
+    pub fn into_router() -> ::groom::router::GroomRouter<()> {
         __groom_runtime_checks();
-        let this_router = ::axum::Router::new()
+        let this_router: ::axum::Router<()> = ::axum::Router::new()
             .route("/", ::axum::routing::get(__groom_wrapper_foo));
-        other.merge(this_router)
-    }
-    pub fn merge_into_openapi_builder(
-        other: ::utoipa::openapi::OpenApiBuilder,
-    ) -> ::utoipa::openapi::OpenApiBuilder {
-        let mut paths = ::utoipa::openapi::path::PathsBuilder::new();
         let mut components = ::groom::extract::ComponentsRegistry::new();
-        paths = paths
-            .path(
-                "/",
+        let mut __groom_paths: ::std::vec::Vec<
+            (::std::string::String, ::utoipa::openapi::path::PathItem),
+        > = ::std::vec::Vec::new();
+        __groom_paths
+            .push((
+                "/".to_string(),
                 {
                     let mut op_builder = ::utoipa::openapi::path::OperationBuilder::new()
                         .summary(None as Option<String>)
@@ -2156,21 +2219,57 @@ mod wrapped_enum {
                         )
                         .build()
                 },
-            );
-        let mut b = other.build();
-        let c = b
-            .components
-            .as_ref()
-            .map(|v| v.clone())
-            .unwrap_or(utoipa::openapi::Components::new());
-        let c = components.into_components(c);
-        b.merge(
-            ::utoipa::openapi::OpenApiBuilder::new()
-                .components(Some(c))
-                .paths(paths)
-                .build(),
+            ));
+        ::groom::router::GroomRouter::from_controller_parts(
+            this_router,
+            components,
+            __groom_paths,
+        )
+    }
+    pub fn merge_into_router(
+        other: impl Into<::groom::router::GroomRouter<()>>,
+    ) -> ::groom::router::GroomRouter<()> {
+        __groom_runtime_checks();
+        let this_router: ::axum::Router<()> = ::axum::Router::new()
+            .route("/", ::axum::routing::get(__groom_wrapper_foo));
+        let mut components = ::groom::extract::ComponentsRegistry::new();
+        let mut __groom_paths: ::std::vec::Vec<
+            (::std::string::String, ::utoipa::openapi::path::PathItem),
+        > = ::std::vec::Vec::new();
+        __groom_paths
+            .push((
+                "/".to_string(),
+                {
+                    let mut op_builder = ::utoipa::openapi::path::OperationBuilder::new()
+                        .summary(None as Option<String>)
+                        .description(None as Option<String>)
+                        .operation_id(Some("foo"));
+                    op_builder = <Result<
+                        Resp,
+                        Error,
+                    >>::__openapi_modify_operation(op_builder, &mut components);
+                    ::utoipa::openapi::path::PathItemBuilder::new()
+                        .operation(
+                            ::utoipa::openapi::path::HttpMethod::Get,
+                            op_builder.build(),
+                        )
+                        .build()
+                },
+            ));
+        let __groom_this = ::groom::router::GroomRouter::from_controller_parts(
+            this_router,
+            components,
+            __groom_paths,
         );
-        b.into()
+        let __groom_other = other.into();
+        match __groom_other.merge(__groom_this) {
+            ::std::result::Result::Ok(r) => r,
+            ::std::result::Result::Err(e) => {
+                ::core::panicking::panic_fmt(
+                    format_args!("GroomRouter merge failed: {0}", e),
+                );
+            }
+        }
     }
     const _: fn() = || {
         fn assert_impl_all<T: ?Sized + ::groom::response::Response>() {}

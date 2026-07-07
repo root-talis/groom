@@ -1,4 +1,3 @@
-use axum::Router;
 use serde_json::json;
 
 use crate::{
@@ -37,7 +36,7 @@ mod controller {
 // axum::http::HeaderMap
 #[tokio::test]
 pub async fn test_get_axum_http_header_map() {
-    let r = controller::merge_into_router(Router::new());
+    let r = controller::into_router().validate().unwrap().to_axum_router();
 
     Req::get("/header-map").with_headers([("x-access-token", "123456789")]).call(&r).await
         .assert_status(200)
@@ -50,7 +49,7 @@ pub async fn test_get_axum_http_header_map() {
 #[test]
 pub fn test_openapi() {
     assert_openapi_doc(
-        |b| controller::merge_into_openapi_builder(b),
+        |api| controller::into_router().validate().unwrap().to_openapi(api),
         json!({
             "info": {
                 "contact": {"email": "mail@example.com","name": "name",

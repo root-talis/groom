@@ -1,5 +1,5 @@
 use color_eyre::eyre::{Result, eyre};
-use groom_example_quick_example::build_router;
+use groom_example_quick_example::make_axum_router;
 use tokio::{net::TcpListener, signal};
 use tower_http::trace::TraceLayer;
 
@@ -11,7 +11,7 @@ async fn main() -> Result<()> {
         .with_max_level(tracing::Level::DEBUG)
         .init();
 
-    run_server(String::from("127.0.0.1:8889"), build_router(), shutdown_signal()).await
+    run_server(String::from("127.0.0.1:8889"), make_axum_router(), shutdown_signal()).await
 }
 
 async fn run_server<Stop>(addr: String, router: axum::Router, stop: Stop) -> Result<()>
@@ -23,10 +23,13 @@ where
         .map_err(|e| eyre!("failed to listen on {}: {}", addr, e))?;
 
     tracing::info!(
-        addr = listener
-            .local_addr()
-            .expect("failed to get local_addr from tcp listener")
-            .to_string(),
+        addr = format!(
+            "http://{}/", 
+            listener
+                .local_addr()
+                .expect("failed to get local_addr from tcp listener")
+                .to_string()
+        ),
         "accepting connections"
     );
 

@@ -1,6 +1,6 @@
-use axum::Router;
+use groom::router::GroomRouterValid;
 use groom_macros::Controller;
-use utoipa::{OpenApi, openapi::OpenApiBuilder};
+use utoipa::OpenApi;
 
 #[Controller()]
 mod api {
@@ -47,15 +47,20 @@ mod api {
     }
 }
 
-fn make_router() -> Router {
-    api::merge_into_router(Router::new())
+fn make_router() -> GroomRouterValid {
+    api::into_router()
+        .validate()
+        .expect("GroomRouter validation failed for quick-example")
 }
 
-fn make_openapi() -> utoipa::openapi::OpenApi {
+pub fn make_axum_router() -> axum::Router {
+    make_router().to_axum_router()
+}
+
+fn make_openapi(r: &GroomRouterValid) -> utoipa::openapi::OpenApi {
     #[derive(OpenApi)]
     #[openapi(info(title = "My API", version = "0.1.0"))]
     struct ApiDoc;
 
-    api::merge_into_openapi_builder(OpenApiBuilder::from(ApiDoc::openapi()))
-        .build()
+    r.to_openapi(ApiDoc::openapi())
 }

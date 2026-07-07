@@ -1,5 +1,27 @@
 # Changelog
 
+## Unreleased
+
+### groom
+
+- Major architecture change: `GroomRouter` introduced as the central composition type.
+- Added typestate pattern: `GroomRouter<S, NotValidated>` → `.validate()` → `GroomRouter<S, Validated>`.
+- `GroomRouter::new()` — creates an empty router with empty registry and no OpenAPI paths.
+- `GroomRouter::merge()` / `GroomRouter::nest()` — compose controllers; return `MergeResult<Self>` with `MergeError::SchemaConflict` on schema name collisions.
+- `GroomRouter::validate()` — detects route shadowing (`RouterValidationError::RouteShadow`) across merged controllers.
+- `GroomRouter::to_axum_router(self)` — terminal: extracts the inner `axum::Router<S>`.
+- `GroomRouter::to_openapi(&self, api: OpenApi)` — terminal: merges accumulated paths and components into an `OpenApi` document.
+- `GroomRouter::layer()` / `.fallback()` / `.route_layer()` — delegate transparently to the inner axum router.
+- Added `prepend_path()` helper for OpenAPI path prefixing under `.nest()`.
+- `RouterValidationError` extracted from `MergeError` as a separate error type with `RouteShadow { path, method }` variant.
+- `MergeError` now carries only `SchemaConflict` and `SchemaNotFound` variants.
+- `GroomRouter::from_router()` removed — controller composition goes through `into_router()` / `.merge()`.
+
+### groom_macros
+
+- `#[Controller]` modules now generate `into_router() -> GroomRouter<S, NotValidated>` as the primary generated function, replacing the separate `merge_into_router()` / `merge_into_openapi_builder()` pattern.
+- `merge_into_router()` retained as a soft-deprecated backward-compat function.
+
 ## v0.2.2
 
 ### groom

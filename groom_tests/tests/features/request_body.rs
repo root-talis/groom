@@ -1,4 +1,4 @@
-use axum::{Router};
+
 use serde_json::json;
 
 use crate::{
@@ -149,7 +149,7 @@ mod controller {
 
 #[tokio::test]
 pub async fn test_post_string() {
-    let r = controller::merge_into_router(Router::new());
+    let r = controller::into_router().validate().unwrap().to_axum_router();
 
     Req::post("/string_body")
         .accept("text/plain")
@@ -173,7 +173,7 @@ pub async fn test_post_string() {
 
 #[tokio::test]
 pub async fn test_post_bytes() {
-    let r = controller::merge_into_router(Router::new());
+    let r = controller::into_router().validate().unwrap().to_axum_router();
 
     Req::post("/bytes_body")
         .accept("text/plain")
@@ -195,7 +195,7 @@ pub async fn test_post_bytes() {
 
 #[tokio::test]
 pub async fn test_post_image() {
-    let r = controller::merge_into_router(Router::new());
+    let r = controller::into_router().validate().unwrap().to_axum_router();
 
     Req::post("/image_body")
         .accept("text/plain")
@@ -218,7 +218,7 @@ pub async fn test_post_image() {
 // Request body JSON - named struct
 #[tokio::test]
 pub async fn test_post_multi_format_json_named_struct() {
-    let r = controller::merge_into_router(Router::new());
+    let r = controller::into_router().validate().unwrap().to_axum_router();
 
     Req::post("/multi_format")
         .with_body(
@@ -248,7 +248,7 @@ pub async fn test_post_multi_format_json_named_struct() {
 // Request body JSON - DTO wrapper
 #[tokio::test]
 pub async fn test_post_multi_format_json_unnamed_struct() {
-    let r = controller::merge_into_router(Router::new());
+    let r = controller::into_router().validate().unwrap().to_axum_router();
 
     Req::post("/multi_format_dto")
         .with_body(
@@ -278,7 +278,7 @@ pub async fn test_post_multi_format_json_unnamed_struct() {
 // Request body url-encoded - named struct
 #[tokio::test]
 pub async fn test_post_multi_format_url_encoded_named_struct() {
-    let r = controller::merge_into_router(Router::new());
+    let r = controller::into_router().validate().unwrap().to_axum_router();
 
     Req::post("/multi_format")
         .with_body(
@@ -308,7 +308,7 @@ pub async fn test_post_multi_format_url_encoded_named_struct() {
 // Request body url-encoded - DTO wrapper
 #[tokio::test]
 pub async fn test_post_multi_format_url_encoded_unnamed_struct() {
-    let r = controller::merge_into_router(Router::new());
+    let r = controller::into_router().validate().unwrap().to_axum_router();
 
     Req::post("/multi_format_dto")
         .with_body(
@@ -338,7 +338,7 @@ pub async fn test_post_multi_format_url_encoded_unnamed_struct() {
 /// Test that url_encoded RequestBody is correctly read for Vec<Enum>
 #[tokio::test]
 pub async fn test_url_encoded_vec_of_enums() {
-    let r = controller::merge_into_router(Router::new());
+    let r = controller::into_router().validate().unwrap().to_axum_router();
 
     Req::post("/url_encoded_vec_enum")
         .with_body(
@@ -388,7 +388,7 @@ pub async fn test_url_encoded_vec_of_enums() {
 /// Test that url_encoded RequestBody is correctly read for Option<Vec<Enum>>
 #[tokio::test]
 pub async fn test_url_encoded_opt_vec_of_enums() {
-    let r = controller::merge_into_router(Router::new());
+    let r = controller::into_router().validate().unwrap().to_axum_router();
 
     Req::post("/url_encoded_opt_vec_enum")
         .with_body(
@@ -440,7 +440,7 @@ pub async fn test_url_encoded_opt_vec_of_enums() {
 #[test]
 pub fn test_openapi() {
     assert_openapi_doc(
-        |b| controller::merge_into_openapi_builder(b),
+        |api| controller::into_router().validate().unwrap().to_openapi(api),
         json!({
             "components": {
                 "schemas": {

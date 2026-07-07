@@ -6,6 +6,8 @@ Groom [README.md](https://github.com/root-talis/groom/blob/main/README.md) is a 
 
 For how this crate's proc-macros are structured and what code they generate, see [ARCHITECTURE.md](ARCHITECTURE.md).
 
+The `#[Controller]` proc-macro generates `into_router() -> ::groom::router::GroomRouter`. GroomRouter provides the composition API — merge controllers via `.merge()` / `.nest()`, validate via `.validate()`, and output via `.to_axum_router()` or `.to_openapi()`.
+
 Optional Cargo feature `axum-extra-form` switches `#[RequestBody(format(url_encoded))]` to `axum_extra::extract::Form` for repeated form keys → `Vec` fields. It forwards to `groom/axum-extra-form`; enable it here only — see the root [README.md](../README.md#array-fields-in-url-encoded-bodies).
 
 ## Goals:
@@ -17,7 +19,7 @@ Optional Cargo feature `axum-extra-form` switches `#[RequestBody(format(url_enco
 
 # ❗ groom is WIP - do not use in production!
 
-[List of things to do](TODO.md).
+[List of things to do](../TODO.md).
 
 ## Licensing:
 [MIT](LICENSE-MIT) or [Apache 2.0](LICENSE-APACHE).

@@ -14,7 +14,7 @@ where
         })?;
 
     tracing::info!(
-        addr=listener.local_addr().expect("failed to get local_addr from tcp listener").to_string(),
+        addr=format!("http://{}/", listener.local_addr().expect("failed to get local_addr from tcp listener").to_string()),
         "accepting connections"
     );
 

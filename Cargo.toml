@@ -5,6 +5,7 @@ members = [
     "groom_macros",
     "groom_tests",
 
+    "examples/composition",
     "examples/hello-world",
     "examples/htmx",
     "examples/quick-example",

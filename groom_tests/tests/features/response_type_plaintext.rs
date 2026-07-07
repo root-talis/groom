@@ -1,4 +1,3 @@
-use axum::Router;
 use serde_json::json;
 
 use crate::{
@@ -36,7 +35,7 @@ mod controller {
 /// Tests that handler for delete request is set correctly
 #[tokio::test]
 pub async fn test_string() {
-    let r = controller::merge_into_router(Router::new());
+    let r = controller::into_router().validate().unwrap().to_axum_router();
 
     Req::get("/string").call(&r).await
         .assert_body(SOME_TEXT)
@@ -49,7 +48,7 @@ pub async fn test_string() {
 #[test]
 pub fn test_openapi() {
     assert_openapi_doc(
-        |b| controller::merge_into_openapi_builder(b),
+        |api| controller::into_router().validate().unwrap().to_openapi(api),
         json!({
             "info": {
                 "contact": {"email": "mail@example.com","name": "name"},

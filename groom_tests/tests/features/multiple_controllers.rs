@@ -1,4 +1,3 @@
-use axum::Router;
 use serde_json::json;
 
 use crate::{
@@ -6,9 +5,9 @@ use crate::{
 };
 
 mod namespace_a {
-    use axum::{Extension, Router};
+    use axum::Extension;
+    use groom::router::GroomRouter;
     use groom_macros::Controller;
-    use utoipa::openapi::OpenApiBuilder;
 
     #[derive(Debug, Clone)]
     pub struct ExtensionA {
@@ -41,20 +40,16 @@ mod namespace_a {
         }
     }
 
-    pub fn merge_router(r: Router<super::SomeState>) -> Router<super::SomeState> {
+    pub fn merge_router(r: GroomRouter<super::SomeState>) -> GroomRouter<super::SomeState> {
         controller::merge_into_router(r)
             .layer(Extension(ExtensionA{ answer: 42 }))
-    }
-
-    pub fn merge_api_spec(b: OpenApiBuilder) -> OpenApiBuilder {
-        controller::merge_into_openapi_builder(b)
     }
 }
 
 mod namespace_b {
-    use axum::{Extension, Router};
+    use axum::Extension;
+    use groom::router::GroomRouter;
     use groom_macros::Controller;
-    use utoipa::openapi::OpenApiBuilder;
 
     #[derive(Debug, Clone)]
     pub struct ExtensionB {
@@ -87,13 +82,9 @@ mod namespace_b {
         }
     }
 
-    pub fn merge_router(r: Router<super::SomeState>) -> Router<super::SomeState> {
+    pub fn merge_router(r: GroomRouter<super::SomeState>) -> GroomRouter<super::SomeState> {
         controller::merge_into_router(r)
             .layer(Extension(ExtensionB{ name: "Luca".into() }))
-    }
-
-    pub fn merge_api_spec(b: OpenApiBuilder) -> OpenApiBuilder {
-        controller::merge_into_openapi_builder(b)
     }
 }
 
@@ -102,16 +93,16 @@ pub struct SomeState {
     pub name: &'static str
 }
 
-fn bootstrap_router() -> Router {
-    // init router
-    let r = Router::new();
+fn bootstrap_router() -> axum::Router {
+    use groom::router::GroomRouter;
 
-    // add controllers from different modules
+    let r = GroomRouter::new();
     let r = namespace_a::merge_router(r);
     let r = namespace_b::merge_router(r);
-
-    // finally add the shared state
-    r.with_state(SomeState {name: "Victoria"})
+    r.validate()
+        .expect("GroomRouter validation failed for multiple_controllers test")
+        .to_axum_router()
+        .with_state(SomeState {name: "Victoria"})
 }
 
 #[tokio::test]
@@ -135,10 +126,13 @@ pub async fn test_merge_routers() {
 #[test]
 pub fn test_openapi() {
     assert_openapi_doc(
-        |b| {
-            let b = namespace_a::merge_api_spec(b);
-            let b = namespace_b::merge_api_spec(b);
-            b
+        |api| {
+            use groom::router::GroomRouter;
+
+            let r = GroomRouter::new();
+            let r = namespace_a::merge_router(r);
+            let r = namespace_b::merge_router(r);
+            r.validate().expect("validation failed").to_openapi(api)
         },
         json!({
             "info": {
@@ -194,7 +188,6 @@ pub fn test_openapi() {
 /// Disallow having different components with the same schema name when merging controllers.
 mod disallow_overlaps {
     use groom_macros::Controller;
-    use utoipa::openapi::OpenApiBuilder;
 
     #[Controller()]
     pub mod controller1 {
@@ -252,11 +245,11 @@ mod disallow_overlaps {
     }
 
     #[test]
-    #[should_panic(expected = "Component `RespData` is defined more then once.")]
+    #[should_panic(expected = "RespData")]
     fn test_openapi_doc() {
-        let b = OpenApiBuilder::new();
-        let b = controller1::merge_into_openapi_builder(b);
-        let _ = controller2::merge_into_openapi_builder(b);
+        let _ = controller1::into_router()
+            .merge(controller2::into_router())
+            .unwrap();
     }
 }
 
@@ -334,10 +327,13 @@ mod allow_shared_components {
     #[test]
     fn test_openapi_doc() {
         assert_openapi_doc(
-            |b| {
-                let b = controller1::merge_into_openapi_builder(b);
-                let b = controller2::merge_into_openapi_builder(b);
-                b
+            |api| {
+                controller1::into_router()
+                    .merge(controller2::into_router())
+                    .expect("merge failed for shared components")
+                    .validate()
+                    .expect("validation failed for shared components")
+                    .to_openapi(api)
             },
             json!( {
                 "components": {

@@ -22,7 +22,7 @@ Optional Cargo features:
 
 # ❗ groom is WIP - do not use in production!
 
-[List of things to do](TODO.md).
+[List of things to do](../TODO.md).
 
 ## Licensing:
 [MIT](LICENSE-MIT) or [Apache 2.0](LICENSE-APACHE).

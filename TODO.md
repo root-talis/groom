@@ -2,9 +2,10 @@
 
 - [ ] **Generation of controllers:**
     - [ ] **through `#[Controller]` annotation for `mod`**
-        - [x] bootstrapping router and openapi spec
+        - [x] into_router() bundles routing + OpenAPI spec in GroomRouter
+        - [x] GroomRouter composition (merge/nest/validate/to_axum_router/to_openapi)
         - [x] specify state type for `State` extractor as an optional argument
-        - [ ] **specify base path**
+        - [ ] **base path via .nest() (GroomRouter layer, not #[Controller] attribute)**
     - [ ] **Routing setup for handlers through `#[Route]` annotation.**
         - [x] generation and bootstrapping
         - [ ] **allow multiple http methods for one handler**
@@ -63,7 +64,7 @@
     - [x] generate schemas for `#[Response]`
     - [x] generate schemas for handlers
         - [x] support content negotiation options for requests and responses
-    - [ ] **extract schemas into Components instead of inlining them**
+    - [x] **extract schemas into Components instead of inlining them**
     - [ ] **as a separate feature**
     - [ ] **integrated swagger-ui and alike - as separate features**
 - [ ] **Security schemas**

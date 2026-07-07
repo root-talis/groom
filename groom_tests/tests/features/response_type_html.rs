@@ -1,5 +1,3 @@
-use axum::Router;
-
 use crate::{
     groom_macros::Controller,
     features::{response_type_html::controller::SOME_TEXT, test_utils::Req}
@@ -72,7 +70,7 @@ mod controller {
 /// Tests that handler for delete request is set correctly
 #[tokio::test]
 pub async fn html_string() {
-    let r = controller::merge_into_router(Router::new());
+    let r = controller::into_router().validate().unwrap().to_axum_router();
 
     Req::get("/html_string").call(&r).await
         .assert_body(SOME_TEXT)
@@ -84,7 +82,7 @@ pub async fn html_string() {
 /// Tests that handler for delete request is set correctly
 #[tokio::test]
 pub async fn html_struct() {
-    let r = controller::merge_into_router(Router::new());
+    let r = controller::into_router().validate().unwrap().to_axum_router();
 
     Req::get("/html_struct").call(&r).await
         .assert_body("status: <b>ok</b> (since <b>1726070400</b>)")

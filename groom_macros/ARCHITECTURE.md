@@ -59,7 +59,7 @@ Annotate a **module** (not a struct or function) to turn it into a self-containe
 #[Controller(state_type = MyState)]
 ```
 
-`state_type` becomes the `S` in `axum::Router<S>` for `merge_into_router`.
+`state_type` becomes the `S` type parameter for the controller's `GroomRouter` and inner axum sub-router.
 
 ### Handler discovery
 
@@ -86,10 +86,9 @@ For each handler, the macro:
 
 ### Module-level output
 
-The transformed module gains two merge functions:
+The transformed module gains an `into_router()` function:
 
-- **`merge_into_router(other) -> Router<S>`** — builds a sub-router with all `#[Route]` handlers, runs runtime HTTP status-code collision checks, then merges into `other`.
-- **`merge_into_openapi_builder(other) -> OpenApiBuilder`** — accumulates paths and components from all handlers and merges into an existing OpenAPI document.
+- **`into_router() -> ::groom::router::GroomRouter<S, NotValidated>`** — creates a `GroomRouter` from the controller's handlers. Builds a sub-router with all `#[Route]` handlers, runs runtime HTTP status-code collision checks, assembles OpenAPI paths and a `ComponentsRegistry` from all handlers, and returns the composed `GroomRouter`.
 
 Runtime checks (`__groom_runtime_checks`) walk each handler return type and call `Response::__groom_check_response_codes` to detect duplicate status codes across variants (important for `Result<T, E>` and multi-variant response enums).
 
@@ -198,7 +197,9 @@ A typical controller module combines the macros in layers:
 
 **Compile-time guarantees** use `static_assertions::assert_impl_all!` / `assert_impl_any!` in generated code so missing trait impls surface as clear errors on the handler or type definition.
 
-**Runtime checks** (status code uniqueness) run once when `merge_into_router` is first called, before routes are registered.
+**Runtime checks** (status code uniqueness for response variants) run once when `into_router()` is called, before routes are constructed. Additional validation (route shadow detection) runs during `.validate()` on the returned `GroomRouter`.
+
+For detailed documentation of `GroomRouter`, including `merge()` / `nest()` composition, `validate()`, `to_axum_router()`, and `to_openapi()`, see [groom/ARCHITECTURE.md](../groom/ARCHITECTURE.md).
 
 ## Cargo features
 

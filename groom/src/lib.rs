@@ -7,6 +7,8 @@ pub mod json_ptr;
 
 pub mod runtime_checks;
 
+pub mod router;
+
 /// Indicates that type is annotated with `#[DTO(...)]`.
 /// 
 /// Do not implement this manually.

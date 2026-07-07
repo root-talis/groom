@@ -1,14 +1,23 @@
 use axum::{Extension, Router, http::StatusCode, response::IntoResponse, routing::get};
 use color_eyre::eyre::Result;
+use groom::router::GroomRouterValid;
 use groom_macros::Controller;
-use utoipa::{OpenApi, openapi::OpenApiBuilder};
+use utoipa::OpenApi;
 
 use crate::state::AppState;
 
 pub fn make_router() -> Result<Router> {
-    Ok(controller::merge_into_router(Router::new())
+    let groom_router = controller::into_router()
+        .validate()
+        .expect("GroomRouter validation failed for htmx controller")
+    ;
+
+    let spec = make_spec(&groom_router)?;
+
+    Ok(groom_router
+        .to_axum_router()
         .route("/spec.yaml", get(get_spec))
-        .layer(Extension(make_spec()?))
+        .layer(Extension(spec))
         .with_state(AppState::new()))
 }
 
@@ -158,7 +167,7 @@ mod controller {
 #[derive(Clone)]
 struct Spec(String);
 
-fn make_spec() -> Result<Spec> {
+fn make_spec(r: &GroomRouterValid<AppState>) -> Result<Spec> {
     #[derive(utoipa::OpenApi)]
     #[openapi(
         info(
@@ -170,11 +179,7 @@ fn make_spec() -> Result<Spec> {
     )]
     struct ApiDoc;
 
-    Ok(Spec(
-        controller::merge_into_openapi_builder(OpenApiBuilder::from(ApiDoc::openapi()))
-            .build()
-            .to_yaml()?,
-    ))
+    Ok(Spec(r.to_openapi(ApiDoc::openapi()).to_yaml()?))
 }
 
 async fn get_spec(Extension(Spec(spec)): Extension<Spec>) -> impl IntoResponse {

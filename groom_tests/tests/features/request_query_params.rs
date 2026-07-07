@@ -1,4 +1,3 @@
-use axum::Router;
 use serde_json::json;
 
 use crate::{
@@ -140,7 +139,7 @@ mod controller {
 /// Test that Query parameters are correctly read when there are several structs mapped as Query()
 #[tokio::test]
 pub async fn test_query_multiple_structs() {
-    let r = controller::merge_into_router(Router::new());
+    let r = controller::into_router().validate().unwrap().to_axum_router();
 
     Req::get("/two_query_inputs?first_name_renamed=").call(&r).await
         .assert_status(400)
@@ -177,7 +176,7 @@ pub async fn test_query_multiple_structs() {
 /// Test that enum Query parameters are correctly read
 #[tokio::test]
 pub async fn test_query_enum() {
-    let r = controller::merge_into_router(Router::new());
+    let r = controller::into_router().validate().unwrap().to_axum_router();
 
     Req::get("/enum_parameter").call(&r).await
         .assert_status(200)
@@ -207,7 +206,7 @@ pub async fn test_query_enum() {
 /// Test that Query parameters are correctly read for Vec<Enum>
 #[tokio::test]
 pub async fn test_query_vec_of_enums() {
-    let r = controller::merge_into_router(Router::new());
+    let r = controller::into_router().validate().unwrap().to_axum_router();
 
     Req::get("/vec_enum?status=New").call(&r).await
         .assert_body("new: y, closed: n")
@@ -233,7 +232,7 @@ pub async fn test_query_vec_of_enums() {
 /// Test that Query parameters are correctly read for Option<Vec<Enum>>
 #[tokio::test]
 pub async fn test_query_opt_vec_of_enums() {
-    let r = controller::merge_into_router(Router::new());
+    let r = controller::into_router().validate().unwrap().to_axum_router();
 
     Req::get("/opt_vec_enum?status=New").call(&r).await
         .assert_body("new: y, closed: n")
@@ -262,7 +261,7 @@ pub async fn test_query_opt_vec_of_enums() {
 #[test]
 pub fn test_openapi() {
     assert_openapi_doc(
-        |b| controller::merge_into_openapi_builder(b),
+        |api| controller::into_router().validate().unwrap().to_openapi(api),
         json!({
             "info": {
                 "contact": {"email": "mail@example.com","name": "name",},

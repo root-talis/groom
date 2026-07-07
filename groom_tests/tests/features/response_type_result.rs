@@ -1,4 +1,3 @@
-use axum::Router;
 use serde_json::json;
 
 use crate::{
@@ -72,7 +71,7 @@ mod controller {
 
 #[tokio::test]
 pub async fn test_ok() {
-    let r = controller::merge_into_router(Router::new());
+    let r = controller::into_router().validate().unwrap().to_axum_router();
 
     Req::get("/?id=1").call(&r).await
         .assert_body(r#"{"id":1,"name":"first"}"#)
@@ -90,7 +89,7 @@ pub async fn test_ok() {
 
 #[tokio::test]
 pub async fn test_not_found() {
-    let r = controller::merge_into_router(Router::new());
+    let r = controller::into_router().validate().unwrap().to_axum_router();
 
     Req::get("/?id=3").call(&r).await
         .assert_body(r#"{"error":"id not found"}"#)
@@ -100,7 +99,7 @@ pub async fn test_not_found() {
 
 #[tokio::test]
 pub async fn test_bad_request() {
-    let r = controller::merge_into_router(Router::new());
+    let r = controller::into_router().validate().unwrap().to_axum_router();
 
     Req::get("/?id=0").call(&r).await
         .assert_body(r#"{"error":"id cannot be zero"}"#)
@@ -111,7 +110,7 @@ pub async fn test_bad_request() {
 #[test]
 pub fn test_openapi() {
     assert_openapi_doc(
-        |b| controller::merge_into_openapi_builder(b),
+        |api| controller::into_router().validate().unwrap().to_openapi(api),
         json!( {
             "components": {
                 "schemas": {

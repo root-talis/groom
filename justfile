@@ -19,3 +19,5 @@ test:
             just --justfile "${example}justfile" test
         fi
     done
+
+    scripts/verify-quickstart-example.sh

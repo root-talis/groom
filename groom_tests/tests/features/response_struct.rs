@@ -1,4 +1,3 @@
-use axum::Router;
 use serde_json::json;
 
 use crate::{
@@ -127,7 +126,7 @@ mod controller {
 /// Default content-type for named struct
 #[tokio::test]
 pub async fn named_struct_default() {
-    let r = controller::merge_into_router(Router::new());
+    let r = controller::into_router().validate().unwrap().to_axum_router();
 
     Req::get("/named-struct").call(&r).await
         .assert_status(418)
@@ -139,7 +138,7 @@ pub async fn named_struct_default() {
 /// Plaintext content-type for named struct
 #[tokio::test]
 pub async fn named_struct_plaintext() {
-    let r = controller::merge_into_router(Router::new());
+    let r = controller::into_router().validate().unwrap().to_axum_router();
 
     Req::get("/named-struct").accept("text/plain").call(&r).await
         .assert_status(418)
@@ -151,7 +150,7 @@ pub async fn named_struct_plaintext() {
 /// HTML content-type for named struct
 #[tokio::test]
 pub async fn named_struct_html() {
-    let r = controller::merge_into_router(Router::new());
+    let r = controller::into_router().validate().unwrap().to_axum_router();
 
     Req::get("/named-struct").accept("text/html").call(&r).await
         .assert_status(418)
@@ -163,7 +162,7 @@ pub async fn named_struct_html() {
 /// JSON content-type for named struct
 #[tokio::test]
 pub async fn named_struct_json() {
-    let r = controller::merge_into_router(Router::new());
+    let r = controller::into_router().validate().unwrap().to_axum_router();
 
     Req::get("/named-struct").accept("application/json").call(&r).await
         .assert_status(418)
@@ -175,7 +174,7 @@ pub async fn named_struct_json() {
 /// Default content-type for named struct with single content-type allowed
 #[tokio::test]
 pub async fn named_struct_single_format_default() {
-    let r = controller::merge_into_router(Router::new());
+    let r = controller::into_router().validate().unwrap().to_axum_router();
 
     Req::get("/named-struct-only-plaintext").call(&r).await
         .assert_status(418)
@@ -187,7 +186,7 @@ pub async fn named_struct_single_format_default() {
 /// Plaintext content-type for named struct with single content-type allowed
 #[tokio::test]
 pub async fn named_struct_single_format_plaintext() {
-    let r = controller::merge_into_router(Router::new());
+    let r = controller::into_router().validate().unwrap().to_axum_router();
 
     Req::get("/named-struct-only-plaintext").accept("text/plain").call(&r).await
         .assert_status(418)
@@ -199,7 +198,7 @@ pub async fn named_struct_single_format_plaintext() {
 /// Unsupported content-type for named struct with single content-type allowed
 #[tokio::test]
 pub async fn named_struct_single_format_unsupported() {
-    let r = controller::merge_into_router(Router::new());
+    let r = controller::into_router().validate().unwrap().to_axum_router();
 
     Req::get("/named-struct-only-plaintext").accept("text/html").call(&r).await
         .assert_status(400)
@@ -217,7 +216,7 @@ pub async fn named_struct_single_format_unsupported() {
 /// Default content-type for unnamed struct
 #[tokio::test]
 pub async fn unnamed_struct_default() {
-    let r = controller::merge_into_router(Router::new());
+    let r = controller::into_router().validate().unwrap().to_axum_router();
 
     Req::get("/unnamed-struct").call(&r).await
         .assert_status(418)
@@ -229,7 +228,7 @@ pub async fn unnamed_struct_default() {
 /// Plaintext content-type for unnamed struct
 #[tokio::test]
 pub async fn unnamed_struct_plaintext() {
-    let r = controller::merge_into_router(Router::new());
+    let r = controller::into_router().validate().unwrap().to_axum_router();
 
     Req::get("/unnamed-struct").accept("text/plain").call(&r).await
         .assert_status(418)
@@ -241,7 +240,7 @@ pub async fn unnamed_struct_plaintext() {
 /// HTML content-type for unnamed struct
 #[tokio::test]
 pub async fn unnamed_struct_html() {
-    let r = controller::merge_into_router(Router::new());
+    let r = controller::into_router().validate().unwrap().to_axum_router();
 
     Req::get("/unnamed-struct").accept("text/html").call(&r).await
         .assert_status(418)
@@ -253,7 +252,7 @@ pub async fn unnamed_struct_html() {
 /// JSON content-type for unnamed struct
 #[tokio::test]
 pub async fn unnamed_struct_json() {
-    let r = controller::merge_into_router(Router::new());
+    let r = controller::into_router().validate().unwrap().to_axum_router();
 
     Req::get("/unnamed-struct").accept("application/json").call(&r).await
         .assert_status(418)
@@ -266,7 +265,7 @@ pub async fn unnamed_struct_json() {
 /// Default content-type for unnamed struct with single content-type allowed
 #[tokio::test]
 pub async fn unnamed_struct_single_format_default() {
-    let r = controller::merge_into_router(Router::new());
+    let r = controller::into_router().validate().unwrap().to_axum_router();
 
     Req::get("/unnamed-struct-only-plaintext").call(&r).await
         .assert_status(418)
@@ -278,7 +277,7 @@ pub async fn unnamed_struct_single_format_default() {
 /// Plaintext content-type for unnamed struct with single content-type allowed
 #[tokio::test]
 pub async fn unnamed_struct_single_format_plaintext() {
-    let r = controller::merge_into_router(Router::new());
+    let r = controller::into_router().validate().unwrap().to_axum_router();
 
     Req::get("/unnamed-struct-only-plaintext").accept("text/plain").call(&r).await
         .assert_status(418)
@@ -290,7 +289,7 @@ pub async fn unnamed_struct_single_format_plaintext() {
 /// Unsupported content-type for unnamed struct with single content-type allowed
 #[tokio::test]
 pub async fn unnamed_struct_single_format_unsupported() {
-    let r = controller::merge_into_router(Router::new());
+    let r = controller::into_router().validate().unwrap().to_axum_router();
 
     Req::get("/unnamed-struct-only-plaintext").accept("text/html").call(&r).await
         .assert_status(400)
@@ -309,7 +308,7 @@ pub async fn unnamed_struct_single_format_unsupported() {
 /// Default response for unnamed struct with DTO body
 #[tokio::test]
 pub async fn unnamed_struct_dto_default() {
-    let r = controller::merge_into_router(Router::new());
+    let r = controller::into_router().validate().unwrap().to_axum_router();
 
     Req::get("/unnamed-struct-dto").call(&r).await
         .assert_status(418)
@@ -321,7 +320,7 @@ pub async fn unnamed_struct_dto_default() {
 /// Json response for unnamed struct with DTO body
 #[tokio::test]
 pub async fn unnamed_struct_dto_json() {
-    let r = controller::merge_into_router(Router::new());
+    let r = controller::into_router().validate().unwrap().to_axum_router();
 
     Req::get("/unnamed-struct-dto").accept("application/json").call(&r).await
         .assert_status(418)
@@ -333,7 +332,7 @@ pub async fn unnamed_struct_dto_json() {
 /// Unsupported response for unnamed struct with DTO body
 #[tokio::test]
 pub async fn unnamed_struct_dto_unsupported() {
-    let r = controller::merge_into_router(Router::new());
+    let r = controller::into_router().validate().unwrap().to_axum_router();
 
     Req::get("/unnamed-struct-dto").accept("text/html").call(&r).await
         .assert_status(400)
@@ -351,7 +350,7 @@ pub async fn unnamed_struct_dto_unsupported() {
 /// Testing responses that are defined as a unit struct
 #[tokio::test]
 pub async fn test_get_unit_struct() {
-    let r = controller::merge_into_router(Router::new());
+    let r = controller::into_router().validate().unwrap().to_axum_router();
 
     Req::get("/unit-struct").call(&r).await
         .assert_status(418)
@@ -382,7 +381,7 @@ pub async fn test_get_unit_struct() {
 #[test]
 pub fn test_openapi() {
     assert_openapi_doc(
-        |b| controller::merge_into_openapi_builder(b),
+        |api| controller::into_router().validate().unwrap().to_openapi(api),
         json!({
             "info": {
                 "contact": {

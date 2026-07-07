@@ -1,13 +1,5 @@
 include!("quickstart_snippet.rs");
 
-pub fn build_router() -> Router {
-    make_router()
-}
-
-pub fn build_openapi() -> utoipa::openapi::OpenApi {
-    make_openapi()
-}
-
 #[cfg(test)]
 mod tests {
     use axum::{body::Body, http::Request, http::StatusCode};
@@ -15,6 +7,10 @@ mod tests {
     use tower::ServiceExt;
 
     use super::*;
+
+    fn build_router() -> axum::Router {
+        make_router().to_axum_router()
+    }
 
     async fn response_body(router: axum::Router, url: &str) -> (StatusCode, String) {
         let response = router
@@ -53,7 +49,7 @@ mod tests {
 
     #[test]
     fn openapi_includes_hello_path() {
-        let spec = build_openapi();
+        let spec = make_openapi(&make_router());
         assert!(spec.paths.paths.contains_key("/hello"));
     }
 }

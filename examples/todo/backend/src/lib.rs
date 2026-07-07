@@ -67,7 +67,7 @@ impl From<CorsOrigin> for AllowOrigin {
 }
 
 pub fn make_router(app: Bootstrap, serve_spec: bool, origin: Option<CorsOrigin>) -> Result<Router> {
-    let router = controller::setup_router(Router::new(), serve_spec)?;
+    let router = controller::setup_router(serve_spec)?;
     
     #[cfg(feature = "static-assets")]
     let router = static_assets::with_assets_route(router);

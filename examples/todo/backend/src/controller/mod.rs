@@ -1,12 +1,12 @@
 use axum::{Extension, Router, http::StatusCode, response::IntoResponse, routing::get};
-use utoipa::{OpenApi, openapi::OpenApiBuilder};
+use utoipa::OpenApi;
 use color_eyre::eyre::Result;
 
 mod todos;
 
 /// Sets up router to serve everything from Controllers layer.
-pub fn setup_router(router: Router, serve_spec: bool) -> Result<Router> {
-    let router = todos::setup_router(router);
+pub fn setup_router(serve_spec: bool) -> Result<Router> {
+    let router = todos::setup_router().to_axum_router();
 
     if !serve_spec {
         tracing::debug!("not serving api spec");
@@ -48,6 +48,5 @@ pub fn make_spec() -> Result<Spec> {
     )]
     struct ApiDoc;
 
-    let spec_builder = OpenApiBuilder::from(ApiDoc::openapi());
-    Ok(Spec(todos::setup_spec(spec_builder).build().to_yaml()?))
+    Ok(Spec(todos::setup_router().to_openapi(ApiDoc::openapi()).to_yaml()?))
 }

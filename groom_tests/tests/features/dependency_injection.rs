@@ -1,4 +1,4 @@
-use axum::{Extension, Router};
+use axum::Extension;
 use serde_json::json;
 
 use crate::{
@@ -56,10 +56,11 @@ pub struct SomeExt {
 // axum::extract::Extension
 #[tokio::test]
 pub async fn test_get_axum_extract_extension() {
-    let r = controller::merge_into_router(Router::new())
+    let r = controller::into_router()
         .layer(Extension(SomeExt {
             name: "Luca"
         }))
+        .validate().unwrap().to_axum_router()
         .with_state(SomeState {
             name: "Victoria"
         })
@@ -75,10 +76,11 @@ pub async fn test_get_axum_extract_extension() {
 // axum::extract::State
 #[tokio::test]
 pub async fn test_get_axum_extract_state() {
-    let r = controller::merge_into_router(Router::new())
+    let r = controller::into_router()
         .layer(Extension(SomeExt {
             name: "Luca"
         }))
+        .validate().unwrap().to_axum_router()
         .with_state(SomeState {
             name: "Victoria"
         })
@@ -95,7 +97,7 @@ pub async fn test_get_axum_extract_state() {
 #[test]
 pub fn test_openapi() {
     assert_openapi_doc(
-        |b| controller::merge_into_openapi_builder(b),
+        |api| controller::into_router().validate().unwrap().to_openapi(api),
         json!({
             "info": {
                 "contact": {"email": "mail@example.com","name": "name",

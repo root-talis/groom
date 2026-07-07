@@ -14,9 +14,9 @@ See also: [quick-example](examples/quick-example) (the code below, as a buildabl
 ## Quick example
 
 ```rust
-use axum::Router;
+use groom::router::GroomRouterValid;
 use groom_macros::Controller;
-use utoipa::{OpenApi, openapi::OpenApiBuilder};
+use utoipa::OpenApi;
 
 #[Controller()]
 mod api {
@@ -63,26 +63,30 @@ mod api {
     }
 }
 
-fn make_router() -> Router {
-    api::merge_into_router(Router::new())
+fn make_router() -> GroomRouterValid {
+    api::into_router()
+        .validate()
+        .expect("GroomRouter validation failed for quick-example")
 }
 
-fn make_openapi() -> utoipa::openapi::OpenApi {
+pub fn make_axum_router() -> axum::Router {
+    make_router().to_axum_router()
+}
+
+fn make_openapi(r: &GroomRouterValid) -> utoipa::openapi::OpenApi {
     #[derive(OpenApi)]
     #[openapi(info(title = "My API", version = "0.1.0"))]
     struct ApiDoc;
 
-    api::merge_into_openapi_builder(OpenApiBuilder::from(ApiDoc::openapi()))
-        .build()
+    r.to_openapi(ApiDoc::openapi())
 }
 ```
 
 Return type of a handler function can also be a `Result<R, E>` with each side, R and E, being a `#[Response()]`.
 
-Each `#[Controller]` module generates two functions:
+Each `#[Controller]` module generates a primary public function:
 
-- `merge_into_router` — registers Groom routes on an existing `Router`.
-- `merge_into_openapi_builder` — merges paths and component schemas into an existing `OpenApiBuilder`.
+- `into_router() -> GroomRouter<S>` — returns a `GroomRouter` for composition (`.merge()`/`.nest()`), validation (`.validate()`), and terminal conversion (`.to_axum_router()`/`.to_openapi()`).
 
 Import `groom::extract::GroomExtractor` and `groom::response::Response` inside the controller module so extractors and response types can participate in OpenAPI generation.
 
@@ -101,15 +105,32 @@ Rust's algebraic type system (structs, enums, newtypes, `Option`, nested variant
 
 ## Architecture of a Groom service
 
-Groom does not own the HTTP server or the OpenAPI document. You start with infrastructure you already have — an axum `Router` (health checks, static files, middleware layers) and a utoipa `ApiDoc` (title, version, security schemes, tags). A `#[Controller]` module describes handlers and DTOs once; generated `merge_into_router` and `merge_into_openapi_builder` functions wire those definitions into both sides.
+Groom does not own the HTTP server or the OpenAPI document. A `#[Controller]` module describes handlers and DTOs once; the generated `into_router()` function returns a `GroomRouter` that composes into both sides. You then merge in with infrastructure you already have — an axum `Router` (health checks, static files, middleware layers) and a utoipa `ApiDoc` (title, version, security schemes, tags). Multiple `GroomRouter`s can be merged together before producing the final `axum::Router` and OpenAPI.
 
-![Groom service architecture](docs/architecture.svg)
+```mermaid
+stateDiagram-v2
+state "#[DTO]" as dto
+state "#[Response]" as response
+state "#[Controller]" as controller1
+state "GroomRouter composition" as groom_router_1
+state "GroomRouter final" as groom_router
+state "axum::Router" as axum_router
+state "utoipa::OpenAPI" as openapi
 
-**Setup (compile time).** Handler signatures, request bodies, and response enums in the Groom controller are the single source of truth. `merge_into_router` registers Groom routes on the existing router without replacing it. `merge_into_openapi_builder` merges paths and component schemas into the existing `OpenApiBuilder` derived from your base `ApiDoc`.
+dto --> controller1
+response --> controller1
+controller1 --> groom_router_1: .into_router() / .merge() / .nest()
+groom_router_1 --> groom_router: .validate().except(...)
+groom_router --> axum_router: .to_axum_router()
+groom_router --> openapi: .to_openapi(...)
 
-**Runtime.** The merged router is served with `axum::serve`. HTTP clients call API endpoints directly. The merged OpenAPI document can optionally be exposed at runtime (for example `/spec.yaml` behind a flag, as in the [todo example](examples/todo/backend/src/controller/mod.rs)).
+```
 
-**Spec export (fork).** The same merged `OpenApi` value can also be made available offline: a simple companion `spec` binary calls `build()` / `to_yaml()` and prints the document. That output is committed as `spec.yaml` in the repository. Frontend tooling ([orval](https://orval.dev), other code generators) reads the committed file and produces a typed HTTP client at build time — without running the server.
+**Setup.** Handler signatures, request bodies, and response enums in the Groom controller are the single source of truth. `into_router()` produces a `GroomRouter<S, NotValidated>` — compose multiple controllers at runtime with `.merge()` or `.nest()`, then call `.validate()` to produce a `GroomRouter<S, Validated>`. From there, `.to_axum_router()` converts to an axum router, and `.to_openapi()` generates the OpenAPI spec.
+
+**Runtime.** The validated router is served with `axum::serve`. HTTP clients call API endpoints directly. The OpenAPI document can optionally be exposed at runtime (for example `/spec.yaml` behind a flag, as in the [todo example](examples/todo/backend/src/controller/mod.rs)).
+
+**Spec export (fork).** The same validated `GroomRouter` can also produce an OpenAPI spec offline: a simple companion `spec` binary calls `.to_openapi()` / `.to_yaml()` and prints the document. That output is committed as `spec.yaml` in the repository. Frontend tooling ([orval](https://orval.dev), other code generators) reads the committed file and produces a typed HTTP client at build time — without running the server.
 
 The dashed line in the diagram marks contract alignment: the generated client and the live API share one spec, so breaking changes show up in `spec.yaml` diffs and compile-time checks on the backend.
 
@@ -124,7 +145,7 @@ The [todo example](examples/todo/backend) maps to this layout:
 | Spec export binary | `bin/spec.rs` |
 | Committed contract | `spec.yaml` (via `just generate-api-spec`) |
 
-Multiple controllers compose by chaining `merge_into_router` and `merge_into_openapi_builder` (see `groom_tests/tests/features/multiple_controllers.rs`).
+Multiple controllers compose via `.merge()` on `GroomRouter` (see `groom_tests/tests/features/multiple_controllers.rs`).
 
 ## Core components
 
@@ -140,8 +161,7 @@ Applied to a module containing route handlers and their supporting types.
 
 Generated API:
 
-- `merge_into_router(router: Router<S>) -> Router<S>`
-- `merge_into_openapi_builder(builder: OpenApiBuilder) -> OpenApiBuilder`
+- `into_router() -> GroomRouter<S>` — returns a `GroomRouter` for composition (`.merge()`/`.nest()`), validation (`.validate()`), and terminal conversion (`.to_axum_router()`/`.to_openapi()`)
 
 Handlers annotated with `#[Route]` are wrapped to parse the `Accept` header and dispatch to `Response::__groom_into_response`. The original handler function remains a plain `async fn` returning a data structure.
 
@@ -400,19 +420,20 @@ See `groom_tests/tests/features/response_content_negotiation.rs` for full `Accep
 
 ## Integrating with an existing router and OpenAPI spec
 
-Groom is designed to merge into infrastructure you already have.
+Groom is designed to compose multiple controllers and merge into infrastructure you already have.
 
-**Router** — start from any `Router` (or `Router<S>` with state), add non-Groom routes first or interleave via multiple merge calls:
+**Router** — start from a `GroomRouter` returned by a controller's `into_router()`. Compose multiple controllers via `.merge()` and `.nest()`, then validate and convert to an axum `Router`:
 
 ```rust
-let router = Router::new()
-    .route("/health", get(health_check));
-
-let router = todos::merge_into_router(router);
+let router = todos::into_router();
+let router = other_controller::into_router().merge(router).unwrap();
 let router = router.layer(Extension(app.task_service));
+
+// Convert for axum:
+let axum_router = router.validate().unwrap().to_axum_router();
 ```
 
-**OpenAPI** — start from a utoipa `#[derive(OpenApi)]` struct for API metadata (title, version, contact, security schemes, tags), then merge controller paths:
+**OpenAPI** — start from a utoipa `#[derive(OpenApi)]` struct for API metadata (title, version, contact, security schemes, tags), then generate the spec from `GroomRouter`:
 
 ```rust
 #[derive(OpenApi)]
@@ -422,11 +443,13 @@ let router = router.layer(Extension(app.task_service));
 )]
 struct ApiDoc;
 
-let spec = todos::merge_into_openapi_builder(OpenApiBuilder::from(ApiDoc::openapi()))
-    .build();
+let spec = todos::into_router()
+    .validate()
+    .unwrap()
+    .to_openapi(ApiDoc::openapi());
 ```
 
-The base `ApiDoc` and Groom controllers share one spec: Groom adds `paths` and `components.schemas`; utoipa retains global metadata. Multiple controllers chain `merge_into_openapi_builder` the same way as routers.
+The base `ApiDoc` and Groom controllers share one spec: Groom adds `paths` and `components.schemas`; utoipa retains global metadata. Multiple controllers chain via `.merge()` on `GroomRouter` the same way.
 
 See how the [hello-world](examples/hello-world/src/main.rs) example serves the merged YAML at `/spec.yaml` via an axum `Extension`, and [todo example](examples/todo/backend/src/controller/mod.rs) gates this behind a `--serve-spec` flag.
 
@@ -445,16 +468,19 @@ fn main() -> color_eyre::eyre::Result<()> {
 }
 ```
 
-`make_spec` lives in the library crate and shares the merge logic with the server:
+`make_spec` lives in the library crate and shares the same `GroomRouter::to_openapi()` path as the server:
 
 ```rust
-pub fn make_spec() -> Result<Spec> {
+pub fn make_spec() -> Result<String> {
     #[derive(OpenApi)]
     #[openapi(info(title = "TODO example", version = "0.0.1"))]
     struct ApiDoc;
 
-    let builder = OpenApiBuilder::from(ApiDoc::openapi());
-    Ok(Spec(todos::setup_spec(builder).build().to_yaml()?))
+    let spec = todos::into_router()
+        .validate()?
+        .to_openapi(ApiDoc::openapi())
+        .to_yaml()?;
+    Ok(spec)
 }
 ```
 

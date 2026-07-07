@@ -1,4 +1,3 @@
-use axum::Router;
 
 use crate::{
     groom_macros::Controller,
@@ -62,7 +61,7 @@ mod controller {
 /// Tests that handler for delete request is set correctly
 #[tokio::test]
 pub async fn test_delete() {
-    let r = controller::merge_into_router(Router::new());
+    let r = controller::into_router().validate().unwrap().to_axum_router();
 
     Req::delete("/").call(&r).await
         .assert_body("")
@@ -74,7 +73,7 @@ pub async fn test_delete() {
 /// Tests that handler for get request is set correctly
 #[tokio::test]
 pub async fn test_get() {
-    let r = controller::merge_into_router(Router::new());
+    let r = controller::into_router().validate().unwrap().to_axum_router();
 
     Req::get("/").call(&r).await
         .assert_body("")
@@ -86,7 +85,7 @@ pub async fn test_get() {
 /// Tests that handler for patch request is set correctly
 #[tokio::test]
 pub async fn test_patch() {
-    let r = controller::merge_into_router(Router::new());
+    let r = controller::into_router().validate().unwrap().to_axum_router();
 
     Req::patch("/").call(&r).await
         .assert_body("")
@@ -98,7 +97,7 @@ pub async fn test_patch() {
 /// Tests that handler for post request is set correctly
 #[tokio::test]
 pub async fn test_post() {
-    let r = controller::merge_into_router(Router::new());
+    let r = controller::into_router().validate().unwrap().to_axum_router();
 
     Req::post("/").call(&r).await
         .assert_body("")
@@ -110,7 +109,7 @@ pub async fn test_post() {
 /// Tests that handler for pu request is set correctly
 #[tokio::test]
 pub async fn test_put() {
-    let r = controller::merge_into_router(Router::new());
+    let r = controller::into_router().validate().unwrap().to_axum_router();
 
     Req::put("/").call(&r).await
         .assert_body("")
@@ -123,7 +122,7 @@ pub async fn test_put() {
 #[test]
 pub fn test_openapi() {
     assert_openapi_doc(
-        |b| controller::merge_into_openapi_builder(b),
+        |api| controller::into_router().validate().unwrap().to_openapi(api),
         json!({
             "openapi":"3.1.0",
             "info":{

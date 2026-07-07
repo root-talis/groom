@@ -1,4 +1,3 @@
-use axum::Router;
 use serde_json::json;
 
 use crate::{
@@ -104,7 +103,7 @@ mod controller {
 /// Tests that handler picks default json format by default
 #[tokio::test]
 pub async fn status_default_json() {
-    let r = controller::merge_into_router(Router::new());
+    let r = controller::into_router().validate().unwrap().to_axum_router();
 
     Req::get("/status").call(&r).await
         .assert_status(200)
@@ -116,7 +115,7 @@ pub async fn status_default_json() {
 /// Tests that handler picks default html format by default
 #[tokio::test]
 pub async fn status_default_html() {
-    let r = controller::merge_into_router(Router::new());
+    let r = controller::into_router().validate().unwrap().to_axum_router();
 
     Req::get("/status/html").call(&r).await
         .assert_status(200)
@@ -128,7 +127,7 @@ pub async fn status_default_html() {
 /// Tests that handler picks json format from headers
 #[tokio::test]
 pub async fn status_json() {
-    let r = controller::merge_into_router(Router::new());
+    let r = controller::into_router().validate().unwrap().to_axum_router();
 
     Req::get("/status").accept("application/json").call(&r).await
         .assert_status(200)
@@ -140,7 +139,7 @@ pub async fn status_json() {
 /// Tests that handler picks html format from headers
 #[tokio::test]
 pub async fn status_html() {
-    let r = controller::merge_into_router(Router::new());
+    let r = controller::into_router().validate().unwrap().to_axum_router();
 
     Req::get("/status").accept("text/html").call(&r).await
         .assert_status(200)
@@ -153,7 +152,7 @@ pub async fn status_html() {
 /// because no Response variant has a body anyway
 #[tokio::test]
 pub async fn no_body_accept_antrhing() {
-    let r = controller::merge_into_router(Router::new());
+    let r = controller::into_router().validate().unwrap().to_axum_router();
 
     Req::put("/no-content").call(&r).await
         .assert_status(418)
@@ -178,7 +177,7 @@ pub async fn no_body_accept_antrhing() {
 #[test]
 pub fn test_openapi() {
     assert_openapi_doc(
-        |b| controller::merge_into_openapi_builder(b),
+        |api| controller::into_router().validate().unwrap().to_openapi(api),
         json!({
             "info": {
                 "contact": {"email": "mail@example.com","name": "name"},
@@ -312,7 +311,7 @@ mod weights_controller {
 /// between String and Html based on weights.
 #[tokio::test]
 pub async fn test_html_or_text_weights() {
-    let r = weights_controller::merge_into_router(Router::new());
+    let r = weights_controller::into_router().validate().unwrap().to_axum_router();
 
     // First content-type has priority
     Req::get("/html-or-text").accept("text/plain, text/html").call(&r).await
@@ -374,7 +373,7 @@ pub async fn test_html_or_text_weights() {
 #[tokio::test]
 pub async fn test_html_or_text_weights_openapi() {
     assert_openapi_doc(
-        |b| weights_controller::merge_into_openapi_builder(b),
+        |api| weights_controller::into_router().validate().unwrap().to_openapi(api),
         json!( {
             "info": {
                 "contact": {"email": "mail@example.com","name": "name",},

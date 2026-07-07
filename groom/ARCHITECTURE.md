@@ -23,24 +23,164 @@ groom/
 │   │   ├── components_registry.rs
 │   │   ├── parameters.rs       # Path<T> / Query<T> OpenAPI wiring (+ axum-extra Query)
 │   │   └── std_types.rs        # Built-in axum extractors
-│   └── response/
-│       ├── mod.rs              # Response trait
-│       ├── html_response.rs    # HtmlFormat trait, html_format!
-│       └── result.rs           # Result<T, E> as Response
+│   ├── response/
+│   │   ├── mod.rs              # Response trait
+│   │   ├── html_response.rs    # HtmlFormat trait, html_format!
+│   │   └── result.rs           # Result<T, E> as Response
+│   └── router/
+│       ├── mod.rs              # GroomRouter, merge/nest/validate/to_axum_router/to_openapi
+│       └── error.rs            # MergeError, RouterValidationError
 └── Cargo.toml
 ```
 
 ## How the pieces fit together
 
-At a high level, a `#[Controller]` module (from `groom_macros`) generates two merge functions. Both paths share the same type definitions but use different traits from this crate.
+At a high level, a `#[Controller]` module (from `groom_macros`) generates an `into_router()` function that returns a `GroomRouter<S, NotValidated>`. The application then composes multiple controllers via `.merge()` / `.nest()`, transitions to the validated state via `.validate()`, and finally converts to the target output via `.to_axum_router()` or `.to_openapi()`.
 
 ![groom architecture](architecture.svg)
 
 **Request path (runtime).** Axum dispatches to a generated wrapper. The wrapper parses the `Accept` header, calls the original handler, then passes the return value to `Response::__groom_into_response`.
 
-**OpenAPI path (build time of the spec).** For each handler, generated code folds `GroomExtractor::__openapi_modify_operation` over every argument type and `Response::__openapi_modify_operation` over the return type, accumulating schemas in a `ComponentsRegistry` before merging into `OpenApiBuilder`.
+**OpenAPI path (build time of the spec).** For each handler, generated code folds `GroomExtractor::__openapi_modify_operation` over every argument type and `Response::__openapi_modify_operation` over the return type, accumulating schemas in a `ComponentsRegistry` before merging into `OpenApi`.
 
-**Startup check.** The first call to `merge_into_router` runs `Response::__groom_check_response_codes` for each handler return type via `HTTPCodeSet`, panicking if two variants map to the same HTTP status code.
+**Startup check.** The first call to `into_router()` runs `Response::__groom_check_response_codes` for each handler return type via `HTTPCodeSet`, panicking if two variants map to the same HTTP status code. When composing multiple controllers, `.validate()` additionally detects `RouteShadow` collisions across merged OpenAPI path entries.
+
+## GroomRouter
+
+`GroomRouter` is the central composition type that carries both the axum routing tree and the accumulated OpenAPI metadata.
+
+### Construction: `new()`
+
+```rust
+pub fn new() -> Self
+```
+
+Creates an empty `GroomRouter` with no routes, no paths, and an empty `ComponentsRegistry`. Useful as an identity value when starting composition:
+
+```rust
+let api = GroomRouter::new()
+    .merge(controller_a::into_router())?
+    .nest("/api/v1", controller_b::into_router())?
+    .validate()?;
+```
+
+### Composition: `merge()` and `nest()`
+
+```rust
+pub fn merge(self, other: GroomRouter<S, NotValidated>) -> MergeResult<Self>;
+pub fn nest(self, path: &str, other: GroomRouter<S, NotValidated>) -> MergeResult<Self>;
+```
+
+Both consume `self` and `other`, returning a new `GroomRouter` in the `NotValidated` state.
+
+**`merge(other)`** combines two routers at the same path level:
+- Axum router trees are merged via `axum::Router::merge()`.
+- OpenAPI path entries are concatenated (no prefix transformation).
+- `ComponentsRegistry` entries are merged — if the same schema name maps to different types across the two controllers, a `MergeError::SchemaConflict` is returned.
+
+**`nest(path, other)`** mounts `other` under a path prefix:
+- Axum router is nested via `axum::Router::nest()`.
+- OpenAPI path entries from `other` are prefixed using `prepend_path(prefix, path)`.
+- The same schema conflict detection applies as in `merge()`.
+
+Both return `MergeResult<Self>` — a `Result` alias with `MergeError` as the error type. This is the primary mechanism for detecting schema name collisions between independently-developed controllers.
+
+### Layer delegation
+
+These methods delegate transparently to the inner `axum::Router`. They return `Self`:
+
+```rust
+pub fn layer<L>(self, layer: L) -> Self;
+pub fn fallback<H, T>(self, handler: H) -> Self;
+pub fn route_layer<L>(self, layer: L) -> Self;
+```
+
+### Validation: `validate()`
+
+```rust
+pub fn validate(self) -> Result<GroomRouter<S, Validated>, RouterValidationError>;
+```
+
+Transitions the router from `NotValidated` to `Validated`. During validation:
+
+1. All accumulated OpenAPI path entries are checked for **route shadowing** — the same HTTP method on the same path registered by more than one controller.
+2. Detection uses O(1) HashMap-style pairwise comparison of `(path, method)` tuples.
+3. On collision, returns `RouterValidationError::RouteShadow { path, method }`.
+
+This catch is important because axum allows overlapping routes (the last registration wins), but having two handlers for the same `(method, path)` across different controllers is almost certainly a programming error.
+
+### Terminal operations
+
+Available only on `GroomRouter<S, Validated>` (enforced at compile time by the typestate pattern).
+
+**`to_openapi(&self, api: OpenApi) -> OpenApi`**
+
+Borrows the validated router and merges its accumulated OpenAPI paths and components into an existing `OpenApi` document. The caller provides the base `OpenApi` value (which typically carries `info`, `servers`, `tags`, and top-level components), and the method returns a merged document:
+
+```rust
+let spec = router.to_openapi(ApiDoc::openapi());
+```
+
+The merge combines:
+- Paths from all composed controllers (with `nest()` prefixing already applied).
+- Components (schemas) from all controllers — duplicate schema names with identical definitions are accepted; mismatched definitions trigger a panic at this stage (a `ComponentsRegistry::into_components` invariant).
+
+**`to_axum_router(self) -> axum::Router<S>`**
+
+Consumes the `GroomRouter` and returns the inner `axum::Router<S>`. The router is ready to be merged into the application's top-level router or served directly:
+
+```rust
+let app = my_controller::into_router()
+    .validate()?
+    .to_axum_router();
+```
+
+### Error types
+
+Defined in `router/error.rs`:
+
+```rust
+pub enum MergeError {
+    SchemaConflict { name: String, source_a: String, source_b: String },
+    SchemaNotFound { path: String, registry: String },
+}
+
+pub enum RouterValidationError {
+    RouteShadow { path: String, method: http::Method },
+}
+```
+
+- `MergeError::SchemaConflict` — two controllers define different Rust types with the same OpenAPI schema name.
+- `MergeError::SchemaNotFound` — a `$ref` points to a schema that was not registered (reserved for future use; currently not triggered by any code path).
+- `RouterValidationError::RouteShadow` — the same `(path, method)` pair appears in more than one controller after composition.
+
+### Path prefix helper
+
+```rust
+pub fn prepend_path(prefix: &str, path: &str) -> String
+```
+
+Prepends a path prefix for OpenAPI path entries under `.nest()`. Mirrors axum's internal `path_for_nested_route` logic. Both `prefix` and `path` must start with `/`.
+
+### Lifecycle
+
+```
+Controller ---> into_router() ---> GroomRouter<S, NotValidated>
+                                        |
+                          .merge() / .nest() (repeat for all controllers)
+                                        |
+                                   GroomRouter<S, NotValidated>
+                                        |
+                                   .validate()
+                                        |
+                                   GroomRouter<S, Validated>
+                                      /       \
+                            .to_axum_router()  .to_openapi(api)
+                                  |                  |
+                           axum::Router<S>      OpenApi
+```
+
+The lifecycle diagram in `architecture.svg` visualizes this flow. See [groom_macros/ARCHITECTURE.md](../groom_macros/ARCHITECTURE.md) for how `#[Controller]` generates the `into_router()` entry point.
 
 ## Core traits (`lib.rs`)
 
@@ -97,8 +237,10 @@ When building OpenAPI, nested DTO schemas must be registered under `#/components
 1. Calls `ToSchema::schemas` to collect nested schema names.
 2. Registers each named schema once, building a `Ref` with a JSON-Pointer-safe path via `json_ptr::escape_json_pointer`.
 3. Skips inline registration for primitive-like schemas (currently `String`).
-4. Panics on name collisions between different Rust types that share the same schema name.
+4. Panics on name collisions between different Rust types that share the same schema name within a single controller.
 5. Merges into an existing `utoipa::openapi::Components` via `into_components`, detecting duplicate definitions across controllers.
+
+At the `GroomRouter` level, schema conflicts between controllers are caught by `ComponentsRegistry::merge()` and surfaced as `MergeError::SchemaConflict` from `.merge()` / `.nest()`, rather than panicking immediately.
 
 `parameters.rs` uses the registry when wiring `Path<T>` and `Query<T>`: parameter schemas are matched to registered components so operations reference `$ref` instead of duplicating inline schemas.
 
@@ -122,7 +264,7 @@ Implemented by `#[Response]` enums and structs in `groom_macros`. Responsibiliti
 |--------|------|------|
 | `__openapi_modify_operation` | Spec generation | Adds response entries (status, content types, schemas) |
 | `__groom_into_response` | Each request | Content negotiation + serialization |
-| `__groom_check_response_codes` | Router merge (once) | Ensures distinct status codes across variants |
+| `__groom_check_response_codes` | `into_router()` (once) | Ensures distinct status codes across variants |
 
 ### `Result<T, E>`
 
@@ -176,7 +318,7 @@ OpenAPI `$ref` locations use JSON Pointer syntax (RFC 6901). Schema names and pa
 
 `HTTPCodeSet` tracks HTTP status codes seen while walking a handler's return type. `ensure_distinct` panics with a context string if a code is reused — for example when two variants of a `#[Response]` enum share the same `code`, or when `Result<Ok, Err>` maps overlapping codes from both sides.
 
-Checks run when `merge_into_router` is first invoked, before routes are registered, so misconfigured APIs fail fast at startup rather than at runtime.
+Checks run when `into_router()` is called, before routes are constructed, so misconfigured APIs fail fast at startup rather than at runtime.
 
 ## Public macros
 
@@ -219,12 +361,13 @@ Proc-macros (`#[Controller]`, `#[Route]`, `#[DTO]`, `#[RequestBody]`, `#[Respons
 | Content negotiation logic | Parsing helpers | MIME lists, match arms in generated `__groom_into_response` |
 | OpenAPI assembly | `ComponentsRegistry`, parameter folding | Per-type `__openapi_modify_operation` bodies |
 | Compile-time assertions | — | `static_assertions` in generated code |
+| Router composition | `GroomRouter` (merge, nest, validate, to_axum_router, to_openapi) | `into_router()` → `GroomRouter` |
 
 Downstream applications depend on **both** crates: `groom_macros` at compile time and `groom` at runtime (traits and helpers referenced from generated code).
 
 ## Testing
 
-- **Unit tests** in `json_ptr.rs` and `components_registry.rs` cover pointer escaping and schema registration edge cases.
+- **Unit tests** in `json_ptr.rs`, `components_registry.rs`, and `router/mod.rs` cover pointer escaping, schema registration edge cases, and GroomRouter merge/nest/validate behavior.
 - **Integration tests** in the workspace [`groom_tests`](../groom_tests/tests/features/) exercise end-to-end behavior (content negotiation, `Result` responses, multiple controllers, etc.).
 - **Macro expansion snapshots** in [`groom_macros/tests/`](../groom_macros/tests/) validate generated glue code.
 
@@ -238,6 +381,7 @@ cargo test -p groom_tests
 
 ## Design notes
 
-- Groom deliberately does not own the server, global middleware, or base OpenAPI metadata — it merges into existing `Router` and `OpenApiBuilder` values.
+- Groom deliberately does not own the server, global middleware, or base OpenAPI metadata — it merges into existing `Router` and `OpenApi` values.
 - Invalid `Accept` or `Content-Type` currently yields `400` with a plain-text body.
 - `GroomExtractor` and `Response` use `__`-prefixed methods to signal they are library hooks, not user API.
+- Schema conflicts between controllers are surfaced as `MergeError::SchemaConflict` from `.merge()` / `.nest()`, not panics. Identical schemas with the same name are accepted (deduplicated by `ComponentsRegistry::merge()`).

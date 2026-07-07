@@ -19,7 +19,7 @@ impl From<ComponentEntry> for RefOr<Schema> {
     }
 }
 
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct ComponentsRegistry {
     seen_types: HashSet<TypeId>,
     components: HashMap<String, ComponentEntry>,
@@ -127,6 +127,23 @@ impl ComponentsRegistry {
         });
 
         !std_types_schemas.contains(schema)
+    }
+
+    pub fn merge(mut self, other: ComponentsRegistry) -> Result<Self, (String, Schema, Schema)> {
+        for (name, entry) in other.components {
+            match self.components.entry(name.clone()) {
+                hash_map::Entry::Occupied(e) => {
+                    if e.get().schema != entry.schema {
+                        return Err((name, e.get().schema.clone(), entry.schema));
+                    }
+                }
+                hash_map::Entry::Vacant(e) => {
+                    e.insert(entry);
+                }
+            }
+        }
+        self.seen_types.extend(other.seen_types);
+        Ok(self)
     }
 
     pub fn into_components(&self, c: Components) -> Components {

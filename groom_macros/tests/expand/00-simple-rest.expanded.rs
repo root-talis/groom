@@ -1358,9 +1358,9 @@ pub mod api_root {
             &mut codes,
         );
     }
-    pub fn merge_into_router(other: ::axum::Router<()>) -> ::axum::Router<()> {
+    pub fn into_router() -> ::groom::router::GroomRouter<()> {
         __groom_runtime_checks();
-        let this_router = ::axum::Router::new()
+        let this_router: ::axum::Router<()> = ::axum::Router::new()
             .route("/", ::axum::routing::get(__groom_wrapper_get_root))
             .route("/", ::axum::routing::post(__groom_wrapper_post_root))
             .route("/greet", ::axum::routing::get(__groom_wrapper_rq_cons_query_struct))
@@ -1369,16 +1369,13 @@ pub mod api_root {
                 ::axum::routing::get(__groom_wrapper_rq_cons_path_struct),
             )
             .route("/json", ::axum::routing::get(__groom_wrapper_resp_json));
-        other.merge(this_router)
-    }
-    pub fn merge_into_openapi_builder(
-        other: ::utoipa::openapi::OpenApiBuilder,
-    ) -> ::utoipa::openapi::OpenApiBuilder {
-        let mut paths = ::utoipa::openapi::path::PathsBuilder::new();
         let mut components = ::groom::extract::ComponentsRegistry::new();
-        paths = paths
-            .path(
-                "/",
+        let mut __groom_paths: ::std::vec::Vec<
+            (::std::string::String, ::utoipa::openapi::path::PathItem),
+        > = ::std::vec::Vec::new();
+        __groom_paths
+            .push((
+                "/".to_string(),
                 {
                     let mut op_builder = ::utoipa::openapi::path::OperationBuilder::new()
                         .summary(Some("Summary"))
@@ -1395,10 +1392,10 @@ pub mod api_root {
                         )
                         .build()
                 },
-            );
-        paths = paths
-            .path(
-                "/",
+            ));
+        __groom_paths
+            .push((
+                "/".to_string(),
                 {
                     let mut op_builder = ::utoipa::openapi::path::OperationBuilder::new()
                         .summary(None as Option<String>)
@@ -1415,10 +1412,10 @@ pub mod api_root {
                         )
                         .build()
                 },
-            );
-        paths = paths
-            .path(
-                "/greet",
+            ));
+        __groom_paths
+            .push((
+                "/greet".to_string(),
                 {
                     let mut op_builder = ::utoipa::openapi::path::OperationBuilder::new()
                         .summary(Some("Query<struct>"))
@@ -1438,10 +1435,10 @@ pub mod api_root {
                         )
                         .build()
                 },
-            );
-        paths = paths
-            .path(
-                "/team/:team_id/user/:user_id",
+            ));
+        __groom_paths
+            .push((
+                "/team/:team_id/user/:user_id".to_string(),
                 {
                     let mut op_builder = ::utoipa::openapi::path::OperationBuilder::new()
                         .summary(Some("Path<struct>"))
@@ -1461,10 +1458,10 @@ pub mod api_root {
                         )
                         .build()
                 },
-            );
-        paths = paths
-            .path(
-                "/json",
+            ));
+        __groom_paths
+            .push((
+                "/json".to_string(),
                 {
                     let mut op_builder = ::utoipa::openapi::path::OperationBuilder::new()
                         .summary(None as Option<String>)
@@ -1481,21 +1478,150 @@ pub mod api_root {
                         )
                         .build()
                 },
-            );
-        let mut b = other.build();
-        let c = b
-            .components
-            .as_ref()
-            .map(|v| v.clone())
-            .unwrap_or(utoipa::openapi::Components::new());
-        let c = components.into_components(c);
-        b.merge(
-            ::utoipa::openapi::OpenApiBuilder::new()
-                .components(Some(c))
-                .paths(paths)
-                .build(),
+            ));
+        ::groom::router::GroomRouter::from_controller_parts(
+            this_router,
+            components,
+            __groom_paths,
+        )
+    }
+    pub fn merge_into_router(
+        other: impl Into<::groom::router::GroomRouter<()>>,
+    ) -> ::groom::router::GroomRouter<()> {
+        __groom_runtime_checks();
+        let this_router: ::axum::Router<()> = ::axum::Router::new()
+            .route("/", ::axum::routing::get(__groom_wrapper_get_root))
+            .route("/", ::axum::routing::post(__groom_wrapper_post_root))
+            .route("/greet", ::axum::routing::get(__groom_wrapper_rq_cons_query_struct))
+            .route(
+                "/team/:team_id/user/:user_id",
+                ::axum::routing::get(__groom_wrapper_rq_cons_path_struct),
+            )
+            .route("/json", ::axum::routing::get(__groom_wrapper_resp_json));
+        let mut components = ::groom::extract::ComponentsRegistry::new();
+        let mut __groom_paths: ::std::vec::Vec<
+            (::std::string::String, ::utoipa::openapi::path::PathItem),
+        > = ::std::vec::Vec::new();
+        __groom_paths
+            .push((
+                "/".to_string(),
+                {
+                    let mut op_builder = ::utoipa::openapi::path::OperationBuilder::new()
+                        .summary(Some("Summary"))
+                        .description(Some("Description"))
+                        .operation_id(Some("getRoot"));
+                    op_builder = <GetRootResponse>::__openapi_modify_operation(
+                        op_builder,
+                        &mut components,
+                    );
+                    ::utoipa::openapi::path::PathItemBuilder::new()
+                        .operation(
+                            ::utoipa::openapi::path::HttpMethod::Get,
+                            op_builder.build(),
+                        )
+                        .build()
+                },
+            ));
+        __groom_paths
+            .push((
+                "/".to_string(),
+                {
+                    let mut op_builder = ::utoipa::openapi::path::OperationBuilder::new()
+                        .summary(None as Option<String>)
+                        .description(None as Option<String>)
+                        .operation_id(Some("postRoot"));
+                    op_builder = <GetRootResponse>::__openapi_modify_operation(
+                        op_builder,
+                        &mut components,
+                    );
+                    ::utoipa::openapi::path::PathItemBuilder::new()
+                        .operation(
+                            ::utoipa::openapi::path::HttpMethod::Post,
+                            op_builder.build(),
+                        )
+                        .build()
+                },
+            ));
+        __groom_paths
+            .push((
+                "/greet".to_string(),
+                {
+                    let mut op_builder = ::utoipa::openapi::path::OperationBuilder::new()
+                        .summary(Some("Query<struct>"))
+                        .description(None as Option<String>)
+                        .operation_id(Some("rqConsQueryStruct"));
+                    op_builder = <Query<
+                        RqConsQueryStruct,
+                    >>::__openapi_modify_operation(op_builder, &mut components);
+                    op_builder = <RqConsQueryResponse>::__openapi_modify_operation(
+                        op_builder,
+                        &mut components,
+                    );
+                    ::utoipa::openapi::path::PathItemBuilder::new()
+                        .operation(
+                            ::utoipa::openapi::path::HttpMethod::Get,
+                            op_builder.build(),
+                        )
+                        .build()
+                },
+            ));
+        __groom_paths
+            .push((
+                "/team/:team_id/user/:user_id".to_string(),
+                {
+                    let mut op_builder = ::utoipa::openapi::path::OperationBuilder::new()
+                        .summary(Some("Path<struct>"))
+                        .description(None as Option<String>)
+                        .operation_id(Some("rqConsPathStruct"));
+                    op_builder = <Path<
+                        RqConsPathStruct,
+                    >>::__openapi_modify_operation(op_builder, &mut components);
+                    op_builder = <RqConsPathResponse>::__openapi_modify_operation(
+                        op_builder,
+                        &mut components,
+                    );
+                    ::utoipa::openapi::path::PathItemBuilder::new()
+                        .operation(
+                            ::utoipa::openapi::path::HttpMethod::Get,
+                            op_builder.build(),
+                        )
+                        .build()
+                },
+            ));
+        __groom_paths
+            .push((
+                "/json".to_string(),
+                {
+                    let mut op_builder = ::utoipa::openapi::path::OperationBuilder::new()
+                        .summary(None as Option<String>)
+                        .description(None as Option<String>)
+                        .operation_id(Some("respJson"));
+                    op_builder = <RespJsonResponse>::__openapi_modify_operation(
+                        op_builder,
+                        &mut components,
+                    );
+                    ::utoipa::openapi::path::PathItemBuilder::new()
+                        .operation(
+                            ::utoipa::openapi::path::HttpMethod::Get,
+                            op_builder.build(),
+                        )
+                        .build()
+                },
+            ));
+        let __groom_this = ::groom::router::GroomRouter::from_controller_parts(
+            this_router,
+            components,
+            __groom_paths,
         );
-        b.into()
+        let __groom_other = other.into();
+        match __groom_other.merge(__groom_this) {
+            ::std::result::Result::Ok(r) => r,
+            ::std::result::Result::Err(e) => {
+                ::core::panicking::panic_fmt(
+                    format_args!("GroomRouter merge failed: {0}", e),
+                );
+            }
+        }
     }
     const _: fn() = || {
         fn assert_impl_all<T: ?Sized + ::groom::response::Response>() {}

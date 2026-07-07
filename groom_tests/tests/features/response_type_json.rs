@@ -1,4 +1,3 @@
-use axum::Router;
 use serde_json::json;
 
 use crate::{
@@ -86,7 +85,7 @@ mod controller {
 /// Tests that json struct is returned correctly
 #[tokio::test]
 pub async fn json_struct() {
-    let r = controller::merge_into_router(Router::new());
+    let r = controller::into_router().validate().unwrap().to_axum_router();
 
     Req::get("/json_struct").call(&r).await
         .assert_status(200)
@@ -98,7 +97,7 @@ pub async fn json_struct() {
 /// Tests that json struct with None value is returned correctly
 #[tokio::test]
 pub async fn json_struct_no_time() {
-    let r = controller::merge_into_router(Router::new());
+    let r = controller::into_router().validate().unwrap().to_axum_router();
 
     Req::get("/json_struct/no_time").call(&r).await
         .assert_status(200)
@@ -110,7 +109,7 @@ pub async fn json_struct_no_time() {
 /// Tests that json string is returned correctly
 #[tokio::test]
 pub async fn json_string() {
-    let r = controller::merge_into_router(Router::new());
+    let r = controller::into_router().validate().unwrap().to_axum_router();
 
     Req::get("/json_string").call(&r).await
         .assert_status(200)
@@ -123,7 +122,7 @@ pub async fn json_string() {
 #[test]
 pub fn test_openapi() {
     assert_openapi_doc(
-        |b| controller::merge_into_openapi_builder(b),
+        |api| controller::into_router().validate().unwrap().to_openapi(api),
         json!({
             "info": {
                 "contact": {"email": "mail@example.com","name": "name"},

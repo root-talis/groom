@@ -1,15 +1,11 @@
-use axum::Router;
+use groom::router::GroomRouterValid;
 use groom_macros::Controller;
-use utoipa::openapi::OpenApiBuilder;
 
 /// Sets up HTTP router.
-pub fn setup_router(router: Router) -> Router {
-    controller::merge_into_router(router)
-}
-
-/// Sets up OpenAPI definitions.
-pub fn setup_spec(spec_builder: OpenApiBuilder) -> OpenApiBuilder {
-    controller::merge_into_openapi_builder(spec_builder)
+pub fn setup_router() -> GroomRouterValid {
+    controller::into_router()
+        .validate()
+        .expect("GroomRouter validation failed for todos controller")
 }
 
 #[Controller()]

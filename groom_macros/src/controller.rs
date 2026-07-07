@@ -65,11 +65,8 @@ struct ModuleASTFragments {
     /// code to set up routes in merge_into_router()
     routes_setup: Vec<TokenStream>,
 
-    /// code to set up paths in merge_into_openapi_builder()
+    /// code to set up paths for GroomRouter
     openapi_paths_setup: IndexMap<String, Vec<TokenStream>>,
-
-    // code to set up components in merge_into_openapi_builder()
-    //openapi_components_setup: IndexMap<String, Vec<TokenStream>>,
 
     /// compile-time checks of trait implementation (for better error messages)
     type_assertions: Vec<TokenStream>,
@@ -429,13 +426,13 @@ fn generate_new_mod_ast(
     ident: &Ident,
     fragments: ModuleASTFragments
 ) -> TokenStream {
-    let mut paths: Vec<TokenStream> = Vec::new();
+    let mut path_assignments: Vec<TokenStream> = Vec::new();
     for p in fragments.openapi_paths_setup {
         let url = p.0;
 
         for m in p.1 {
-            paths.push(quote! {
-                paths = paths.path(#url, #m);
+            path_assignments.push(quote! {
+                __groom_paths.push((#url.to_string(), #m));
             });
         }
     }
@@ -464,34 +461,41 @@ fn generate_new_mod_ast(
                 #(#runtime_checks)*
             }
 
-            pub fn merge_into_router(other: ::axum::Router<#state_ty>) -> ::axum::Router<#state_ty> {
+            pub fn into_router() -> ::groom::router::GroomRouter<#state_ty> {
                 __groom_runtime_checks();
 
-                let this_router = ::axum::Router::new()
+                let this_router: ::axum::Router<#state_ty> = ::axum::Router::new()
                     #(#routes_setup)*
                 ;
 
-                other.merge(this_router)
+                let mut components = ::groom::extract::ComponentsRegistry::new();
+                let mut __groom_paths: ::std::vec::Vec<(::std::string::String, ::utoipa::openapi::path::PathItem)> = ::std::vec::Vec::new();
+                #(#path_assignments)*
+                ::groom::router::GroomRouter::from_controller_parts(
+                    this_router, components, __groom_paths
+                )
             }
 
-            pub fn merge_into_openapi_builder(other: ::utoipa::openapi::OpenApiBuilder) -> ::utoipa::openapi::OpenApiBuilder {
-                let mut paths = ::utoipa::openapi::path::PathsBuilder::new();
+            pub fn merge_into_router(other: impl Into<::groom::router::GroomRouter<#state_ty>>) -> ::groom::router::GroomRouter<#state_ty> {
+                __groom_runtime_checks();
+
+                let this_router: ::axum::Router<#state_ty> = ::axum::Router::new()
+                    #(#routes_setup)*
+                ;
+
                 let mut components = ::groom::extract::ComponentsRegistry::new();
-
-                #(#paths)*
-
-                let mut b = other.build();
-                
-                let c = b.components.as_ref().map(|v| v.clone()).unwrap_or(utoipa::openapi::Components::new());
-                let c = components.into_components(c);
-
-                b.merge(
-                    ::utoipa::openapi::OpenApiBuilder::new()
-                        .components(Some(c))
-                        .paths(paths)
-                        .build()
+                let mut __groom_paths: ::std::vec::Vec<(::std::string::String, ::utoipa::openapi::path::PathItem)> = ::std::vec::Vec::new();
+                #(#path_assignments)*
+                let __groom_this = ::groom::router::GroomRouter::from_controller_parts(
+                    this_router, components, __groom_paths
                 );
-                b.into()
+                let __groom_other = other.into();
+                match __groom_other.merge(__groom_this) {
+                    ::std::result::Result::Ok(r) => r,
+                    ::std::result::Result::Err(e) => {
+                        ::std::panic!("GroomRouter merge failed: {}", e)
+                    }
+                }
             }
 
             #(#type_assertions)*

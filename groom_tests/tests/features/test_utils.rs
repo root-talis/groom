@@ -5,9 +5,9 @@ use axum::{
 };
 
 use serde_json::Value;
-use tower::ServiceExt; // for `call`, `oneshot` and `ready`
+use tower::ServiceExt;
 use http_body_util::BodyExt;
-use utoipa::{OpenApi, openapi::OpenApiBuilder};
+use utoipa::OpenApi;
 
 #[cfg(test)]
 use pretty_assertions::assert_eq;
@@ -169,7 +169,7 @@ impl ReqBody {
 }
 
 pub fn assert_openapi_doc(
-    merge: fn (b: OpenApiBuilder) -> OpenApiBuilder,
+    merge: fn (api: utoipa::openapi::OpenApi) -> utoipa::openapi::OpenApi,
     expected_json: Value
 ) {
     #[derive(OpenApi)]
@@ -184,12 +184,8 @@ pub fn assert_openapi_doc(
     )]
     struct ApiDoc;
 
-    let api = OpenApiBuilder::from(ApiDoc::openapi());
-    let api = merge(api);
-
-    let json = api.build().to_json().expect("expected a valid json string");
-
-    // eprintln!("generated openapi definition as json:\n---\n{json}\n---");
+    let api = merge(ApiDoc::openapi());
+    let json = api.to_json().expect("expected a valid json string");
 
     assert_eq!(
         json.parse::<serde_json::Value>().expect("expected a parsed json"),
