@@ -18,7 +18,8 @@ Optional Cargo features:
   - abstract out content-type negotiations and serialization/deserialization and allow developer to work with raw data;
   - allow code-first OpenAPI spec generation;
   - be a supplement to axum, not a replacement;
-  - check everything at compile-time with developer-friendly error messages - wherever possible.
+  - check everything at compile-time with developer-friendly error messages - wherever possible;
+  - allow tower middleware to contribute to the OpenAPI spec via `OpenApiSpecLayer`;
 
 # ❗ groom is WIP - do not use in production!
 

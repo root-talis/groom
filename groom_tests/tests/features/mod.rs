@@ -8,6 +8,7 @@ mod test_utils;
 mod dependency_injection;
 mod multiple_controllers;
 mod nesting_controllers;
+mod openapi_spec_layer;
 
 //
 // endregion: project structuring

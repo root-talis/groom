@@ -90,6 +90,39 @@ Each `#[Controller]` module generates a primary public function:
 
 Import `groom::extract::GroomExtractor` and `groom::response::Response` inside the controller module so extractors and response types can participate in OpenAPI generation.
 
+## OpenAPI-Aware Middleware
+
+Groom provides an `OpenApiSpecLayer` trait that extends `tower::Layer` so a single type implements both the tower layer (runtime behavior) and the OpenAPI spec contribution. This eliminates the need for two separate types and two separate arguments.
+
+```rust
+use groom::router::{GroomRouter, OpenApiSpecLayer};
+
+struct MyLayer;
+
+impl tower::Layer<axum::routing::Route> for MyLayer {
+    type Service = /* your tower Service type */;
+
+    fn layer(&self, inner: axum::routing::Route) -> Self::Service {
+        // Wrap inner with your middleware
+    }
+}
+
+impl OpenApiSpecLayer for MyLayer {
+    fn modify_openapi(&self, api: &mut utoipa::openapi::OpenApi) {
+        // Add security schemes, response codes, etc.
+    }
+
+    fn clone_box(&self) -> Box<dyn groom::router::SpecLayerModifier> {
+        Box::new(self.clone())
+    }
+}
+
+let router = GroomRouter::new()
+    .layer_with_spec(MyLayer);
+```
+
+See [auth-middleware example](examples/auth-middleware/) for a complete working example.
+
 ## Problem being solved
 
 Groom targets a statically-typed HTTP layer on top of axum and utoipa:
