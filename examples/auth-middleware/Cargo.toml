@@ -9,9 +9,19 @@ repository.workspace = true
 documentation.workspace = true
 license.workspace = true
 
+[lib]
+name = "groom_example_auth_middleware"
+path = "src/lib.rs"
+
+[[bin]]
+name = "auth-middleware"
+path = "src/main.rs"
+
 [dependencies]
 accept-header = "0.2.3"
 axum = "0.8.9"
+base64 = "0.22"
+color-eyre = "0.6.5"
 groom = { path = "../../groom" }
 groom_macros = { path = "../../groom_macros" }
 http = "1.0.0"
@@ -23,3 +33,6 @@ tower-http = { version = "0.6", features = ["trace"] }
 tracing = "0.1"
 tracing-subscriber = "0.3"
 utoipa = { version = "5.4.0", features = ["yaml"] }
+
+[dev-dependencies]
+http-body-util = "0.1.0"

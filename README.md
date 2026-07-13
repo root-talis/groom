@@ -111,10 +111,6 @@ impl OpenApiSpecLayer for MyLayer {
     fn modify_openapi(&self, api: &mut utoipa::openapi::OpenApi) {
         // Add security schemes, response codes, etc.
     }
-
-    fn clone_box(&self) -> Box<dyn groom::router::SpecLayerModifier> {
-        Box::new(self.clone())
-    }
 }
 
 let router = GroomRouter::new()
