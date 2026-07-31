@@ -1,25 +1,18 @@
-# groom
+# groom_macros
 
-A thin wrapper around [axum](https://github.com/tokio-rs/axum) for making code-first strictly-typed HTTP APIs. Groom is heavily inspired by [poem-openapi](https://github.com/poem-web/poem/blob/3bd9ee79e94b3f8a088a21e16648e7be6eed471c/poem-openapi-derive/src/api.rs).
+Proc-macro crate for groom. It provides attribute macros that generate router and OpenAPI wiring at compile time.
 
-Groom [README.md](https://github.com/root-talis/groom/blob/main/README.md) is a good starting point.
+## Documentation
 
-For how this crate's proc-macros are structured and what code they generate, see [ARCHITECTURE.md](ARCHITECTURE.md).
+- [Quickstart](docs/quickstart.md) — get a Groom API running in minutes
+- [User guide](../docs/user-guide.md) — annotations and how-tos
+- [API reference](../docs/api-reference.md) — GroomRouter, OpenApiSpecLayer, content negotiation
+- [Architecture](../docs/architecture.md) — runtime + codegen internals
 
-The `#[Controller]` proc-macro generates `into_router() -> ::groom::router::GroomRouter`. GroomRouter provides the composition API — merge controllers via `.merge()` / `.nest()`, validate via `.validate()`, and output via `.to_axum_router()` or `.to_openapi()`.
+## Cargo features
 
-Optional Cargo feature `axum-extra-form` switches `#[RequestBody(format(url_encoded))]` to `axum_extra::extract::Form` for repeated form keys → `Vec` fields. It forwards to `groom/axum-extra-form`; enable it here only — see the root [README.md](../README.md#array-fields-in-url-encoded-bodies).
+Optional Cargo feature `axum-extra-form` switches `#[RequestBody(format(url_encoded))]` to `axum_extra::extract::Form` for repeated form keys → `Vec` fields. It forwards to `groom/axum-extra-form`; enable it here only — see [Array fields in URL-encoded bodies](../docs/user-guide.md#array-fields-in-url-encoded-bodies).
 
-## Goals:
-  - leverage rust's type system to describe and enforce API contracts;
-  - abstract out content-type negotiations and serialization/deserialization and allow developer to work with raw data;
-  - allow code-first OpenAPI spec generation;
-  - be a supplement to axum, not a replacement;
-  - check everything at compile-time with developer-friendly error messages - wherever possible.
+## Licensing
 
-# ❗ groom is WIP - do not use in production!
-
-[List of things to do](../TODO.md).
-
-## Licensing:
 [MIT](LICENSE-MIT) or [Apache 2.0](LICENSE-APACHE).
