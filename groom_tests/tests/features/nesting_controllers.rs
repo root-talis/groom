@@ -275,6 +275,16 @@ pub fn test_openapi_schema() {
                                         "schema": {"$ref": "#/components/schemas/SharedItem"}
                                     }
                                 }
+                            },
+                            "406": {
+                                "description": "The requested content type is not supported",
+                                "content": {
+                                    "text/plain": {
+                                        "schema": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
                             }
                         }
                     }
@@ -288,6 +298,16 @@ pub fn test_openapi_schema() {
                                 "content": {
                                     "application/json": {
                                         "schema": {"$ref": "#/components/schemas/BarItem"}
+                                    }
+                                }
+                            },
+                            "406": {
+                                "description": "The requested content type is not supported",
+                                "content": {
+                                    "text/plain": {
+                                        "schema": {
+                                            "type": "string"
+                                        }
                                     }
                                 }
                             }
@@ -305,6 +325,16 @@ pub fn test_openapi_schema() {
                                         "schema": {"$ref": "#/components/schemas/FooItem"}
                                     }
                                 }
+                            },
+                            "406": {
+                                "description": "The requested content type is not supported",
+                                "content": {
+                                    "text/plain": {
+                                        "schema": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
                             }
                         }
                     }
@@ -318,6 +348,16 @@ pub fn test_openapi_schema() {
                                 "content": {
                                     "application/json": {
                                         "schema": {"$ref": "#/components/schemas/SharedItem"}
+                                    }
+                                }
+                            },
+                            "406": {
+                                "description": "The requested content type is not supported",
+                                "content": {
+                                    "text/plain": {
+                                        "schema": {
+                                            "type": "string"
+                                        }
                                     }
                                 }
                             }
@@ -335,6 +375,16 @@ pub fn test_openapi_schema() {
                                         "schema": {"$ref": "#/components/schemas/V2Item"}
                                     }
                                 }
+                            },
+                            "406": {
+                                "description": "The requested content type is not supported",
+                                "content": {
+                                    "text/plain": {
+                                        "schema": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
                             }
                         }
                     }
@@ -348,6 +398,16 @@ pub fn test_openapi_schema() {
                                 "content": {
                                     "application/json": {
                                         "schema": {"$ref": "#/components/schemas/WorldItem"}
+                                    }
+                                }
+                            },
+                            "406": {
+                                "description": "The requested content type is not supported",
+                                "content": {
+                                    "text/plain": {
+                                        "schema": {
+                                            "type": "string"
+                                        }
                                     }
                                 }
                             }

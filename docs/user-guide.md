@@ -251,7 +251,7 @@ pub enum TaskResponse {
 | `format(plain_text)` | `text/plain; charset=utf-8`. |
 | `format(html)` | `text/html; charset=utf-8`. |
 | `format(json, html, plain_text)` | Multiple formats; client selects via `Accept`. |
-| `default_format = "json"` | Format used when `Accept` is absent or unmatched. Required when multiple formats are declared. |
+| `default_format = "json"` | Format used when `Accept` is absent. Required when multiple formats are declared. |
 
 | Variant-level option | Description |
 |----------------------|-------------|
@@ -259,7 +259,7 @@ pub enum TaskResponse {
 
 Variant doc comments become response descriptions in OpenAPI.
 
-The generated `Response` impl routes each variant through `into_response_*` and `__groom_into_response`. The runtime checks the variant and the negotiated format, then produces the axum response. Because the status codes and formats are part of the type, every possible outcome of the handler appears in the generated OpenAPI spec.
+The generated `Response` impl routes each variant through `into_response_*` and `__groom_into_response`. Negotiation runs in the generated wrapper before the handler is invoked; `__groom_into_response` consumes the pre-negotiated format. The runtime checks the variant and the negotiated format, then produces the axum response. Because the status codes and formats are part of the type, every possible outcome of the handler appears in the generated OpenAPI spec.
 
 **Struct (single response shape)** — one status code for the entire type:
 
@@ -348,7 +348,7 @@ groom::html_format!(StatusView, self {
 
 When building HTML manually, escape any user-controlled values to avoid XSS (see `groom_tests/tests/features/response_type_html.rs`).
 
-**Content negotiation with HTML** — combine formats and set a default when `Accept` is missing or unmatched:
+**Content negotiation with HTML** — combine formats and set a default for when `Accept` is missing:
 
 ```rust
 #[Response(format(json, html), default_format = "json")]
@@ -362,7 +362,7 @@ See `groom_tests/tests/features/response_content_negotiation.rs` for full `Accep
 
 ## Content negotiation
 
-When a response type declares multiple formats, groom parses the client's `Accept` header and selects the matching serializer at request time. `default_format` is the fallback when `Accept` is absent or matches none of the declared formats. JSON detection accepts both `application/json` and `application/*+json` vendor suffixes (for example `application/vnd.api+json`). Request bodies negotiate on input the same way. A `#[RequestBody(format(json))]` type accepts `application/json`; `format(url_encoded)` accepts `application/x-www-form-urlencoded`; `format(json, url_encoded)` accepts both via `Content-Type`. Unsupported content types get a `400` plain-text response. The parsing functions (`parse_accept_header`, `parse_content_type_header`, `get_body_content_type`) are documented in [api-reference.md](api-reference.md).
+When a response type declares multiple formats, groom negotiates the client's `Accept` header **once in the generated wrapper, before the handler runs**, and passes the negotiated mime to response conversion. `default_format` is used **only when `Accept` is absent** (required when multiple formats are declared). JSON detection accepts both `application/json` and `application/*+json` vendor suffixes (for example `application/vnd.api+json`). When the client's `Accept` header satisfies none of the declared formats, the server responds `406 Not Acceptable` with a `Vary: Accept` header and a body listing the supported content types; a malformed `Accept` yields `400` with `Invalid Accept header.`. Request bodies negotiate on input the same way. A `#[RequestBody(format(json))]` type accepts `application/json`; `format(url_encoded)` accepts `application/x-www-form-urlencoded`; `format(json, url_encoded)` accepts both via `Content-Type`. Unsupported **request** content types get a `400` plain-text response. The parsing functions (`parse_accept_header`, `parse_content_type_header`, `get_body_content_type`) are documented in [api-reference.md](api-reference.md).
 
 ## Supporting traits and macros
 

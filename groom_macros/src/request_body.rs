@@ -243,7 +243,10 @@ mod struct_impl {
                 async fn from_request(req: ::axum::extract::Request, state: &S) 
                     -> ::core::result::Result<Self, Self::Rejection> 
                 {
-                    let content_type = ::groom::content_negotiation::parse_content_type_header(req.headers());
+                    let content_type = match ::groom::content_negotiation::parse_content_type_header(req.headers()) {
+                        Err(_) => return Err(#rejection_ident::BadContentType),
+                        Ok(content_type) => content_type,
+                    };
 
                     match ::groom::content_negotiation::get_body_content_type(content_type) {
                         #(#body_extractors)*

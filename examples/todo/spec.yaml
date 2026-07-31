@@ -48,6 +48,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/TasksList'
+        '406':
+          description: The requested content type is not supported
+          content:
+            text/plain:
+              schema:
+                type: string
         '500':
           description: ''
     post:
@@ -76,6 +82,12 @@ paths:
             application/json:
               schema:
                 type: string
+        '406':
+          description: The requested content type is not supported
+          content:
+            text/plain:
+              schema:
+                type: string
         '409':
           description: Task already exists with the same title
         '500':
@@ -101,6 +113,12 @@ paths:
                 $ref: '#/components/schemas/Task'
         '404':
           description: ''
+        '406':
+          description: The requested content type is not supported
+          content:
+            text/plain:
+              schema:
+                type: string
         '500':
           description: ''
   /tasks/{task_id}/name:
@@ -140,6 +158,12 @@ paths:
                 type: string
         '404':
           description: ''
+        '406':
+          description: The requested content type is not supported
+          content:
+            text/plain:
+              schema:
+                type: string
         '409':
           description: ''
         '500':
@@ -165,6 +189,12 @@ paths:
                 $ref: '#/components/schemas/Task'
         '404':
           description: ''
+        '406':
+          description: The requested content type is not supported
+          content:
+            text/plain:
+              schema:
+                type: string
         '409':
           description: Returned if the operation would result in a duplicated task in Pending status.
         '500':
@@ -190,6 +220,12 @@ paths:
                 $ref: '#/components/schemas/Task'
         '404':
           description: ''
+        '406':
+          description: The requested content type is not supported
+          content:
+            text/plain:
+              schema:
+                type: string
         '409':
           description: Returned if the operation would result in a duplicated task in Pending status.
         '500':
@@ -215,6 +251,12 @@ paths:
                 $ref: '#/components/schemas/Task'
         '404':
           description: ''
+        '406':
+          description: The requested content type is not supported
+          content:
+            text/plain:
+              schema:
+                type: string
         '409':
           description: Returned if the operation would result in a duplicated task in Pending status.
         '500':

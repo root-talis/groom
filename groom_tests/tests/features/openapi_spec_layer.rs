@@ -189,6 +189,16 @@ fn test_merge_controllers_openapi() {
                                     }
                                 },
                                 "description": ""
+                            },
+                            "406": {
+                                "description": "The requested content type is not supported",
+                                "content": {
+                                    "text/plain": {
+                                        "schema": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
                             }
                         }
                     }
@@ -207,6 +217,16 @@ fn test_merge_controllers_openapi() {
                                     }
                                 },
                                 "description": ""
+                            },
+                            "406": {
+                                "description": "The requested content type is not supported",
+                                "content": {
+                                    "text/plain": {
+                                        "schema": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
                             }
                         }
                     }
@@ -297,6 +317,16 @@ fn test_nest_controllers_openapi() {
                                     }
                                 },
                                 "description": ""
+                            },
+                            "406": {
+                                "description": "The requested content type is not supported",
+                                "content": {
+                                    "text/plain": {
+                                        "schema": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
                             }
                         }
                     }
@@ -315,6 +345,16 @@ fn test_nest_controllers_openapi() {
                                     }
                                 },
                                 "description": ""
+                            },
+                            "406": {
+                                "description": "The requested content type is not supported",
+                                "content": {
+                                    "text/plain": {
+                                        "schema": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
                             }
                         }
                     }

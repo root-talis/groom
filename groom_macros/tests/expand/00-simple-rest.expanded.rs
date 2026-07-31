@@ -16,9 +16,21 @@ pub mod api_root {
     async fn __groom_wrapper_get_root(
         headers: ::axum::http::header::HeaderMap,
     ) -> impl ::axum::response::IntoResponse {
-        let accept = ::groom::content_negotiation::parse_accept_header(&headers);
+        let accept = match ::groom::content_negotiation::parse_accept_header(&headers) {
+            Err(_) => return ::groom::response::bad_accept_header(),
+            Ok(accept) => accept,
+        };
+        let negotiated = match accept {
+            None => None,
+            Some(accept) => {
+                match <GetRootResponse>::__groom_negotiate_content_type(&accept) {
+                    Err(response) => return response,
+                    Ok(negotiated) => negotiated,
+                }
+            }
+        };
         let result = get_root().await;
-        result.__groom_into_response(accept)
+        result.__groom_into_response(negotiated.as_ref())
     }
     /// HTTP handler: POST /
     pub async fn post_root() -> GetRootResponse {
@@ -27,9 +39,21 @@ pub mod api_root {
     async fn __groom_wrapper_post_root(
         headers: ::axum::http::header::HeaderMap,
     ) -> impl ::axum::response::IntoResponse {
-        let accept = ::groom::content_negotiation::parse_accept_header(&headers);
+        let accept = match ::groom::content_negotiation::parse_accept_header(&headers) {
+            Err(_) => return ::groom::response::bad_accept_header(),
+            Ok(accept) => accept,
+        };
+        let negotiated = match accept {
+            None => None,
+            Some(accept) => {
+                match <GetRootResponse>::__groom_negotiate_content_type(&accept) {
+                    Err(response) => return response,
+                    Ok(negotiated) => negotiated,
+                }
+            }
+        };
         let result = post_root().await;
-        result.__groom_into_response(accept)
+        result.__groom_into_response(negotiated.as_ref())
     }
     fn sync_util_fn(s: String) -> String {
         s
@@ -52,9 +76,21 @@ pub mod api_root {
         headers: ::axum::http::header::HeaderMap,
         input0: Query<RqConsQueryStruct>,
     ) -> impl ::axum::response::IntoResponse {
-        let accept = ::groom::content_negotiation::parse_accept_header(&headers);
+        let accept = match ::groom::content_negotiation::parse_accept_header(&headers) {
+            Err(_) => return ::groom::response::bad_accept_header(),
+            Ok(accept) => accept,
+        };
+        let negotiated = match accept {
+            None => None,
+            Some(accept) => {
+                match <RqConsQueryResponse>::__groom_negotiate_content_type(&accept) {
+                    Err(response) => return response,
+                    Ok(negotiated) => negotiated,
+                }
+            }
+        };
         let result = rq_cons_query_struct(input0).await;
-        result.__groom_into_response(accept)
+        result.__groom_into_response(negotiated.as_ref())
     }
     /// Path<struct>
     ///
@@ -68,9 +104,21 @@ pub mod api_root {
         headers: ::axum::http::header::HeaderMap,
         input0: Path<RqConsPathStruct>,
     ) -> impl ::axum::response::IntoResponse {
-        let accept = ::groom::content_negotiation::parse_accept_header(&headers);
+        let accept = match ::groom::content_negotiation::parse_accept_header(&headers) {
+            Err(_) => return ::groom::response::bad_accept_header(),
+            Ok(accept) => accept,
+        };
+        let negotiated = match accept {
+            None => None,
+            Some(accept) => {
+                match <RqConsPathResponse>::__groom_negotiate_content_type(&accept) {
+                    Err(response) => return response,
+                    Ok(negotiated) => negotiated,
+                }
+            }
+        };
         let result = rq_cons_path_struct(input0).await;
-        result.__groom_into_response(accept)
+        result.__groom_into_response(negotiated.as_ref())
     }
     /// HTTP handler: GET /json
     pub async fn resp_json() -> RespJsonResponse {
@@ -79,9 +127,21 @@ pub mod api_root {
     async fn __groom_wrapper_resp_json(
         headers: ::axum::http::header::HeaderMap,
     ) -> impl ::axum::response::IntoResponse {
-        let accept = ::groom::content_negotiation::parse_accept_header(&headers);
+        let accept = match ::groom::content_negotiation::parse_accept_header(&headers) {
+            Err(_) => return ::groom::response::bad_accept_header(),
+            Ok(accept) => accept,
+        };
+        let negotiated = match accept {
+            None => None,
+            Some(accept) => {
+                match <RespJsonResponse>::__groom_negotiate_content_type(&accept) {
+                    Err(response) => return response,
+                    Ok(negotiated) => negotiated,
+                }
+            }
+        };
         let result = resp_json().await;
-        result.__groom_into_response(accept)
+        result.__groom_into_response(negotiated.as_ref())
     }
     async fn not_a_handler() {
         let a = 1;
@@ -126,34 +186,19 @@ pub mod api_root {
     impl ::groom::response::Response for GetRootResponse {
         fn __groom_into_response(
             self,
-            accept: Option<::accept_header::Accept>,
+            negotiated: Option<&::mime::Mime>,
         ) -> ::axum::response::Response {
-            match accept {
+            match negotiated {
                 None => self.into_response_text_plain(),
-                Some(accept) => {
-                    match accept
-                        .negotiate(&__GROOM_RESPONSE_SUPPORTED_MIMES_GetRootResponse)
-                    {
-                        Err(_) => {
+                Some(negotiated) => {
+                    match (negotiated.type_(), negotiated.subtype()) {
+                        (::mime::TEXT, mime::PLAIN) => self.into_response_text_plain(),
+                        _ => {
                             (
                                 ::axum::http::StatusCode::BAD_REQUEST,
-                                "Requested Content-Type is not supported.",
+                                "Content-Type negotiation produced an unexpected type/subtype pair.",
                             )
                                 .into_response()
-                        }
-                        Ok(negotiated) => {
-                            match (negotiated.type_(), negotiated.subtype()) {
-                                (::mime::TEXT, mime::PLAIN) => {
-                                    self.into_response_text_plain()
-                                }
-                                _ => {
-                                    (
-                                        ::axum::http::StatusCode::BAD_REQUEST,
-                                        "Content-Type negotiation produced an unexpected type/subtype pair.",
-                                    )
-                                        .into_response()
-                                }
-                            }
                         }
                     }
                 }
@@ -216,7 +261,43 @@ pub mod api_root {
                         .description("You shall not pass!")
                         .build(),
                 );
+            let op = op
+                .response(
+                    "406",
+                    ::utoipa::openapi::ResponseBuilder::new()
+                        .description("The requested content type is not supported")
+                        .content(
+                            ::mime::TEXT_PLAIN.as_ref(),
+                            ::utoipa::openapi::ContentBuilder::new()
+                                .schema({
+                                    match <String as utoipa::PartialSchema>::schema() {
+                                        ::utoipa::openapi::RefOr::T(s) => Some(s),
+                                        ::utoipa::openapi::RefOr::Ref(_) => {
+                                            ::core::panicking::panic_fmt(
+                                                format_args!("String schema for plain_text is ref"),
+                                            );
+                                        }
+                                    }
+                                })
+                                .build(),
+                        )
+                        .build(),
+                );
             op
+        }
+        fn __groom_negotiate_content_type(
+            accept: &::accept_header::Accept,
+        ) -> ::core::result::Result<Option<::mime::Mime>, ::axum::response::Response> {
+            match accept.negotiate(&__GROOM_RESPONSE_SUPPORTED_MIMES_GetRootResponse) {
+                Ok(negotiated) => Ok(Some(negotiated)),
+                Err(_) => {
+                    Err(
+                        ::groom::response::not_acceptable(
+                            __GROOM_RESPONSE_SUPPORTED_MIMES_GetRootResponse,
+                        ),
+                    )
+                }
+            }
         }
         fn __groom_check_response_codes(
             context: &str,
@@ -559,34 +640,19 @@ pub mod api_root {
     impl ::groom::response::Response for RqConsQueryResponse {
         fn __groom_into_response(
             self,
-            accept: Option<::accept_header::Accept>,
+            negotiated: Option<&::mime::Mime>,
         ) -> ::axum::response::Response {
-            match accept {
+            match negotiated {
                 None => self.into_response_text_plain(),
-                Some(accept) => {
-                    match accept
-                        .negotiate(&__GROOM_RESPONSE_SUPPORTED_MIMES_RqConsQueryResponse)
-                    {
-                        Err(_) => {
+                Some(negotiated) => {
+                    match (negotiated.type_(), negotiated.subtype()) {
+                        (::mime::TEXT, mime::PLAIN) => self.into_response_text_plain(),
+                        _ => {
                             (
                                 ::axum::http::StatusCode::BAD_REQUEST,
-                                "Requested Content-Type is not supported.",
+                                "Content-Type negotiation produced an unexpected type/subtype pair.",
                             )
                                 .into_response()
-                        }
-                        Ok(negotiated) => {
-                            match (negotiated.type_(), negotiated.subtype()) {
-                                (::mime::TEXT, mime::PLAIN) => {
-                                    self.into_response_text_plain()
-                                }
-                                _ => {
-                                    (
-                                        ::axum::http::StatusCode::BAD_REQUEST,
-                                        "Content-Type negotiation produced an unexpected type/subtype pair.",
-                                    )
-                                        .into_response()
-                                }
-                            }
                         }
                     }
                 }
@@ -642,7 +708,44 @@ pub mod api_root {
                         .build(),
                 );
             components.add_components::<String>();
+            let op = op
+                .response(
+                    "406",
+                    ::utoipa::openapi::ResponseBuilder::new()
+                        .description("The requested content type is not supported")
+                        .content(
+                            ::mime::TEXT_PLAIN.as_ref(),
+                            ::utoipa::openapi::ContentBuilder::new()
+                                .schema({
+                                    match <String as utoipa::PartialSchema>::schema() {
+                                        ::utoipa::openapi::RefOr::T(s) => Some(s),
+                                        ::utoipa::openapi::RefOr::Ref(_) => {
+                                            ::core::panicking::panic_fmt(
+                                                format_args!("String schema for plain_text is ref"),
+                                            );
+                                        }
+                                    }
+                                })
+                                .build(),
+                        )
+                        .build(),
+                );
             op
+        }
+        fn __groom_negotiate_content_type(
+            accept: &::accept_header::Accept,
+        ) -> ::core::result::Result<Option<::mime::Mime>, ::axum::response::Response> {
+            match accept.negotiate(&__GROOM_RESPONSE_SUPPORTED_MIMES_RqConsQueryResponse)
+            {
+                Ok(negotiated) => Ok(Some(negotiated)),
+                Err(_) => {
+                    Err(
+                        ::groom::response::not_acceptable(
+                            __GROOM_RESPONSE_SUPPORTED_MIMES_RqConsQueryResponse,
+                        ),
+                    )
+                }
+            }
         }
         fn __groom_check_response_codes(
             context: &str,
@@ -1009,34 +1112,19 @@ pub mod api_root {
     impl ::groom::response::Response for RqConsPathResponse {
         fn __groom_into_response(
             self,
-            accept: Option<::accept_header::Accept>,
+            negotiated: Option<&::mime::Mime>,
         ) -> ::axum::response::Response {
-            match accept {
+            match negotiated {
                 None => self.into_response_text_plain(),
-                Some(accept) => {
-                    match accept
-                        .negotiate(&__GROOM_RESPONSE_SUPPORTED_MIMES_RqConsPathResponse)
-                    {
-                        Err(_) => {
+                Some(negotiated) => {
+                    match (negotiated.type_(), negotiated.subtype()) {
+                        (::mime::TEXT, mime::PLAIN) => self.into_response_text_plain(),
+                        _ => {
                             (
                                 ::axum::http::StatusCode::BAD_REQUEST,
-                                "Requested Content-Type is not supported.",
+                                "Content-Type negotiation produced an unexpected type/subtype pair.",
                             )
                                 .into_response()
-                        }
-                        Ok(negotiated) => {
-                            match (negotiated.type_(), negotiated.subtype()) {
-                                (::mime::TEXT, mime::PLAIN) => {
-                                    self.into_response_text_plain()
-                                }
-                                _ => {
-                                    (
-                                        ::axum::http::StatusCode::BAD_REQUEST,
-                                        "Content-Type negotiation produced an unexpected type/subtype pair.",
-                                    )
-                                        .into_response()
-                                }
-                            }
                         }
                     }
                 }
@@ -1069,7 +1157,44 @@ pub mod api_root {
                         .build(),
                 );
             components.add_components::<String>();
+            let op = op
+                .response(
+                    "406",
+                    ::utoipa::openapi::ResponseBuilder::new()
+                        .description("The requested content type is not supported")
+                        .content(
+                            ::mime::TEXT_PLAIN.as_ref(),
+                            ::utoipa::openapi::ContentBuilder::new()
+                                .schema({
+                                    match <String as utoipa::PartialSchema>::schema() {
+                                        ::utoipa::openapi::RefOr::T(s) => Some(s),
+                                        ::utoipa::openapi::RefOr::Ref(_) => {
+                                            ::core::panicking::panic_fmt(
+                                                format_args!("String schema for plain_text is ref"),
+                                            );
+                                        }
+                                    }
+                                })
+                                .build(),
+                        )
+                        .build(),
+                );
             op
+        }
+        fn __groom_negotiate_content_type(
+            accept: &::accept_header::Accept,
+        ) -> ::core::result::Result<Option<::mime::Mime>, ::axum::response::Response> {
+            match accept.negotiate(&__GROOM_RESPONSE_SUPPORTED_MIMES_RqConsPathResponse)
+            {
+                Ok(negotiated) => Ok(Some(negotiated)),
+                Err(_) => {
+                    Err(
+                        ::groom::response::not_acceptable(
+                            __GROOM_RESPONSE_SUPPORTED_MIMES_RqConsPathResponse,
+                        ),
+                    )
+                }
+            }
         }
         fn __groom_check_response_codes(
             context: &str,
@@ -1191,34 +1316,21 @@ pub mod api_root {
     impl ::groom::response::Response for RespJsonResponse {
         fn __groom_into_response(
             self,
-            accept: Option<::accept_header::Accept>,
+            negotiated: Option<&::mime::Mime>,
         ) -> ::axum::response::Response {
-            match accept {
+            match negotiated {
                 None => self.into_response_application_json(),
-                Some(accept) => {
-                    match accept
-                        .negotiate(&__GROOM_RESPONSE_SUPPORTED_MIMES_RespJsonResponse)
-                    {
-                        Err(_) => {
+                Some(negotiated) => {
+                    match (negotiated.type_(), negotiated.subtype()) {
+                        (::mime::APPLICATION, mime::JSON) => {
+                            self.into_response_application_json()
+                        }
+                        _ => {
                             (
                                 ::axum::http::StatusCode::BAD_REQUEST,
-                                "Requested Content-Type is not supported.",
+                                "Content-Type negotiation produced an unexpected type/subtype pair.",
                             )
                                 .into_response()
-                        }
-                        Ok(negotiated) => {
-                            match (negotiated.type_(), negotiated.subtype()) {
-                                (::mime::APPLICATION, mime::JSON) => {
-                                    self.into_response_application_json()
-                                }
-                                _ => {
-                                    (
-                                        ::axum::http::StatusCode::BAD_REQUEST,
-                                        "Content-Type negotiation produced an unexpected type/subtype pair.",
-                                    )
-                                        .into_response()
-                                }
-                            }
                         }
                     }
                 }
@@ -1255,7 +1367,43 @@ pub mod api_root {
                         )
                         .build(),
                 );
+            let op = op
+                .response(
+                    "406",
+                    ::utoipa::openapi::ResponseBuilder::new()
+                        .description("The requested content type is not supported")
+                        .content(
+                            ::mime::TEXT_PLAIN.as_ref(),
+                            ::utoipa::openapi::ContentBuilder::new()
+                                .schema({
+                                    match <String as utoipa::PartialSchema>::schema() {
+                                        ::utoipa::openapi::RefOr::T(s) => Some(s),
+                                        ::utoipa::openapi::RefOr::Ref(_) => {
+                                            ::core::panicking::panic_fmt(
+                                                format_args!("String schema for plain_text is ref"),
+                                            );
+                                        }
+                                    }
+                                })
+                                .build(),
+                        )
+                        .build(),
+                );
             op
+        }
+        fn __groom_negotiate_content_type(
+            accept: &::accept_header::Accept,
+        ) -> ::core::result::Result<Option<::mime::Mime>, ::axum::response::Response> {
+            match accept.negotiate(&__GROOM_RESPONSE_SUPPORTED_MIMES_RespJsonResponse) {
+                Ok(negotiated) => Ok(Some(negotiated)),
+                Err(_) => {
+                    Err(
+                        ::groom::response::not_acceptable(
+                            __GROOM_RESPONSE_SUPPORTED_MIMES_RespJsonResponse,
+                        ),
+                    )
+                }
+            }
         }
         fn __groom_check_response_codes(
             context: &str,

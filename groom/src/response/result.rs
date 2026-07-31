@@ -13,10 +13,19 @@ where T: Response, E: Response
         E::__openapi_modify_operation(op, c)
     }
 
-    fn __groom_into_response(self, accept: Option<Accept>) -> axum::response::Response {
+    fn __groom_negotiate_content_type(accept: &Accept)
+        -> ::core::result::Result<Option<::mime::Mime>, ::axum::response::Response>
+    {
+        match T::__groom_negotiate_content_type(accept) {
+            Ok(mime) => Ok(mime),
+            Err(_) => E::__groom_negotiate_content_type(accept),
+        }
+    }
+
+    fn __groom_into_response(self, negotiated: Option<&::mime::Mime>) -> axum::response::Response {
         match self {
-            Ok(t) => t.__groom_into_response(accept),
-            Err(e) => e.__groom_into_response(accept),
+            Ok(t) => t.__groom_into_response(negotiated),
+            Err(e) => e.__groom_into_response(negotiated),
         }
     }
 

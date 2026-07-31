@@ -5,6 +5,8 @@ use crate::{
     features::test_utils::{Req, assert_openapi_doc}
 };
 
+use axum::http::StatusCode;
+
 #[Controller()]
 mod controller {
     use axum::response::IntoResponse;
@@ -195,22 +197,22 @@ pub async fn named_struct_single_format_plaintext() {
     ;
 }
 
-/// Unsupported content-type for named struct with single content-type allowed
+/// Not-acceptable content-type for named struct with single content-type allowed
 #[tokio::test]
 pub async fn named_struct_single_format_unsupported() {
     let r = controller::into_router().validate().unwrap().to_axum_router();
 
-    Req::get("/named-struct-only-plaintext").accept("text/html").call(&r).await
-        .assert_status(400)
-        .assert_body("Requested Content-Type is not supported.")
-        .assert_content_type("text/plain; charset=utf-8")
-    ;
+    let res = Req::get("/named-struct-only-plaintext").accept("text/html").call(&r).await;
+    res.assert_status(StatusCode::NOT_ACCEPTABLE.as_u16())
+        .assert_body("Supported content types: text/plain")
+        .assert_content_type("text/plain; charset=utf-8");
+    assert_eq!(res.headers.get("vary"), Some(&axum::http::HeaderValue::from_static("Accept")));
 
-    Req::get("/named-struct-only-plaintext").accept("application/json").call(&r).await
-        .assert_status(400)
-        .assert_body("Requested Content-Type is not supported.")
-        .assert_content_type("text/plain; charset=utf-8")
-    ;
+    let res = Req::get("/named-struct-only-plaintext").accept("application/json").call(&r).await;
+    res.assert_status(StatusCode::NOT_ACCEPTABLE.as_u16())
+        .assert_body("Supported content types: text/plain")
+        .assert_content_type("text/plain; charset=utf-8");
+    assert_eq!(res.headers.get("vary"), Some(&axum::http::HeaderValue::from_static("Accept")));
 }
 
 /// Default content-type for unnamed struct
@@ -286,22 +288,22 @@ pub async fn unnamed_struct_single_format_plaintext() {
     ;
 }
 
-/// Unsupported content-type for unnamed struct with single content-type allowed
+/// Not-acceptable content-type for unnamed struct with single content-type allowed
 #[tokio::test]
 pub async fn unnamed_struct_single_format_unsupported() {
     let r = controller::into_router().validate().unwrap().to_axum_router();
 
-    Req::get("/unnamed-struct-only-plaintext").accept("text/html").call(&r).await
-        .assert_status(400)
-        .assert_body("Requested Content-Type is not supported.")
-        .assert_content_type("text/plain; charset=utf-8")
-    ;
+    let res = Req::get("/unnamed-struct-only-plaintext").accept("text/html").call(&r).await;
+    res.assert_status(StatusCode::NOT_ACCEPTABLE.as_u16())
+        .assert_body("Supported content types: text/plain")
+        .assert_content_type("text/plain; charset=utf-8");
+    assert_eq!(res.headers.get("vary"), Some(&axum::http::HeaderValue::from_static("Accept")));
 
-    Req::get("/unnamed-struct-only-plaintext").accept("application/json").call(&r).await
-        .assert_status(400)
-        .assert_body("Requested Content-Type is not supported.")
-        .assert_content_type("text/plain; charset=utf-8")
-    ;
+    let res = Req::get("/unnamed-struct-only-plaintext").accept("application/json").call(&r).await;
+    res.assert_status(StatusCode::NOT_ACCEPTABLE.as_u16())
+        .assert_body("Supported content types: text/plain")
+        .assert_content_type("text/plain; charset=utf-8");
+    assert_eq!(res.headers.get("vary"), Some(&axum::http::HeaderValue::from_static("Accept")));
 }
 
 
@@ -329,22 +331,22 @@ pub async fn unnamed_struct_dto_json() {
     ;
 }
 
-/// Unsupported response for unnamed struct with DTO body
+/// Not-acceptable response for unnamed struct with DTO body
 #[tokio::test]
 pub async fn unnamed_struct_dto_unsupported() {
     let r = controller::into_router().validate().unwrap().to_axum_router();
 
-    Req::get("/unnamed-struct-dto").accept("text/html").call(&r).await
-        .assert_status(400)
-        .assert_body("Requested Content-Type is not supported.")
-        .assert_content_type("text/plain; charset=utf-8")
-    ;
+    let res = Req::get("/unnamed-struct-dto").accept("text/html").call(&r).await;
+    res.assert_status(StatusCode::NOT_ACCEPTABLE.as_u16())
+        .assert_body("Supported content types: application/json")
+        .assert_content_type("text/plain; charset=utf-8");
+    assert_eq!(res.headers.get("vary"), Some(&axum::http::HeaderValue::from_static("Accept")));
 
-    Req::get("/unnamed-struct-dto").accept("text/plain").call(&r).await
-        .assert_status(400)
-        .assert_body("Requested Content-Type is not supported.")
-        .assert_content_type("text/plain; charset=utf-8")
-    ;
+    let res = Req::get("/unnamed-struct-dto").accept("text/plain").call(&r).await;
+    res.assert_status(StatusCode::NOT_ACCEPTABLE.as_u16())
+        .assert_body("Supported content types: application/json")
+        .assert_content_type("text/plain; charset=utf-8");
+    assert_eq!(res.headers.get("vary"), Some(&axum::http::HeaderValue::from_static("Accept")));
 }
 
 /// Testing responses that are defined as a unit struct
@@ -441,6 +443,16 @@ pub fn test_openapi() {
                     "get": {
                         "operationId": ("respNamedStruct"),
                         "responses": {
+                            "406": {
+                                "description": ("The requested content type is not supported"),
+                                "content": {
+                                    "text/plain": {
+                                        "schema": {
+                                            "type": ("string"),
+                                        },
+                                    },
+                                },
+                            },
                             "418": {
                                 "content": {
                                     "application/json": {
@@ -468,6 +480,16 @@ pub fn test_openapi() {
                     "get": {
                         "operationId": ("respNamedStructOnlyPlaintext"),
                         "responses": {
+                            "406": {
+                                "description": ("The requested content type is not supported"),
+                                "content": {
+                                    "text/plain": {
+                                        "schema": {
+                                            "type": ("string"),
+                                        },
+                                    },
+                                },
+                            },
                             "418": {
                                 "content": {
                                     "text/plain; charset=utf-8": {
@@ -495,6 +517,16 @@ pub fn test_openapi() {
                     "get": {
                         "operationId": ("respUnnamedStruct"),
                         "responses": {
+                            "406": {
+                                "description": ("The requested content type is not supported"),
+                                "content": {
+                                    "text/plain": {
+                                        "schema": {
+                                            "type": ("string"),
+                                        },
+                                    },
+                                },
+                            },
                             "418": {
                                 "content": {
                                     "application/json": {
@@ -522,6 +554,16 @@ pub fn test_openapi() {
                     "get": {
                         "operationId": ("respUnnamedStructDto"),
                         "responses": {
+                            "406": {
+                                "description": ("The requested content type is not supported"),
+                                "content": {
+                                    "text/plain": {
+                                        "schema": {
+                                            "type": ("string"),
+                                        },
+                                    },
+                                },
+                            },
                             "418": {
                                 "content": {
                                     "application/json": {
@@ -539,6 +581,16 @@ pub fn test_openapi() {
                     "get": {
                         "operationId": ("respUnnamedStructOnlyPlaintext"),
                         "responses": {
+                            "406": {
+                                "description": ("The requested content type is not supported"),
+                                "content": {
+                                    "text/plain": {
+                                        "schema": {
+                                            "type": ("string"),
+                                        },
+                                    },
+                                },
+                            },
                             "418": {
                                 "content": {
                                     "text/plain; charset=utf-8": {

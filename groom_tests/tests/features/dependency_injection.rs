@@ -123,6 +123,16 @@ pub fn test_openapi() {
                                 },
                                 "description": "",
                             },
+                            "406": {
+                                "description": ("The requested content type is not supported"),
+                                "content": {
+                                    "text/plain": {
+                                        "schema": {
+                                            "type": ("string"),
+                                        },
+                                    },
+                                },
+                            },
                         },
                     },
                 },
@@ -139,6 +149,16 @@ pub fn test_openapi() {
                                     },
                                 },
                                 "description": "",
+                            },
+                            "406": {
+                                "description": ("The requested content type is not supported"),
+                                "content": {
+                                    "text/plain": {
+                                        "schema": {
+                                            "type": ("string"),
+                                        },
+                                    },
+                                },
                             },
                         },
                     },

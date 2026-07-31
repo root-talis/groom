@@ -399,24 +399,41 @@ fn generate_new_handler_ast(
     let delegated_inputs = &fn_fragments.delegated_inputs;
     let fn_name = &original_handler.sig.ident;
 
+    // The wrapper needs the handler's return type to call its associated
+    // `__groom_negotiate_content_type` for the pre-run Accept check.
+    // `generate_openapi_modifier_for_handler()` has already rejected handlers
+    // without a return type before this point.
+    let return_ty = match &original_handler.sig.output {
+        syn::ReturnType::Type(_, ty) => ty,
+        syn::ReturnType::Default => {
+            unreachable!("handlers must return something (checked earlier in generate_openapi_modifier_for_handler)")
+        }
+    };
+
     // generate module item:
     mod_fragments.module_items.push(quote! {
         #(#new_comment)*
         #original_handler
 
         async fn #wrapper_name(headers: ::axum::http::header::HeaderMap, #(#wrapper_inputs)*) -> impl ::axum::response::IntoResponse {
-            let accept = ::groom::content_negotiation::parse_accept_header(&headers);
+            let accept = match ::groom::content_negotiation::parse_accept_header(&headers) {
+                Err(_) => return ::groom::response::bad_accept_header(),
+                Ok(accept) => accept,
+            };
 
-            // todo: check that accept is valid for output before running code
+            let negotiated = match accept {
+                None => None,
+                Some(accept) => match <#return_ty>::__groom_negotiate_content_type(&accept) {
+                    Err(response) => return response,
+                    Ok(negotiated) => negotiated,
+                },
+            };
 
             let result = #fn_name(#(#delegated_inputs)*).await;
 
-            result.__groom_into_response(accept)
+            result.__groom_into_response(negotiated.as_ref())
         }
     });
-
-    // todo: #wrapper_output should be a Result with error type indicating bad accept header;
-    // todo: that error should serialize into an appropriate header and response code.
 }
 
 /// Generates new AST for the entire mod based on parsed fragments

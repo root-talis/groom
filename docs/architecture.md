@@ -243,7 +243,8 @@ Axum's `Query` cannot deserialize repeated query keys into `Vec` fields. The opt
 ```rust
 pub trait Response {
     fn __openapi_modify_operation(op: OperationBuilder, c: &mut ComponentsRegistry) -> OperationBuilder;
-    fn __groom_into_response(self, accept: Option<Accept>) -> axum::response::Response;
+    fn __groom_negotiate_content_type(accept: &Accept) -> Result<Option<Mime>, axum::response::Response>;
+    fn __groom_into_response(self, negotiated: Option<&mime::Mime>) -> axum::response::Response;
     fn __groom_check_response_codes(context: &str, codes: &mut HTTPCodeSet);
 }
 ```
@@ -253,7 +254,8 @@ Implemented by `#[Response]` enums and structs in `groom_macros`. Responsibiliti
 | Method | When | Role |
 |--------|------|------|
 | `__openapi_modify_operation` | Spec generation | Adds response entries (status, content types, schemas) |
-| `__groom_into_response` | Each request | Content negotiation + serialization |
+| `__groom_negotiate_content_type` | Each request, before the handler runs | Negotiation (once, in the generated wrapper) |
+| `__groom_into_response` | Each request | Serialization using the pre-negotiated mime |
 | `__groom_check_response_codes` | `into_router()` (once) | Ensures distinct status codes across variants |
 
 #### `Result<T, E>`
@@ -284,10 +286,12 @@ Generated code (`groom_macros`) handles JSON and plain-text serialization. HTML 
 
 #### Outgoing responses (`Accept`)
 
-`parse_accept_header` reads `HeaderMap` and parses `Accept` into `accept_header::Accept`. Generated `__groom_into_response` implementations compare client preferences against a `const` list of supported MIME types, from `#[Response(format(...))]`.
+`parse_accept_header` reads `HeaderMap` and parses `Accept` into `accept_header::Accept`. Negotiation runs **once per request, in the generated wrapper before the handler executes** — never inside response conversion. `__groom_negotiate_content_type` compares the client's preferences against the return type's `const` list of supported MIME types, from `#[Response(format(...))]`:
 
-- If `Accept` is missing or unmatched, `default_format` from the `#[Response]` attribute is used (required when multiple formats are enabled).
-- If the client requests an unsupported type, the generated code returns `400` with a plain-text explanation.
+- `Accept` absent → negotiation returns `Ok(None)` and `default_format` from the `#[Response]` attribute is used (required when multiple formats are enabled).
+- `Accept` present and matching a supported format → the negotiated mime is passed to `__groom_into_response`, which serializes to that type.
+- `Accept` present but matching none of the supported types → the wrapper returns `406 Not Acceptable` with a `Vary: Accept` header and a `text/plain` body listing the supported types (`Supported content types: <list>`).
+- `Accept` malformed (unparseable or non-UTF8) → the wrapper returns `400 Bad Request` with `Invalid Accept header.`.
 
 #### Incoming request bodies (`Content-Type`)
 
@@ -348,7 +352,7 @@ Proc-macros (`#[Controller]`, `#[Route]`, `#[DTO]`, `#[RequestBody]`, `#[Respons
 | Trait definitions | `GroomExtractor`, `Response`, `DTO`, `HtmlFormat` | — |
 | Handler / route wiring | — | `#[Controller]`, `#[Route]` wrappers |
 | Type derives | Marker trait impls only | `#[DTO]`, `#[RequestBody]`, `#[Response]` |
-| Content negotiation logic | Parsing helpers | MIME lists, match arms in generated `__groom_into_response` |
+| Content negotiation logic | Parsing helpers | MIME lists, pre-run negotiation + serialization match arms in generated `__groom_negotiate_content_type` / `__groom_into_response` |
 | OpenAPI assembly | `ComponentsRegistry`, parameter folding | Per-type `__openapi_modify_operation` bodies |
 | Compile-time assertions | — | `static_assertions` in generated code |
 | Router composition | `GroomRouter` (merge, nest, validate, to_axum_router, to_openapi) | `into_router()` → `GroomRouter` |
@@ -374,7 +378,7 @@ cargo test -p groom_tests
 ### Design notes
 
 - Groom deliberately does not own the server, global middleware, or base OpenAPI metadata. It merges into existing `Router` and `OpenApi` values.
-- Invalid `Accept` or `Content-Type` yields `400` with a plain-text body.
+- A malformed `Accept` yields `400` with a plain-text body (`Invalid Accept header.`); an unsupported `Accept` yields `406` with a `Vary: Accept` header and a supported-content-types body. A malformed request `Content-Type` yields the generated `BadContentType` rejection (`400`).
 - `GroomExtractor` and `Response` use `__`-prefixed methods to signal they are library hooks, not user API.
 - Schema conflicts between controllers are surfaced as `MergeError::SchemaConflict` from `.merge()` and `.nest()`, not panics. Identical schemas with the same name are accepted and deduplicated by `ComponentsRegistry::merge()`.
 
@@ -442,8 +446,9 @@ Each routed handler must be `async` and must not take `self`. Duplicate `(method
 2. Keeps the **original handler function** as the business-logic entry point.
 3. Emits a **wrapper function** `__groom_wrapper_{name}` that:
    - Takes `HeaderMap` plus the same typed arguments as the handler.
-   - Parses the `Accept` header via `groom::content_negotiation::parse_accept_header`.
-   - Calls the original handler and passes the result to `Response::__groom_into_response`.
+   - Parses the `Accept` header via `groom::content_negotiation::parse_accept_header`; a parse error (`Err`) immediately returns `groom::response::bad_accept_header()` (400 `Invalid Accept header.`).
+   - Negotiates via `<ReturnType>::__groom_negotiate_content_type(&accept)`; on `Err(response)` returns it immediately (406/400) without calling the handler.
+   - Calls the original handler and passes the result to `Response::__groom_into_response(negotiated.as_ref())`.
 4. Asserts at compile time that every handler argument implements `groom::extract::GroomExtractor` and the return type implements `groom::response::Response`.
 5. Registers OpenAPI operation modifiers for each extractor and the return type.
 
@@ -476,7 +481,8 @@ Implements `groom::response::Response` for **enums** (typical multi-status API) 
 The macro generates:
 
 - `into_response_*` methods per enabled format (plain text, HTML, JSON).
-- `__groom_into_response` — negotiates `Accept` against a `const` MIME list, or returns `400` if unsupported.
+- `__groom_negotiate_content_type` — negotiates `Accept` against the type's `const` MIME list (the single negotiation site); returns `Err(not_acceptable(...))` (406) when nothing matches, `Ok(None)` for types with no format list.
+- `__groom_into_response` — consumes the pre-negotiated mime and serializes; negotiation happened earlier in `__groom_negotiate_content_type` (see Content negotiation).
 - `__openapi_modify_operation` — one OpenAPI response entry per variant/status.
 - `__groom_check_response_codes` — ensures distinct codes across variants.
 
@@ -587,6 +593,6 @@ When changing code generation, update the `.expanded.rs` fixtures or add new exp
 - Inspired by [poem-openapi](https://github.com/poem-web/poem)'s derive approach. Groom targets axum + utoipa instead.
 - `#[Route]` is a helper attribute parsed inside `#[Controller]`, not a standalone proc-macro.
 - Enum response variants do not support named fields (only unit or single tuple field).
-- Invalid or unsupported `Accept` / `Content-Type` yield `400` with a plain-text message.
+- A malformed `Accept` yields `400` with a plain-text message (`Invalid Accept header.`); an unsupported `Accept` yields `406` with a `Vary: Accept` header. Request-body issues keep their `400` behavior (malformed `Content-Type` → generated `BadContentType` rejection).
 
 For GroomRouter details, see [groom (runtime crate)](#groom-runtime-crate).

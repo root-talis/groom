@@ -385,9 +385,41 @@ fn make_new_ast(fragments: NewAstFragments)
             resp_args_span
         )?;
 
+    let groom_negotiate_content_type_function =
+        make_groom_negotiate_content_type_function(
+            &fragments,
+            resp_args,
+        );
+
     let formatter_functions = &fragments.formatter_functions;
     let type_assertions = &fragments.type_assertions;
-    let openapi_impls = &fragments.openapi_impls;
+
+    // negotiating types document a 406 response entry (emitted once per type);
+    // any-content types gain none
+    let mut openapi_impls = fragments.openapi_impls.clone();
+    if resp_args.format.is_any() {
+        openapi_impls.push(quote! {
+            let op = op.response(
+                "406",
+                ::utoipa::openapi::ResponseBuilder::new()
+                    .description("The requested content type is not supported")
+                    .content(
+                        ::mime::TEXT_PLAIN.as_ref(),
+                        ::utoipa::openapi::ContentBuilder::new()
+                            .schema({
+                                match <String as utoipa::PartialSchema>::schema() {
+                                    ::utoipa::openapi::RefOr::T(s) => Some(s),
+                                    ::utoipa::openapi::RefOr::Ref(_) => panic!("String schema for plain_text is ref"),
+                                }
+                            })
+                            .build()
+                    )
+                    .build()
+            );
+        });
+    }
+    let openapi_impls = &openapi_impls;
+
     let new_item_code = &fragments.new_item_ast;
     let item_ident = &fragments.item_ident;
     let check_response_codes_fn = &fragments.check_response_codes_fn;
@@ -420,7 +452,7 @@ fn make_new_ast(fragments: NewAstFragments)
                     op
                 }
 
-                // todo: __groom_content_type_supported
+                #groom_negotiate_content_type_function
 
                 #check_response_codes_fn
             }
@@ -430,8 +462,10 @@ fn make_new_ast(fragments: NewAstFragments)
     )
 }
 
-/// Makes `::groom::response::Response::__groom_into_response()` - the main function that  performs
-/// content negotiation and converts this response's data into appropriate response headers & body.
+/// Makes `::groom::response::Response::__groom_into_response()` - the main function that
+/// converts this response's data into appropriate response headers & body.
+/// The negotiated mime is passed in from the pre-run `__groom_negotiate_content_type`
+/// call in the controller wrapper — no negotiation happens here.
 fn make_groom_into_response_function(
     fragments: &NewAstFragments,
     resp_args: &ResponseArgsBase,
@@ -439,7 +473,6 @@ fn make_groom_into_response_function(
 ) -> Result<TokenStream, TokenStream>
 {
     let item_ident = &fragments.item_ident;
-    let supported_mimes_ident = &fragments.supported_mimes_ident;
 
     let fn_ident_for_any_content = &fragments.into_response_any_content_type_ident;
     let fn_ident_for_text_plain = &fragments.into_response_text_plain_ident;
@@ -474,31 +507,21 @@ fn make_groom_into_response_function(
         );
 
         quote! {
-            match accept {
+            match negotiated {
                 None => {
                     // no Accept header found
                     #default_content_response
                 },
-                Some(accept) => {
-                    // some Accept header found
-                    // #available_mimes_ident is a const array with a list of supported mime types for this enum
-                    match accept.negotiate(&#supported_mimes_ident) {
-                        Err(_) => {
-                            // todo: is this response body good enough?
-                            (::axum::http::StatusCode::BAD_REQUEST, "Requested Content-Type is not supported.").into_response()
-                        },
+                Some(negotiated) => {
+                    // the negotiated mime was produced by the pre-run
+                    // `__groom_negotiate_content_type` call — the single negotiation site
+                    match (negotiated.type_(), negotiated.subtype()) {
+                        #(#mime_type_matches)*
 
-                        Ok(negotiated) => {
-                            // todo: this match's arms should not include formats that aren't valid for this enum
-                            match (negotiated.type_(), negotiated.subtype()) {
-                                #(#mime_type_matches)*
-
-                                _ => {
-                                    // todo: somehow log this error?
-                                    (::axum::http::StatusCode::BAD_REQUEST, "Content-Type negotiation produced an unexpected type/subtype pair.")
-                                        .into_response()
-                                }
-                            }
+                        _ => {
+                            // todo: somehow log this error?
+                            (::axum::http::StatusCode::BAD_REQUEST, "Content-Type negotiation produced an unexpected type/subtype pair.")
+                                .into_response()
                         }
                     }
                 }
@@ -507,10 +530,43 @@ fn make_groom_into_response_function(
     };
 
     Ok(quote!{
-        fn __groom_into_response(self, accept: Option<::accept_header::Accept>) -> ::axum::response::Response {
+        fn __groom_into_response(self, negotiated: Option<&::mime::Mime>) -> ::axum::response::Response {
             #content_type_negotiation
         }
     })
+}
+
+/// Makes `::groom::response::Response::__groom_negotiate_content_type()` — the single
+/// negotiation site per request. The controller wrapper calls it BEFORE running the
+/// handler; its result flows into `__groom_into_response`.
+fn make_groom_negotiate_content_type_function(
+    fragments: &NewAstFragments,
+    resp_args: &ResponseArgsBase,
+) -> TokenStream
+{
+    let supported_mimes_ident = &fragments.supported_mimes_ident;
+
+    if !resp_args.format.is_any() {
+        // any-content type: accepts every content type by design, no negotiation
+        quote! {
+            fn __groom_negotiate_content_type(_accept: &::accept_header::Accept)
+                -> ::core::result::Result<Option<::mime::Mime>, ::axum::response::Response>
+            {
+                Ok(None)
+            }
+        }
+    } else {
+        quote! {
+            fn __groom_negotiate_content_type(accept: &::accept_header::Accept)
+                -> ::core::result::Result<Option<::mime::Mime>, ::axum::response::Response>
+            {
+                match accept.negotiate(&#supported_mimes_ident) {
+                    Ok(negotiated) => Ok(Some(negotiated)),
+                    Err(_) => Err(::groom::response::not_acceptable(#supported_mimes_ident)),
+                }
+            }
+        }
+    }
 }
 
 /// Attempts to infer `default_format` value of `#[Response]` annotation if it is applicable.

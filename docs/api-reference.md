@@ -248,9 +248,15 @@ See [auth-middleware example](../examples/auth-middleware/) for a complete worki
 The public API in `groom::content_negotiation` parses request headers and maps content types:
 
 ```rust
-pub fn parse_accept_header(headers: &HeaderMap) -> Option<Accept>            // Accept: from the accept-header crate
-pub fn parse_content_type_header(headers: &HeaderMap) -> Option<Mime>        // Content-Type: from the mime crate
-pub fn get_body_content_type(mime: Option<Mime>) -> Option<BodyContentType>  // map to the enum below
+pub fn parse_accept_header(headers: &HeaderMap) -> Result<Option<Accept>, HeaderParseError>      // Accept: from the accept-header crate
+pub fn parse_content_type_header(headers: &HeaderMap) -> Result<Option<Mime>, HeaderParseError>  // Content-Type: from the mime crate
+pub fn get_body_content_type(mime: Option<Mime>) -> Option<BodyContentType>                      // map to the enum below
+
+#[derive(Debug, Clone, Error)]
+pub enum HeaderParseError {
+    UnparseableValue(&'static str, String),
+    NonUtf8HeaderBytes(&'static str),
+}
 
 #[derive(Debug)]
 pub enum BodyContentType {
@@ -259,9 +265,12 @@ pub enum BodyContentType {
 }
 ```
 
-- `parse_accept_header` — parses the `Accept` header into an `accept_header::Accept` value.
-- `parse_content_type_header` — parses the `Content-Type` header into a `mime::Mime`.
+- `HeaderParseError` — shared by both header parse functions. `UnparseableValue(header, value)` — the header value failed to parse as the expected type; `NonUtf8HeaderBytes(header)` — the header value is not valid UTF-8.
+- `parse_accept_header` — parses the `Accept` header into an `accept_header::Accept`; `Ok(None)` means the header is absent. `Err` means the header is malformed — handled as `400 Invalid Accept header.` by generated wrappers.
+- `parse_content_type_header` — parses the `Content-Type` header into a `mime::Mime`; `Ok(None)` means the header is absent. `Err` means the header is malformed — mapped to the generated `BadContentType` rejection by request-body extractors.
 - `get_body_content_type` — maps a parsed Mime to a `BodyContentType`. JSON detection accepts both `application/json` and `application/*+json` (for example `application/vnd.api+json`). Unsupported content types yield `None`; groom's request-body extractors answer `400` with a plain-text error.
+
+On the response side, generated controller wrappers call the return type's `__groom_negotiate_content_type` **before** invoking the handler. An `Accept` that matches none of the type's supported content types yields `406 Not Acceptable` with a `Vary: Accept` header and a body listing the supported types (`Supported content types: ...`); a malformed `Accept` yields `400` with `Invalid Accept header.`. The request-body `400` from groom's extractors is about `Content-Type` handling and is unchanged.
 
 ## Cargo features
 

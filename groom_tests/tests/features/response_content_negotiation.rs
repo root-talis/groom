@@ -8,6 +8,10 @@ use crate::{
     }
 };
 
+/// Malformed Accept header fixture that MUST fail `Accept::parse` (sanity-guarded
+/// inside the tests that use it).
+const MALFORMED_ACCEPT: &str = "text/plain;q=";
+
 #[Controller()]
 mod controller {
     use axum::response::IntoResponse;
@@ -241,6 +245,16 @@ pub fn test_openapi() {
                                 },
                                 "description": "",
                             },
+                            "406": {
+                                "description": ("The requested content type is not supported"),
+                                "content": {
+                                    "text/plain": {
+                                        "schema": {
+                                            "type": ("string"),
+                                        },
+                                    },
+                                },
+                            },
                         },
                     },
                 },
@@ -262,6 +276,16 @@ pub fn test_openapi() {
                                     },
                                 },
                                 "description": "",
+                            },
+                            "406": {
+                                "description": ("The requested content type is not supported"),
+                                "content": {
+                                    "text/plain": {
+                                        "schema": {
+                                            "type": ("string"),
+                                        },
+                                    },
+                                },
                             },
                         },
                     },
@@ -304,6 +328,47 @@ mod weights_controller {
     #[Route(method = "get", path = "/html-or-text")]
     async fn resp_html_or_text() -> GetHtmlOrTextBodyResult {
         GetHtmlOrTextBodyResult::Ok(PageData("Hello, world!".to_string()))
+    }
+}
+
+#[Controller()]
+mod panic_controller {
+    use axum::response::IntoResponse;
+
+    use groom::response::Response;
+    use groom_macros::Response;
+
+    use super::controller::{DataObject, NoContentResponse};
+
+    // ---
+
+    #[Response(format(json))]
+    pub enum PanicJsonResponse {
+        #[allow(dead_code)]
+        #[Response()]
+        Ok(DataObject),
+    }
+
+    #[Response()]
+    pub enum PanicNoContent {
+        #[allow(dead_code)]
+        #[Response()]
+        Ok,
+    }
+
+    #[Route(method = "get", path = "/panic-negotiating")]
+    pub async fn resp_panic_negotiating() -> PanicJsonResponse {
+        panic!("handler must not be called")
+    }
+
+    #[Route(method = "get", path = "/panic-any-content")]
+    pub async fn resp_panic_any_content() -> PanicNoContent {
+        panic!("handler must not be called")
+    }
+
+    #[Route(method = "put", path = "/any-content-ok")]
+    pub async fn resp_any_content_ok() -> NoContentResponse {
+        NoContentResponse::Teapot
     }
 }
 
@@ -403,6 +468,16 @@ pub async fn test_html_or_text_weights_openapi() {
                                 },
                                 "description": "Home page",
                             },
+                            "406": {
+                                "description": ("The requested content type is not supported"),
+                                "content": {
+                                    "text/plain": {
+                                        "schema": {
+                                            "type": ("string"),
+                                        },
+                                    },
+                                },
+                            },
                         },
                     },
                 },
@@ -410,5 +485,74 @@ pub async fn test_html_or_text_weights_openapi() {
             "components": {},
         })
     );
+}
+
+/// A panic-on-call handler returning a negotiating type must receive 406 (not run)
+/// for an Accept that matches none of its formats (SPEC req 1 acceptance).
+#[tokio::test]
+pub async fn test_panic_handler_not_called_on_unsatisfiable_accept() {
+    let r = panic_controller::into_router().validate().unwrap().to_axum_router();
+
+    let res = Req::get("/panic-negotiating").accept("application/xml").call(&r).await;
+    res.assert_status(406)
+        .assert_body("Supported content types: application/json")
+        .assert_content_type("text/plain; charset=utf-8");
+    assert_eq!(res.headers.get("vary"), Some(&axum::http::HeaderValue::from_static("Accept")));
+}
+
+/// A malformed Accept must yield 400 without running a panic-on-call negotiating
+/// handler (SPEC req 3 acceptance).
+#[tokio::test]
+pub async fn test_panic_handler_not_called_on_malformed_accept_negotiating() {
+    // sanity guard: the malformed fixture must fail Accept::parse
+    assert!(MALFORMED_ACCEPT.parse::<accept_header::Accept>().is_err());
+
+    let r = panic_controller::into_router().validate().unwrap().to_axum_router();
+
+    let res = Req::get("/panic-negotiating").accept(MALFORMED_ACCEPT).call(&r).await;
+    res.assert_status(400)
+        .assert_body("Invalid Accept header.");
+}
+
+/// A malformed Accept must yield 400 without running a panic-on-call any-content
+/// handler too — any-content types skip negotiation but still validate the header
+/// (SPEC req 3 acceptance).
+#[tokio::test]
+pub async fn test_panic_handler_not_called_on_malformed_accept_any_content() {
+    // sanity guard: the malformed fixture must fail Accept::parse
+    assert!(MALFORMED_ACCEPT.parse::<accept_header::Accept>().is_err());
+
+    let r = panic_controller::into_router().validate().unwrap().to_axum_router();
+
+    let res = Req::get("/panic-any-content").accept(MALFORMED_ACCEPT).call(&r).await;
+    res.assert_status(400)
+        .assert_body("Invalid Accept header.");
+}
+
+/// An any-content handler still runs on a valid Accept (preserved behavior, req 7).
+#[tokio::test]
+pub async fn test_any_content_handler_still_runs_on_valid_accept() {
+    let r = panic_controller::into_router().validate().unwrap().to_axum_router();
+
+    Req::put("/any-content-ok").accept("text/plain").call(&r).await
+        .assert_status(418)
+        .assert_no_body()
+        .assert_no_content_type()
+    ;
+}
+
+/// The 406 body lists every supported mime of the type (deterministic const-array
+/// order: plain_text, then html) and carries the Vary: Accept header (SPEC req 2
+/// acceptance).
+#[tokio::test]
+pub async fn test_406_vary_and_body_lists_all_supported_mimes() {
+    let r = weights_controller::into_router().validate().unwrap().to_axum_router();
+
+    let res = Req::get("/html-or-text").accept("application/xml").call(&r).await;
+    res.assert_status(406)
+        .assert_body("Supported content types: text/plain, text/html")
+        .assert_content_type("text/plain; charset=utf-8");
+    assert_eq!(res.headers.get("vary"), Some(&axum::http::HeaderValue::from_static("Accept")));
+    assert!(res.body.contains("text/plain") && res.body.contains("text/html"));
 }
 
