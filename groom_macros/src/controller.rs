@@ -173,6 +173,9 @@ fn parse_handler_function(
         mod_fragments.runtime_checks.push(quote! {
             let mut codes = ::groom::runtime_checks::HTTPCodeSet::new();
             <#ty>::__groom_check_response_codes(&format!(#context_format), &mut codes);
+
+            let mut formats = ::groom::runtime_checks::HTTPFormatsSet::new();
+            <#ty>::__groom_check_response_formats(&format!(#context_format), &mut formats);
         });
     }
 
@@ -471,8 +474,6 @@ fn generate_new_mod_ast(
 
             #(#module_items)*
 
-            // todo: validate http codes of response types in runtime
-            // todo: validate content-types of response types in runtime
             fn __groom_runtime_checks() {
                 let context = #runtime_checks_context.to_string();
                 #(#runtime_checks)*

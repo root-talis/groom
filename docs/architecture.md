@@ -246,6 +246,7 @@ pub trait Response {
     fn __groom_negotiate_content_type(accept: &Accept) -> Result<Option<Mime>, axum::response::Response>;
     fn __groom_into_response(self, negotiated: Option<&mime::Mime>) -> axum::response::Response;
     fn __groom_check_response_codes(context: &str, codes: &mut HTTPCodeSet);
+    fn __groom_check_response_formats(context: &str, formats: &mut HTTPFormatsSet);
 }
 ```
 
@@ -257,6 +258,7 @@ Implemented by `#[Response]` enums and structs in `groom_macros`. Responsibiliti
 | `__groom_negotiate_content_type` | Each request, before the handler runs | Negotiation (once, in the generated wrapper) |
 | `__groom_into_response` | Each request | Serialization using the pre-negotiated mime |
 | `__groom_check_response_codes` | `into_router()` (once) | Ensures distinct status codes across variants |
+| `__groom_check_response_formats` | `into_router()` (once) | Validates the declared content-type formats; the generated per-type impl records them into an `HTTPFormatsSet` |
 
 #### `Result<T, E>`
 
@@ -265,6 +267,8 @@ Implemented by `#[Response]` enums and structs in `groom_macros`. Responsibiliti
 - OpenAPI merges success and error response definitions.
 - `Ok(v)` and `Err(e)` delegate to the respective `__groom_into_response`.
 - Status-code checks run on both sides with distinct context strings.
+
+The two variants must declare the **same list of formats**. A mismatch — `Ok` with `format(json)` and `Err` with `format(html)`, or an any-content arm alongside a formatted one — panics at router build inside `__groom_runtime_checks` with `"Result<...>: both variants must support the same list of formats"`. The panic fails the misconfiguration at startup instead of producing a runtime `400` when the negotiated content type cannot render the arm actually returned. Any-content arms (empty format list) are legal only when both arms are any-content.
 
 This allows handlers to return `Result<GreetOk, GreetFailure>` instead of a single response enum.
 
@@ -311,6 +315,10 @@ OpenAPI `$ref` locations use JSON Pointer syntax (RFC 6901). Schema names and pa
 ### Runtime checks
 
 `HTTPCodeSet` tracks HTTP status codes seen while walking a handler's return type. `ensure_distinct` panics with a context string if a code is reused. For example, two variants of a `#[Response]` enum share the same `code`, or `Result<Ok, Err>` maps overlapping codes from both sides.
+
+`HTTPFormatsSet` tracks declared content-type formats the same way. Each generated impl records its supported MIME list via `__groom_check_response_formats`. The `Result<T, E>` impl delegates to both arms, panics when their lists differ, and merges the equal list upward so nested `Result`s compose.
+
+`__groom_runtime_checks` therefore validates both HTTP codes and content-type format lists.
 
 Checks run when `into_router()` is called, before routes are constructed. Misconfigured APIs fail fast at startup rather than at runtime.
 
@@ -456,7 +464,7 @@ Each routed handler must be `async` and must not take `self`. Duplicate `(method
 
 - **`into_router() -> ::groom::router::GroomRouter<S, NotValidated>`** — creates a `GroomRouter` from the controller's handlers. It builds a sub-router with all `#[Route]` handlers, runs runtime HTTP status-code collision checks, assembles OpenAPI paths and a `ComponentsRegistry` from all handlers, and returns the composed `GroomRouter`.
 
-Runtime checks (`__groom_runtime_checks`) walk each handler return type and call `Response::__groom_check_response_codes` to detect duplicate status codes across variants. This matters for `Result<T, E>` and multi-variant response enums.
+Runtime checks (`__groom_runtime_checks`) walk each handler return type and call `Response::__groom_check_response_codes` and `Response::__groom_check_response_formats`. They detect duplicate status codes across variants and mismatched content-type format lists. This matters for `Result<T, E>` and multi-variant response enums.
 
 ### `#[Response]`
 
@@ -485,6 +493,7 @@ The macro generates:
 - `__groom_into_response` — consumes the pre-negotiated mime and serializes; negotiation happened earlier in `__groom_negotiate_content_type` (see Content negotiation).
 - `__openapi_modify_operation` — one OpenAPI response entry per variant/status.
 - `__groom_check_response_codes` — ensures distinct codes across variants.
+- `__groom_check_response_formats` — validates that both `Result` arms declare the same list of formats; panics at router build on mismatch.
 
 `#[derive(utoipa::ToSchema)]` is added to the enum.
 

@@ -22,6 +22,11 @@ pub trait Response {
     /// Performs runtime checks of response codes of this Response.
     /// Used to detect duplicated codes in composite types like Result<T, E>
     fn __groom_check_response_codes(context: &str, codes: &mut HTTPCodeSet);
+
+    /// Performs runtime checks of the supported response formats of this Response.
+    /// Used to detect format-list mismatches in composite types like Result<T, E>
+    /// (both variants must support the same list of formats).
+    fn __groom_check_response_formats(context: &str, formats: &mut HTTPFormatsSet);
 }
 
 /// Builds the 406 Not Acceptable response: `Vary: Accept`, text/plain body listing supported mimes.
@@ -41,6 +46,6 @@ pub fn bad_accept_header() -> ::axum::response::Response {
 
 pub mod html_response;
 pub use html_response::{HtmlFormat, html_format};
-use crate::{extract::ComponentsRegistry, runtime_checks::HTTPCodeSet};
+use crate::{extract::ComponentsRegistry, runtime_checks::{HTTPCodeSet, HTTPFormatsSet}};
 
 pub mod result;

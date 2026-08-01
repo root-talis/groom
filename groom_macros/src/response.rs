@@ -156,6 +156,10 @@ struct NewAstFragments {
     /// (to detect response code collisions in composite types like `Result<T, E>`)
     check_response_codes_fn: TokenStream,
 
+    /// runtime checks of supported response content types
+    /// (to detect format list mismatches in composite types like `Result<T, E>`)
+    check_response_formats_fn: TokenStream,
+
     openapi_impls: Vec<TokenStream>,
     new_item_ast: TokenStream,
 
@@ -181,6 +185,7 @@ impl NewAstFragments {
 
             type_assertions: Default::default(),
             check_response_codes_fn: Default::default(),
+            check_response_formats_fn: Default::default(),
 
             openapi_impls: Default::default(),
             new_item_ast: Default::default(),
@@ -423,6 +428,7 @@ fn make_new_ast(fragments: NewAstFragments)
     let new_item_code = &fragments.new_item_ast;
     let item_ident = &fragments.item_ident;
     let check_response_codes_fn = &fragments.check_response_codes_fn;
+    let check_response_formats_fn = &fragments.check_response_formats_fn;
 
     Ok(
         quote! {
@@ -455,6 +461,8 @@ fn make_new_ast(fragments: NewAstFragments)
                 #groom_negotiate_content_type_function
 
                 #check_response_codes_fn
+
+                #check_response_formats_fn
             }
 
             #(#type_assertions)*
@@ -723,6 +731,13 @@ mod enum_impl {
             }
         };
 
+        let supported_mimes_ident = &fragments.supported_mimes_ident;
+        fragments.check_response_formats_fn = quote! {
+            fn __groom_check_response_formats(context: &str, formats: &mut ::groom::runtime_checks::HTTPFormatsSet) {
+                formats.record(context, &#supported_mimes_ident);
+            }
+        };
+
         Ok(fragments)
     }
 
@@ -984,6 +999,7 @@ mod struct_impl {
         );
 
         make_groom_check_response_codes_fn(&struct_impl, code, &mut fragments);
+        make_groom_check_response_formats_fn(&mut fragments);
 
         Ok(fragments)
     }
@@ -1158,6 +1174,15 @@ mod struct_impl {
         fragments.check_response_codes_fn = quote! {
             fn __groom_check_response_codes(context: &str, codes: &mut ::groom::runtime_checks::HTTPCodeSet) {
                 codes.ensure_distinct(format!(#new_context_format), #code)
+            }
+        };
+    }
+
+    fn make_groom_check_response_formats_fn(fragments: &mut NewAstFragments) {
+        let supported_mimes_ident = &fragments.supported_mimes_ident;
+        fragments.check_response_formats_fn = quote! {
+            fn __groom_check_response_formats(context: &str, formats: &mut ::groom::runtime_checks::HTTPFormatsSet) {
+                formats.record(context, &#supported_mimes_ident);
             }
         };
     }

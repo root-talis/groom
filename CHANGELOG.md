@@ -16,6 +16,8 @@
 - `RouterValidationError` extracted from `MergeError` as a separate error type with `RouteShadow { path, method }` variant.
 - `MergeError` now carries only `SchemaConflict` and `SchemaNotFound` variants.
 - `GroomRouter::from_router()` removed — controller composition goes through `into_router()` / `.merge()`.
+- **Breaking:** `Result` response types now require both variants to declare the same list of formats. The router rejects a mismatch at build time with `"both variants must support the same list of formats"` instead of failing per-request.
+- Added `Response::__groom_check_response_formats` and `HTTPFormatsSet`: `into_router()` now validates content-type format lists alongside HTTP status codes.
 
 ### groom_macros
 

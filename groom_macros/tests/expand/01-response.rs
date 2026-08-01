@@ -150,8 +150,8 @@ mod result_struct_struct {
 
 #[Controller]
 mod result_struct_enum {
-    #[Response()]
-    pub struct Success;
+    #[Response(format(plain_text))]
+    pub struct Success(String);
 
     #[Response(format(plain_text))]
     pub enum Error {
@@ -164,7 +164,7 @@ mod result_struct_enum {
 
     #[Route(method = "get", path = "/")]
     async fn foo() -> Result<Success, Error> {
-        Err(Error::NoAccess("ip blocked".into()))
+        Ok(Success("ok".into()))
     }
 }
 
@@ -194,8 +194,10 @@ mod wrapped_enum {
         StructWithEnum(WrapperStruct),
     }
 
-    #[Response(code = 404)]
-    pub struct Error;
+    #[Response(format(json), code = 404)]
+    pub struct Error {
+        pub message: &'static str,
+    }
 
     #[Route(method = "get", path = "/")]
     async fn foo() -> Result<Resp, Error> {

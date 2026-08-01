@@ -308,6 +308,8 @@ pub async fn greet(Query(p): Query<GreetParams>) -> Result<GreetOk, GreetFailure
 }
 ```
 
+**Formats must match.** The `Ok` and `Err` arms of a `Result` response must declare identical `format(...)` lists — both `format(json)`, or both `format(json, html)`. Mixing `format(json)` and `format(html)`, or pairing a formatted arm with an any-content arm, is a build-time error. The router panics at `into_router()` with `"Result<...>: both variants must support the same list of formats"` instead of failing per-request at runtime. Any-content arms (no `format(...)`) are legal only when both arms are any-content.
+
 See `groom_tests/tests/features/response_type_result.rs` for a full example with multiple error status codes and OpenAPI assertions.
 
 ### HTML responses

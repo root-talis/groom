@@ -73,7 +73,6 @@ mod union_controller {
     use axum::response::IntoResponse;
 
     use groom::{
-        html_format,
         response::Response,
     };
     use groom_macros::{DTO,Response};
@@ -88,30 +87,26 @@ mod union_controller {
         pub error: &'static str,
     }
 
-    html_format!(UnionErr, self {
-        format!("<div>error: {}</div>", self.error)
-    });
-
     #[Response(format(json))]
-    pub enum JsonOnly {
+    pub enum UnionA {
         #[Response()]
         Ok(UnionOk),
     }
 
-    #[Response(format(html))]
-    pub enum HtmlOnly {
+    #[Response(format(json))]
+    pub enum UnionB {
         #[allow(dead_code)]
         #[Response(code = 400)]
         Ok(UnionErr),
     }
 
     #[Route(method = "get", path = "/union")]
-    pub async fn resp_union() -> Result<JsonOnly, HtmlOnly> {
-        Ok(JsonOnly::Ok(UnionOk { id: 42 }))
+    pub async fn resp_union() -> Result<UnionA, UnionB> {
+        Ok(UnionA::Ok(UnionOk { id: 42 }))
     }
 
     #[Route(method = "get", path = "/union-panic")]
-    pub async fn resp_union_panic() -> Result<JsonOnly, HtmlOnly> {
+    pub async fn resp_union_panic() -> Result<UnionA, UnionB> {
         panic!("handler must not be called")
     }
 }
@@ -283,17 +278,18 @@ pub async fn test_union_accept_json_runs_handler() {
     ;
 }
 
-/// Result<T,E> union pre-check: Accept satisfying the Err arm's formats also runs
-/// the handler; the runtime-returned Ok arm cannot render html, so the existing
-/// response-time guard fires (SPEC req 5 arm-can't-render case, handled unchanged).
+/// Result<T,E> union pre-check: Accept for a format the union no longer
+/// supports (html, after Phase 9 migrated both arms to json) is unsatisfiable
+/// at negotiation level -> 406 without executing the panic-on-call handler.
+/// The response-time 400 guard can no longer be reached for format reasons.
 #[tokio::test]
-pub async fn test_union_accept_html_runs_handler() {
+pub async fn test_union_accept_html_no_handler_run() {
     let r = union_controller::into_router().validate().unwrap().to_axum_router();
 
-    Req::get("/union").accept("text/html").call(&r).await
-        .assert_status(400)
-        .assert_body("Content-Type negotiation produced an unexpected type/subtype pair.")
-    ;
+    let res = Req::get("/union-panic").accept("text/html").call(&r).await;
+    res.assert_status(406)
+        .assert_content_type("text/plain; charset=utf-8");
+    assert_eq!(res.headers.get("vary"), Some(&axum::http::HeaderValue::from_static("Accept")));
 }
 
 /// Result<T,E> union pre-check: Accept satisfying neither arm returns 406 without
@@ -372,9 +368,9 @@ pub fn test_union_openapi_has_406() {
                             },
                             "400": {
                                 "content": {
-                                    "text/html; charset=utf-8": {
+                                    "application/json": {
                                         "schema": {
-                                            "type": ("string"),
+                                            "$ref": ("#/components/schemas/UnionErr"),
                                         },
                                     },
                                 },
@@ -409,9 +405,9 @@ pub fn test_union_openapi_has_406() {
                             },
                             "400": {
                                 "content": {
-                                    "text/html; charset=utf-8": {
+                                    "application/json": {
                                         "schema": {
-                                            "type": ("string"),
+                                            "$ref": ("#/components/schemas/UnionErr"),
                                         },
                                     },
                                 },
@@ -433,4 +429,58 @@ pub fn test_union_openapi_has_406() {
             },
         })
     );
+}
+
+/// Deliberately mismatched-format Result union: Ok arm supports [application/json],
+/// Err arm supports [text/html]. Phase 9 requires this to fail at router build
+/// (into_router -> __groom_runtime_checks) instead of at request time.
+#[Controller()]
+mod mismatched_union_controller {
+    use axum::response::IntoResponse;
+
+    use groom::{
+        html_format,
+        response::Response,
+    };
+    use groom_macros::{DTO,Response};
+
+    #[DTO(response)]
+    pub struct MismatchedOk {
+        pub id: u64,
+    }
+
+    #[DTO(response)]
+    pub struct MismatchedErr {
+        pub error: &'static str,
+    }
+
+    html_format!(MismatchedErr, self {
+        format!("<div>error: {}</div>", self.error)
+    });
+
+    #[Response(format(json))]
+    pub enum MismatchedJson {
+        #[Response()]
+        Ok(MismatchedOk),
+    }
+
+    #[Response(format(html))]
+    pub enum MismatchedHtml {
+        #[allow(dead_code)]
+        #[Response(code = 400)]
+        Ok(MismatchedErr),
+    }
+
+    #[Route(method = "get", path = "/mismatched-union")]
+    pub async fn resp_mismatched_union() -> Result<MismatchedJson, MismatchedHtml> {
+        Ok(MismatchedJson::Ok(MismatchedOk { id: 42 }))
+    }
+}
+
+/// Phase 9 regression: a Result whose arms support different format lists panics
+/// at router build with the stable message (not at request time).
+#[test]
+#[should_panic(expected = "must support the same list of formats")]
+pub fn test_mismatched_union_formats_panic_at_router_build() {
+    let _ = mismatched_union_controller::into_router();
 }

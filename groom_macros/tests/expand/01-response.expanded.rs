@@ -77,6 +77,12 @@ mod no_content_type {
                     404u16,
                 );
         }
+        fn __groom_check_response_formats(
+            context: &str,
+            formats: &mut ::groom::runtime_checks::HTTPFormatsSet,
+        ) {
+            formats.record(context, &__GROOM_RESPONSE_SUPPORTED_MIMES_RespJsonResponse);
+        }
     }
 }
 mod plaintext_only {
@@ -221,6 +227,16 @@ mod plaintext_only {
                         )
                     }),
                     404u16,
+                );
+        }
+        fn __groom_check_response_formats(
+            context: &str,
+            formats: &mut ::groom::runtime_checks::HTTPFormatsSet,
+        ) {
+            formats
+                .record(
+                    context,
+                    &__GROOM_RESPONSE_SUPPORTED_MIMES_RespPlaintextResponse,
                 );
         }
     }
@@ -419,6 +435,12 @@ mod html_only {
                     404u16,
                 );
         }
+        fn __groom_check_response_formats(
+            context: &str,
+            formats: &mut ::groom::runtime_checks::HTTPFormatsSet,
+        ) {
+            formats.record(context, &__GROOM_RESPONSE_SUPPORTED_MIMES_RespHtmlResponse);
+        }
     }
 }
 mod json_only {
@@ -606,6 +628,12 @@ mod json_only {
                     }),
                     404u16,
                 );
+        }
+        fn __groom_check_response_formats(
+            context: &str,
+            formats: &mut ::groom::runtime_checks::HTTPFormatsSet,
+        ) {
+            formats.record(context, &__GROOM_RESPONSE_SUPPORTED_MIMES_RespJsonResponse);
         }
     }
 }
@@ -873,6 +901,16 @@ mod multiple_content_types {
                     404u16,
                 );
         }
+        fn __groom_check_response_formats(
+            context: &str,
+            formats: &mut ::groom::runtime_checks::HTTPFormatsSet,
+        ) {
+            formats
+                .record(
+                    context,
+                    &__GROOM_RESPONSE_SUPPORTED_MIMES_RespMultipleTypesResponse,
+                );
+        }
     }
 }
 mod named_struct_response {
@@ -1055,6 +1093,12 @@ mod named_struct_response {
                     }),
                     200u16,
                 )
+        }
+        fn __groom_check_response_formats(
+            context: &str,
+            formats: &mut ::groom::runtime_checks::HTTPFormatsSet,
+        ) {
+            formats.record(context, &__GROOM_RESPONSE_SUPPORTED_MIMES_Named);
         }
     }
     impl ::groom::response::HtmlFormat for Named {
@@ -1243,6 +1287,12 @@ mod unnamed_struct_response {
                     200u16,
                 )
         }
+        fn __groom_check_response_formats(
+            context: &str,
+            formats: &mut ::groom::runtime_checks::HTTPFormatsSet,
+        ) {
+            formats.record(context, &__GROOM_RESPONSE_SUPPORTED_MIMES_Unnamed);
+        }
     }
     impl ::groom::response::HtmlFormat for Unnamed {
         fn render(self) -> ::axum::response::Html<axum::body::Body> {
@@ -1330,6 +1380,12 @@ mod unit_struct_response {
                     200u16,
                 )
         }
+        fn __groom_check_response_formats(
+            context: &str,
+            formats: &mut ::groom::runtime_checks::HTTPFormatsSet,
+        ) {
+            formats.record(context, &__GROOM_RESPONSE_SUPPORTED_MIMES_Unit);
+        }
     }
 }
 mod result_struct_struct {
@@ -1404,6 +1460,12 @@ mod result_struct_struct {
                     200u16,
                 )
         }
+        fn __groom_check_response_formats(
+            context: &str,
+            formats: &mut ::groom::runtime_checks::HTTPFormatsSet,
+        ) {
+            formats.record(context, &__GROOM_RESPONSE_SUPPORTED_MIMES_Success);
+        }
     }
     pub struct Error;
     #[doc(hidden)]
@@ -1475,6 +1537,12 @@ mod result_struct_struct {
                     404u16,
                 )
         }
+        fn __groom_check_response_formats(
+            context: &str,
+            formats: &mut ::groom::runtime_checks::HTTPFormatsSet,
+        ) {
+            formats.record(context, &__GROOM_RESPONSE_SUPPORTED_MIMES_Error);
+        }
     }
     /// HTTP handler: GET /
     async fn foo() -> Result<Success, Error> {
@@ -1510,6 +1578,16 @@ mod result_struct_struct {
                 ::alloc::fmt::format(format_args!("{0}: handler `foo`", context))
             }),
             &mut codes,
+        );
+        let mut formats = ::groom::runtime_checks::HTTPFormatsSet::new();
+        <Result<
+            Success,
+            Error,
+        >>::__groom_check_response_formats(
+            &::alloc::__export::must_use({
+                ::alloc::fmt::format(format_args!("{0}: handler `foo`", context))
+            }),
+            &mut formats,
         );
     }
     pub fn into_router() -> ::groom::router::GroomRouter<()> {
@@ -1598,7 +1676,7 @@ mod result_struct_struct {
 }
 mod result_struct_enum {
     use ::static_assertions::{assert_impl_all, assert_impl_any};
-    pub struct Success;
+    pub struct Success(String);
     #[doc(hidden)]
     #[allow(
         non_upper_case_globals,
@@ -1618,17 +1696,27 @@ mod result_struct_enum {
             where
                 __S: _serde::Serializer,
             {
-                _serde::Serializer::serialize_unit_struct(__serializer, "Success")
+                _serde::Serializer::serialize_newtype_struct(
+                    __serializer,
+                    "Success",
+                    &self.0,
+                )
             }
         }
     };
     impl ::groom::DTO for Success {}
     impl ::groom::DTO_Response for Success {}
     #[allow(non_upper_case_globals)]
-    const __GROOM_RESPONSE_SUPPORTED_MIMES_Success: &[::mime::Mime] = &[];
+    const __GROOM_RESPONSE_SUPPORTED_MIMES_Success: &[::mime::Mime] = &[
+        ::mime::TEXT_PLAIN,
+    ];
     impl Success {
-        fn into_response_any_content_type(self) -> ::axum::response::Response {
-            (::axum::http::StatusCode::from_u16(200u16).unwrap()).into_response()
+        fn into_response_text_plain(self) -> ::axum::response::Response {
+            (
+                ::axum::http::StatusCode::from_u16(200u16).unwrap(),
+                Into::<String>::into(self.0),
+            )
+                .into_response()
         }
     }
     impl ::groom::response::Response for Success {
@@ -1636,7 +1724,21 @@ mod result_struct_enum {
             self,
             negotiated: Option<&::mime::Mime>,
         ) -> ::axum::response::Response {
-            self.into_response_any_content_type()
+            match negotiated {
+                None => self.into_response_text_plain(),
+                Some(negotiated) => {
+                    match (negotiated.type_(), negotiated.subtype()) {
+                        (::mime::TEXT, mime::PLAIN) => self.into_response_text_plain(),
+                        _ => {
+                            (
+                                ::axum::http::StatusCode::BAD_REQUEST,
+                                "Content-Type negotiation produced an unexpected type/subtype pair.",
+                            )
+                                .into_response()
+                        }
+                    }
+                }
+            }
         }
         fn __openapi_modify_operation(
             op: ::utoipa::openapi::path::OperationBuilder,
@@ -1645,14 +1747,63 @@ mod result_struct_enum {
             let op = op
                 .response(
                     "200",
-                    ::utoipa::openapi::ResponseBuilder::new().description("").build(),
+                    ::utoipa::openapi::ResponseBuilder::new()
+                        .description("")
+                        .content(
+                            ::mime::TEXT_PLAIN_UTF_8.as_ref(),
+                            ::utoipa::openapi::ContentBuilder::new()
+                                .schema({
+                                    match <String as utoipa::PartialSchema>::schema() {
+                                        ::utoipa::openapi::RefOr::T(s) => Some(s),
+                                        ::utoipa::openapi::RefOr::Ref(_) => {
+                                            ::core::panicking::panic_fmt(
+                                                format_args!("String schema for plain_text is ref"),
+                                            );
+                                        }
+                                    }
+                                })
+                                .build(),
+                        )
+                        .build(),
+                );
+            components.add_components::<String>();
+            let op = op
+                .response(
+                    "406",
+                    ::utoipa::openapi::ResponseBuilder::new()
+                        .description("The requested content type is not supported")
+                        .content(
+                            ::mime::TEXT_PLAIN.as_ref(),
+                            ::utoipa::openapi::ContentBuilder::new()
+                                .schema({
+                                    match <String as utoipa::PartialSchema>::schema() {
+                                        ::utoipa::openapi::RefOr::T(s) => Some(s),
+                                        ::utoipa::openapi::RefOr::Ref(_) => {
+                                            ::core::panicking::panic_fmt(
+                                                format_args!("String schema for plain_text is ref"),
+                                            );
+                                        }
+                                    }
+                                })
+                                .build(),
+                        )
+                        .build(),
                 );
             op
         }
         fn __groom_negotiate_content_type(
-            _accept: &::accept_header::Accept,
+            accept: &::accept_header::Accept,
         ) -> ::core::result::Result<Option<::mime::Mime>, ::axum::response::Response> {
-            Ok(None)
+            match accept.negotiate(&__GROOM_RESPONSE_SUPPORTED_MIMES_Success) {
+                Ok(negotiated) => Ok(Some(negotiated)),
+                Err(_) => {
+                    Err(
+                        ::groom::response::not_acceptable(
+                            __GROOM_RESPONSE_SUPPORTED_MIMES_Success,
+                        ),
+                    )
+                }
+            }
         }
         fn __groom_check_response_codes(
             context: &str,
@@ -1668,7 +1819,54 @@ mod result_struct_enum {
                     200u16,
                 )
         }
+        fn __groom_check_response_formats(
+            context: &str,
+            formats: &mut ::groom::runtime_checks::HTTPFormatsSet,
+        ) {
+            formats.record(context, &__GROOM_RESPONSE_SUPPORTED_MIMES_Success);
+        }
     }
+    const _: fn() = || {
+        use ::static_assertions::_core::marker::PhantomData;
+        use ::static_assertions::_core::ops::Deref;
+        let previous = AssertImplAnyFallback;
+        struct AssertImplAnyFallback;
+        struct ActualAssertImplAnyToken;
+        trait AssertImplAnyToken {}
+        impl AssertImplAnyToken for ActualAssertImplAnyToken {}
+        fn assert_impl_any_token<T: AssertImplAnyToken>(_: T) {}
+        let previous = {
+            struct Wrapper<T, N>(PhantomData<T>, N);
+            impl<T, N> Deref for Wrapper<T, N> {
+                type Target = N;
+                fn deref(&self) -> &Self::Target {
+                    &self.1
+                }
+            }
+            impl<T: ::utoipa::PartialSchema, N> Wrapper<T, N> {
+                fn _static_assertions_impl_any(&self) -> ActualAssertImplAnyToken {
+                    ActualAssertImplAnyToken
+                }
+            }
+            Wrapper::<String, _>(PhantomData, previous)
+        };
+        let previous = {
+            struct Wrapper<T, N>(PhantomData<T>, N);
+            impl<T, N> Deref for Wrapper<T, N> {
+                type Target = N;
+                fn deref(&self) -> &Self::Target {
+                    &self.1
+                }
+            }
+            impl<T: ::groom::DTO_Response, N> Wrapper<T, N> {
+                fn _static_assertions_impl_any(&self) -> ActualAssertImplAnyToken {
+                    ActualAssertImplAnyToken
+                }
+            }
+            Wrapper::<String, _>(PhantomData, previous)
+        };
+        assert_impl_any_token(previous._static_assertions_impl_any());
+    };
     pub enum Error {
         NotFound,
         NoAccess(String),
@@ -1810,6 +2008,12 @@ mod result_struct_enum {
                     400u16,
                 );
         }
+        fn __groom_check_response_formats(
+            context: &str,
+            formats: &mut ::groom::runtime_checks::HTTPFormatsSet,
+        ) {
+            formats.record(context, &__GROOM_RESPONSE_SUPPORTED_MIMES_Error);
+        }
     }
     const _: fn() = || {
         use ::static_assertions::_core::marker::PhantomData;
@@ -1854,7 +2058,7 @@ mod result_struct_enum {
     };
     /// HTTP handler: GET /
     async fn foo() -> Result<Success, Error> {
-        Err(Error::NoAccess("ip blocked".into()))
+        Ok(Success("ok".into()))
     }
     async fn __groom_wrapper_foo(
         headers: ::axum::http::header::HeaderMap,
@@ -1886,6 +2090,16 @@ mod result_struct_enum {
                 ::alloc::fmt::format(format_args!("{0}: handler `foo`", context))
             }),
             &mut codes,
+        );
+        let mut formats = ::groom::runtime_checks::HTTPFormatsSet::new();
+        <Result<
+            Success,
+            Error,
+        >>::__groom_check_response_formats(
+            &::alloc::__export::must_use({
+                ::alloc::fmt::format(format_args!("{0}: handler `foo`", context))
+            }),
+            &mut formats,
         );
     }
     pub fn into_router() -> ::groom::router::GroomRouter<()> {
@@ -2248,6 +2462,12 @@ mod wrapped_enum {
                     202u16,
                 );
         }
+        fn __groom_check_response_formats(
+            context: &str,
+            formats: &mut ::groom::runtime_checks::HTTPFormatsSet,
+        ) {
+            formats.record(context, &__GROOM_RESPONSE_SUPPORTED_MIMES_Resp);
+        }
     }
     const _: fn() = || {
         use ::static_assertions::_core::marker::PhantomData;
@@ -2331,7 +2551,9 @@ mod wrapped_enum {
         };
         assert_impl_any_token(previous._static_assertions_impl_any());
     };
-    pub struct Error;
+    pub struct Error {
+        pub message: &'static str,
+    }
     #[doc(hidden)]
     #[allow(
         non_upper_case_globals,
@@ -2351,17 +2573,30 @@ mod wrapped_enum {
             where
                 __S: _serde::Serializer,
             {
-                _serde::Serializer::serialize_unit_struct(__serializer, "Error")
+                let mut __serde_state = _serde::Serializer::serialize_struct(
+                    __serializer,
+                    "Error",
+                    false as usize + 1,
+                )?;
+                _serde::ser::SerializeStruct::serialize_field(
+                    &mut __serde_state,
+                    "message",
+                    &self.message,
+                )?;
+                _serde::ser::SerializeStruct::end(__serde_state)
             }
         }
     };
     impl ::groom::DTO for Error {}
     impl ::groom::DTO_Response for Error {}
     #[allow(non_upper_case_globals)]
-    const __GROOM_RESPONSE_SUPPORTED_MIMES_Error: &[::mime::Mime] = &[];
+    const __GROOM_RESPONSE_SUPPORTED_MIMES_Error: &[::mime::Mime] = &[
+        ::mime::APPLICATION_JSON,
+    ];
     impl Error {
-        fn into_response_any_content_type(self) -> ::axum::response::Response {
-            (::axum::http::StatusCode::from_u16(404u16).unwrap()).into_response()
+        fn into_response_application_json(self) -> ::axum::response::Response {
+            (::axum::http::StatusCode::from_u16(404u16).unwrap(), ::axum::Json(self))
+                .into_response()
         }
     }
     impl ::groom::response::Response for Error {
@@ -2369,7 +2604,23 @@ mod wrapped_enum {
             self,
             negotiated: Option<&::mime::Mime>,
         ) -> ::axum::response::Response {
-            self.into_response_any_content_type()
+            match negotiated {
+                None => self.into_response_application_json(),
+                Some(negotiated) => {
+                    match (negotiated.type_(), negotiated.subtype()) {
+                        (::mime::APPLICATION, mime::JSON) => {
+                            self.into_response_application_json()
+                        }
+                        _ => {
+                            (
+                                ::axum::http::StatusCode::BAD_REQUEST,
+                                "Content-Type negotiation produced an unexpected type/subtype pair.",
+                            )
+                                .into_response()
+                        }
+                    }
+                }
+            }
         }
         fn __openapi_modify_operation(
             op: ::utoipa::openapi::path::OperationBuilder,
@@ -2378,14 +2629,66 @@ mod wrapped_enum {
             let op = op
                 .response(
                     "404",
-                    ::utoipa::openapi::ResponseBuilder::new().description("").build(),
+                    ::utoipa::openapi::ResponseBuilder::new()
+                        .description("")
+                        .content(
+                            ::mime::APPLICATION_JSON.as_ref(),
+                            ::utoipa::openapi::ContentBuilder::new()
+                                .schema(
+                                    match <Error as ::utoipa::PartialSchema>::schema() {
+                                        ::utoipa::openapi::RefOr::T(s) => {
+                                            Some(components.add_components::<Error>())
+                                        }
+                                        ::utoipa::openapi::RefOr::Ref(_) => {
+                                            ::core::panicking::panic_fmt(
+                                                format_args!(
+                                                    "Type `{0}` schema for application/json is ref", "Error",
+                                                ),
+                                            );
+                                        }
+                                    },
+                                )
+                                .build(),
+                        )
+                        .build(),
+                );
+            let op = op
+                .response(
+                    "406",
+                    ::utoipa::openapi::ResponseBuilder::new()
+                        .description("The requested content type is not supported")
+                        .content(
+                            ::mime::TEXT_PLAIN.as_ref(),
+                            ::utoipa::openapi::ContentBuilder::new()
+                                .schema({
+                                    match <String as utoipa::PartialSchema>::schema() {
+                                        ::utoipa::openapi::RefOr::T(s) => Some(s),
+                                        ::utoipa::openapi::RefOr::Ref(_) => {
+                                            ::core::panicking::panic_fmt(
+                                                format_args!("String schema for plain_text is ref"),
+                                            );
+                                        }
+                                    }
+                                })
+                                .build(),
+                        )
+                        .build(),
                 );
             op
         }
         fn __groom_negotiate_content_type(
-            _accept: &::accept_header::Accept,
+            accept: &::accept_header::Accept,
         ) -> ::core::result::Result<Option<::mime::Mime>, ::axum::response::Response> {
-            Ok(None)
+            match accept.negotiate(&__GROOM_RESPONSE_SUPPORTED_MIMES_Error) {
+                Ok(negotiated) => Ok(Some(negotiated)),
+                Err(_) => {
+                    Err(
+                        ::groom::response::not_acceptable(
+                            __GROOM_RESPONSE_SUPPORTED_MIMES_Error,
+                        ),
+                    )
+                }
+            }
         }
         fn __groom_check_response_codes(
             context: &str,
@@ -2401,7 +2704,54 @@ mod wrapped_enum {
                     404u16,
                 )
         }
+        fn __groom_check_response_formats(
+            context: &str,
+            formats: &mut ::groom::runtime_checks::HTTPFormatsSet,
+        ) {
+            formats.record(context, &__GROOM_RESPONSE_SUPPORTED_MIMES_Error);
+        }
     }
+    const _: fn() = || {
+        use ::static_assertions::_core::marker::PhantomData;
+        use ::static_assertions::_core::ops::Deref;
+        let previous = AssertImplAnyFallback;
+        struct AssertImplAnyFallback;
+        struct ActualAssertImplAnyToken;
+        trait AssertImplAnyToken {}
+        impl AssertImplAnyToken for ActualAssertImplAnyToken {}
+        fn assert_impl_any_token<T: AssertImplAnyToken>(_: T) {}
+        let previous = {
+            struct Wrapper<T, N>(PhantomData<T>, N);
+            impl<T, N> Deref for Wrapper<T, N> {
+                type Target = N;
+                fn deref(&self) -> &Self::Target {
+                    &self.1
+                }
+            }
+            impl<T: ::utoipa::PartialSchema, N> Wrapper<T, N> {
+                fn _static_assertions_impl_any(&self) -> ActualAssertImplAnyToken {
+                    ActualAssertImplAnyToken
+                }
+            }
+            Wrapper::<Error, _>(PhantomData, previous)
+        };
+        let previous = {
+            struct Wrapper<T, N>(PhantomData<T>, N);
+            impl<T, N> Deref for Wrapper<T, N> {
+                type Target = N;
+                fn deref(&self) -> &Self::Target {
+                    &self.1
+                }
+            }
+            impl<T: ::groom::DTO_Response, N> Wrapper<T, N> {
+                fn _static_assertions_impl_any(&self) -> ActualAssertImplAnyToken {
+                    ActualAssertImplAnyToken
+                }
+            }
+            Wrapper::<Error, _>(PhantomData, previous)
+        };
+        assert_impl_any_token(previous._static_assertions_impl_any());
+    };
     /// HTTP handler: GET /
     async fn foo() -> Result<Resp, Error> {
         Ok(
@@ -2442,6 +2792,16 @@ mod wrapped_enum {
                 ::alloc::fmt::format(format_args!("{0}: handler `foo`", context))
             }),
             &mut codes,
+        );
+        let mut formats = ::groom::runtime_checks::HTTPFormatsSet::new();
+        <Result<
+            Resp,
+            Error,
+        >>::__groom_check_response_formats(
+            &::alloc::__export::must_use({
+                ::alloc::fmt::format(format_args!("{0}: handler `foo`", context))
+            }),
+            &mut formats,
         );
     }
     pub fn into_router() -> ::groom::router::GroomRouter<()> {

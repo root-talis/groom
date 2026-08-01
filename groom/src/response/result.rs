@@ -2,7 +2,7 @@ use accept_header::Accept;
 use utoipa::openapi::path::OperationBuilder;
 use crate::extract::ComponentsRegistry;
 use crate::response::Response;
-use crate::runtime_checks::HTTPCodeSet;
+use crate::runtime_checks::{HTTPCodeSet, HTTPFormatsSet};
 
 impl<T, E> Response for Result<T, E>
 where T: Response, E: Response
@@ -32,5 +32,14 @@ where T: Response, E: Response
     fn __groom_check_response_codes(context: &str, codes: &mut HTTPCodeSet) {
         T::__groom_check_response_codes(&format!("{context} / Result<Ok, _>"), codes);
         E::__groom_check_response_codes(&format!("{context} / Result<_, Err>"), codes);
+    }
+
+    fn __groom_check_response_formats(context: &str, formats: &mut HTTPFormatsSet) {
+        let mut ok_formats = HTTPFormatsSet::new();
+        let mut err_formats = HTTPFormatsSet::new();
+        T::__groom_check_response_formats(&format!("{context} / Result<Ok, _>"), &mut ok_formats);
+        E::__groom_check_response_formats(&format!("{context} / Result<_, Err>"), &mut err_formats);
+        ok_formats.assert_same_as(&format!("{context} / Result<Ok, _>"), &err_formats);
+        formats.merge(&ok_formats);
     }
 }

@@ -334,6 +334,12 @@ pub mod api_root {
                     401u16,
                 );
         }
+        fn __groom_check_response_formats(
+            context: &str,
+            formats: &mut ::groom::runtime_checks::HTTPFormatsSet,
+        ) {
+            formats.record(context, &__GROOM_RESPONSE_SUPPORTED_MIMES_GetRootResponse);
+        }
     }
     const _: fn() = || {
         use ::static_assertions::_core::marker::PhantomData;
@@ -772,6 +778,13 @@ pub mod api_root {
                     }),
                     400u16,
                 );
+        }
+        fn __groom_check_response_formats(
+            context: &str,
+            formats: &mut ::groom::runtime_checks::HTTPFormatsSet,
+        ) {
+            formats
+                .record(context, &__GROOM_RESPONSE_SUPPORTED_MIMES_RqConsQueryResponse);
         }
     }
     const _: fn() = || {
@@ -1213,6 +1226,13 @@ pub mod api_root {
                     200u16,
                 );
         }
+        fn __groom_check_response_formats(
+            context: &str,
+            formats: &mut ::groom::runtime_checks::HTTPFormatsSet,
+        ) {
+            formats
+                .record(context, &__GROOM_RESPONSE_SUPPORTED_MIMES_RqConsPathResponse);
+        }
     }
     const _: fn() = || {
         use ::static_assertions::_core::marker::PhantomData;
@@ -1422,6 +1442,12 @@ pub mod api_root {
                     200u16,
                 );
         }
+        fn __groom_check_response_formats(
+            context: &str,
+            formats: &mut ::groom::runtime_checks::HTTPFormatsSet,
+        ) {
+            formats.record(context, &__GROOM_RESPONSE_SUPPORTED_MIMES_RespJsonResponse);
+        }
     }
     const _: fn() = || {
         use ::static_assertions::_core::marker::PhantomData;
@@ -1473,12 +1499,26 @@ pub mod api_root {
             }),
             &mut codes,
         );
+        let mut formats = ::groom::runtime_checks::HTTPFormatsSet::new();
+        <GetRootResponse>::__groom_check_response_formats(
+            &::alloc::__export::must_use({
+                ::alloc::fmt::format(format_args!("{0}: handler `get_root`", context))
+            }),
+            &mut formats,
+        );
         let mut codes = ::groom::runtime_checks::HTTPCodeSet::new();
         <GetRootResponse>::__groom_check_response_codes(
             &::alloc::__export::must_use({
                 ::alloc::fmt::format(format_args!("{0}: handler `post_root`", context))
             }),
             &mut codes,
+        );
+        let mut formats = ::groom::runtime_checks::HTTPFormatsSet::new();
+        <GetRootResponse>::__groom_check_response_formats(
+            &::alloc::__export::must_use({
+                ::alloc::fmt::format(format_args!("{0}: handler `post_root`", context))
+            }),
+            &mut formats,
         );
         let mut codes = ::groom::runtime_checks::HTTPCodeSet::new();
         <RqConsQueryResponse>::__groom_check_response_codes(
@@ -1489,6 +1529,15 @@ pub mod api_root {
             }),
             &mut codes,
         );
+        let mut formats = ::groom::runtime_checks::HTTPFormatsSet::new();
+        <RqConsQueryResponse>::__groom_check_response_formats(
+            &::alloc::__export::must_use({
+                ::alloc::fmt::format(
+                    format_args!("{0}: handler `rq_cons_query_struct`", context),
+                )
+            }),
+            &mut formats,
+        );
         let mut codes = ::groom::runtime_checks::HTTPCodeSet::new();
         <RqConsPathResponse>::__groom_check_response_codes(
             &::alloc::__export::must_use({
@@ -1498,12 +1547,28 @@ pub mod api_root {
             }),
             &mut codes,
         );
+        let mut formats = ::groom::runtime_checks::HTTPFormatsSet::new();
+        <RqConsPathResponse>::__groom_check_response_formats(
+            &::alloc::__export::must_use({
+                ::alloc::fmt::format(
+                    format_args!("{0}: handler `rq_cons_path_struct`", context),
+                )
+            }),
+            &mut formats,
+        );
         let mut codes = ::groom::runtime_checks::HTTPCodeSet::new();
         <RespJsonResponse>::__groom_check_response_codes(
             &::alloc::__export::must_use({
                 ::alloc::fmt::format(format_args!("{0}: handler `resp_json`", context))
             }),
             &mut codes,
+        );
+        let mut formats = ::groom::runtime_checks::HTTPFormatsSet::new();
+        <RespJsonResponse>::__groom_check_response_formats(
+            &::alloc::__export::must_use({
+                ::alloc::fmt::format(format_args!("{0}: handler `resp_json`", context))
+            }),
+            &mut formats,
         );
     }
     pub fn into_router() -> ::groom::router::GroomRouter<()> {
