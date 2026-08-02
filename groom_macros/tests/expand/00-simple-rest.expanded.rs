@@ -2174,7 +2174,10 @@ pub mod api_root {
     }
     pub fn merge_into_router(
         other: impl Into<::groom::router::GroomRouter<()>>,
-    ) -> ::groom::router::GroomRouter<()> {
+    ) -> ::std::result::Result<
+        ::groom::router::GroomRouter<()>,
+        ::groom::router::MergeError,
+    > {
         __groom_runtime_checks();
         let this_router: ::axum::Router<()> = ::axum::Router::new()
             .route("/", ::axum::routing::get(__groom_wrapper_get_root))
@@ -2301,14 +2304,7 @@ pub mod api_root {
             __groom_paths,
         );
         let __groom_other = other.into();
-        match __groom_other.merge(__groom_this) {
-            ::std::result::Result::Ok(r) => r,
-            ::std::result::Result::Err(e) => {
-                ::core::panicking::panic_fmt(
-                    format_args!("GroomRouter merge failed: {0}", e),
-                );
-            }
-        }
+        __groom_other.merge(__groom_this)
     }
     const _: fn() = || {
         fn assert_impl_all<T: ?Sized + ::groom::response::Response>() {}
@@ -2573,7 +2569,10 @@ mod options_connect {
     }
     pub fn merge_into_router(
         other: impl Into<::groom::router::GroomRouter<()>>,
-    ) -> ::groom::router::GroomRouter<()> {
+    ) -> ::std::result::Result<
+        ::groom::router::GroomRouter<()>,
+        ::groom::router::MergeError,
+    > {
         __groom_runtime_checks();
         let this_router: ::axum::Router<()> = ::axum::Router::new()
             .route(
@@ -2611,14 +2610,7 @@ mod options_connect {
             __groom_paths,
         );
         let __groom_other = other.into();
-        match __groom_other.merge(__groom_this) {
-            ::std::result::Result::Ok(r) => r,
-            ::std::result::Result::Err(e) => {
-                ::core::panicking::panic_fmt(
-                    format_args!("GroomRouter merge failed: {0}", e),
-                );
-            }
-        }
+        __groom_other.merge(__groom_this)
     }
     const _: fn() = || {
         fn assert_impl_all<T: ?Sized + ::groom::response::Response>() {}

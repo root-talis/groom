@@ -51,7 +51,7 @@ paths:
         '406':
           description: The requested content type is not supported
           content:
-            text/plain:
+            text/plain; charset=utf-8:
               schema:
                 type: string
         '500':
@@ -85,7 +85,7 @@ paths:
         '406':
           description: The requested content type is not supported
           content:
-            text/plain:
+            text/plain; charset=utf-8:
               schema:
                 type: string
         '409':
@@ -116,7 +116,7 @@ paths:
         '406':
           description: The requested content type is not supported
           content:
-            text/plain:
+            text/plain; charset=utf-8:
               schema:
                 type: string
         '500':
@@ -161,7 +161,7 @@ paths:
         '406':
           description: The requested content type is not supported
           content:
-            text/plain:
+            text/plain; charset=utf-8:
               schema:
                 type: string
         '409':
@@ -192,7 +192,7 @@ paths:
         '406':
           description: The requested content type is not supported
           content:
-            text/plain:
+            text/plain; charset=utf-8:
               schema:
                 type: string
         '409':
@@ -223,7 +223,7 @@ paths:
         '406':
           description: The requested content type is not supported
           content:
-            text/plain:
+            text/plain; charset=utf-8:
               schema:
                 type: string
         '409':
@@ -254,7 +254,7 @@ paths:
         '406':
           description: The requested content type is not supported
           content:
-            text/plain:
+            text/plain; charset=utf-8:
               schema:
                 type: string
         '409':

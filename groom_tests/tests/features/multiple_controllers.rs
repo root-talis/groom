@@ -42,6 +42,7 @@ mod namespace_a {
 
     pub fn merge_router(r: GroomRouter<super::SomeState>) -> GroomRouter<super::SomeState> {
         controller::merge_into_router(r)
+            .expect("router merge must not conflict")
             .layer(Extension(ExtensionA{ answer: 42 }))
     }
 }
@@ -84,6 +85,7 @@ mod namespace_b {
 
     pub fn merge_router(r: GroomRouter<super::SomeState>) -> GroomRouter<super::SomeState> {
         controller::merge_into_router(r)
+            .expect("router merge must not conflict")
             .layer(Extension(ExtensionB{ name: "Luca".into() }))
     }
 }

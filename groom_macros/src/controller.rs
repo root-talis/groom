@@ -504,7 +504,7 @@ fn generate_new_mod_ast(
                 )
             }
 
-            pub fn merge_into_router(other: impl Into<::groom::router::GroomRouter<#state_ty>>) -> ::groom::router::GroomRouter<#state_ty> {
+            pub fn merge_into_router(other: impl Into<::groom::router::GroomRouter<#state_ty>>) -> ::std::result::Result<::groom::router::GroomRouter<#state_ty>, ::groom::router::MergeError> {
                 __groom_runtime_checks();
 
                 let this_router: ::axum::Router<#state_ty> = ::axum::Router::new()
@@ -518,12 +518,7 @@ fn generate_new_mod_ast(
                     this_router, components, __groom_paths
                 );
                 let __groom_other = other.into();
-                match __groom_other.merge(__groom_this) {
-                    ::std::result::Result::Ok(r) => r,
-                    ::std::result::Result::Err(e) => {
-                        ::std::panic!("GroomRouter merge failed: {}", e)
-                    }
-                }
+                __groom_other.merge(__groom_this)
             }
 
             #(#type_assertions)*

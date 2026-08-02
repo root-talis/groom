@@ -23,6 +23,7 @@
 
 - `#[Controller]` modules now generate `into_router() -> GroomRouter<S, NotValidated>` as the primary generated function, replacing the separate `merge_into_router()` / `merge_into_openapi_builder()` pattern.
 - `merge_into_router()` retained as a soft-deprecated backward-compat function.
+- **Breaking:** Generated `merge_into_router` now returns `Result<GroomRouter<S>, MergeError>` instead of panicking on schema conflict; callers must handle the result. Prefer `into_router()` for the non-fallible single-controller path.
 
 ## v0.2.2
 
