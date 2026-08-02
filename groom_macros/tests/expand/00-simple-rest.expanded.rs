@@ -1865,3 +1865,245 @@ pub mod api_root {
         assert_impl_all::<RespJsonResponse>();
     };
 }
+mod options_connect {
+    use ::static_assertions::{assert_impl_all, assert_impl_any};
+    pub enum OptionsResult {
+        Ok,
+    }
+    #[allow(non_upper_case_globals)]
+    const __GROOM_RESPONSE_SUPPORTED_MIMES_OptionsResult: &[::mime::Mime] = &[];
+    impl OptionsResult {
+        fn into_response_any_content_type(self) -> ::axum::response::Response {
+            match self {
+                Self::Ok => {
+                    (::axum::http::StatusCode::from_u16(200u16).unwrap()).into_response()
+                }
+            }
+        }
+    }
+    impl ::groom::response::Response for OptionsResult {
+        fn __groom_into_response(
+            self,
+            negotiated: Option<&::mime::Mime>,
+        ) -> ::axum::response::Response {
+            self.into_response_any_content_type()
+        }
+        fn __openapi_modify_operation(
+            op: ::utoipa::openapi::path::OperationBuilder,
+            components: &mut ::groom::extract::ComponentsRegistry,
+        ) -> ::utoipa::openapi::path::OperationBuilder {
+            let op = op
+                .response(
+                    "200",
+                    ::utoipa::openapi::ResponseBuilder::new().description("").build(),
+                );
+            op
+        }
+        fn __groom_negotiate_content_type(
+            _accept: &::accept_header::Accept,
+        ) -> ::core::result::Result<Option<::mime::Mime>, ::axum::response::Response> {
+            Ok(None)
+        }
+        fn __groom_check_response_codes(
+            context: &str,
+            codes: &mut ::groom::runtime_checks::HTTPCodeSet,
+        ) {
+            let context = ::alloc::__export::must_use({
+                ::alloc::fmt::format(format_args!("{0} / enum `OptionsResult`", context))
+            });
+            codes
+                .ensure_distinct(
+                    ::alloc::__export::must_use({
+                        ::alloc::fmt::format(format_args!("{0} / variant `Ok`", context))
+                    }),
+                    200u16,
+                );
+        }
+        fn __groom_check_response_formats(
+            context: &str,
+            formats: &mut ::groom::runtime_checks::HTTPFormatsSet,
+        ) {
+            formats.record(context, &__GROOM_RESPONSE_SUPPORTED_MIMES_OptionsResult);
+        }
+    }
+    /// HTTP handler: OPTIONS /options-check
+    pub async fn options_route() -> OptionsResult {
+        OptionsResult::Ok
+    }
+    async fn __groom_wrapper_options_route(
+        headers: ::axum::http::header::HeaderMap,
+    ) -> impl ::axum::response::IntoResponse {
+        let accept = match ::groom::content_negotiation::parse_accept_header(&headers) {
+            Err(_) => return ::groom::response::bad_accept_header(),
+            Ok(accept) => accept,
+        };
+        let negotiated = match accept {
+            None => None,
+            Some(accept) => {
+                match <OptionsResult>::__groom_negotiate_content_type(&accept) {
+                    Err(response) => return response,
+                    Ok(negotiated) => negotiated,
+                }
+            }
+        };
+        let result = options_route().await;
+        result.__groom_into_response(negotiated.as_ref())
+    }
+    /// HTTP handler: CONNECT /tunnel
+    pub async fn connect_route() -> OptionsResult {
+        OptionsResult::Ok
+    }
+    async fn __groom_wrapper_connect_route(
+        headers: ::axum::http::header::HeaderMap,
+    ) -> impl ::axum::response::IntoResponse {
+        let accept = match ::groom::content_negotiation::parse_accept_header(&headers) {
+            Err(_) => return ::groom::response::bad_accept_header(),
+            Ok(accept) => accept,
+        };
+        let negotiated = match accept {
+            None => None,
+            Some(accept) => {
+                match <OptionsResult>::__groom_negotiate_content_type(&accept) {
+                    Err(response) => return response,
+                    Ok(negotiated) => negotiated,
+                }
+            }
+        };
+        let result = connect_route().await;
+        result.__groom_into_response(negotiated.as_ref())
+    }
+    fn __groom_runtime_checks() {
+        let context = "Groom runtime check of mod `options_connect`".to_string();
+        let mut codes = ::groom::runtime_checks::HTTPCodeSet::new();
+        <OptionsResult>::__groom_check_response_codes(
+            &::alloc::__export::must_use({
+                ::alloc::fmt::format(
+                    format_args!("{0}: handler `options_route`", context),
+                )
+            }),
+            &mut codes,
+        );
+        let mut formats = ::groom::runtime_checks::HTTPFormatsSet::new();
+        <OptionsResult>::__groom_check_response_formats(
+            &::alloc::__export::must_use({
+                ::alloc::fmt::format(
+                    format_args!("{0}: handler `options_route`", context),
+                )
+            }),
+            &mut formats,
+        );
+        let mut codes = ::groom::runtime_checks::HTTPCodeSet::new();
+        <OptionsResult>::__groom_check_response_codes(
+            &::alloc::__export::must_use({
+                ::alloc::fmt::format(
+                    format_args!("{0}: handler `connect_route`", context),
+                )
+            }),
+            &mut codes,
+        );
+        let mut formats = ::groom::runtime_checks::HTTPFormatsSet::new();
+        <OptionsResult>::__groom_check_response_formats(
+            &::alloc::__export::must_use({
+                ::alloc::fmt::format(
+                    format_args!("{0}: handler `connect_route`", context),
+                )
+            }),
+            &mut formats,
+        );
+    }
+    pub fn into_router() -> ::groom::router::GroomRouter<()> {
+        __groom_runtime_checks();
+        let this_router: ::axum::Router<()> = ::axum::Router::new()
+            .route(
+                "/options-check",
+                ::axum::routing::options(__groom_wrapper_options_route),
+            )
+            .route("/tunnel", ::axum::routing::connect(__groom_wrapper_connect_route));
+        let mut components = ::groom::extract::ComponentsRegistry::new();
+        let mut __groom_paths: ::std::vec::Vec<
+            (::std::string::String, ::utoipa::openapi::path::PathItem),
+        > = ::std::vec::Vec::new();
+        __groom_paths
+            .push((
+                "/options-check".to_string(),
+                {
+                    let mut op_builder = ::utoipa::openapi::path::OperationBuilder::new()
+                        .summary(None as Option<String>)
+                        .description(None as Option<String>)
+                        .operation_id(Some("optionsRoute"));
+                    op_builder = <OptionsResult>::__openapi_modify_operation(
+                        op_builder,
+                        &mut components,
+                    );
+                    ::utoipa::openapi::path::PathItemBuilder::new()
+                        .operation(
+                            ::utoipa::openapi::path::HttpMethod::Options,
+                            op_builder.build(),
+                        )
+                        .build()
+                },
+            ));
+        ::groom::router::GroomRouter::from_controller_parts(
+            this_router,
+            components,
+            __groom_paths,
+        )
+    }
+    pub fn merge_into_router(
+        other: impl Into<::groom::router::GroomRouter<()>>,
+    ) -> ::groom::router::GroomRouter<()> {
+        __groom_runtime_checks();
+        let this_router: ::axum::Router<()> = ::axum::Router::new()
+            .route(
+                "/options-check",
+                ::axum::routing::options(__groom_wrapper_options_route),
+            )
+            .route("/tunnel", ::axum::routing::connect(__groom_wrapper_connect_route));
+        let mut components = ::groom::extract::ComponentsRegistry::new();
+        let mut __groom_paths: ::std::vec::Vec<
+            (::std::string::String, ::utoipa::openapi::path::PathItem),
+        > = ::std::vec::Vec::new();
+        __groom_paths
+            .push((
+                "/options-check".to_string(),
+                {
+                    let mut op_builder = ::utoipa::openapi::path::OperationBuilder::new()
+                        .summary(None as Option<String>)
+                        .description(None as Option<String>)
+                        .operation_id(Some("optionsRoute"));
+                    op_builder = <OptionsResult>::__openapi_modify_operation(
+                        op_builder,
+                        &mut components,
+                    );
+                    ::utoipa::openapi::path::PathItemBuilder::new()
+                        .operation(
+                            ::utoipa::openapi::path::HttpMethod::Options,
+                            op_builder.build(),
+                        )
+                        .build()
+                },
+            ));
+        let __groom_this = ::groom::router::GroomRouter::from_controller_parts(
+            this_router,
+            components,
+            __groom_paths,
+        );
+        let __groom_other = other.into();
+        match __groom_other.merge(__groom_this) {
+            ::std::result::Result::Ok(r) => r,
+            ::std::result::Result::Err(e) => {
+                ::core::panicking::panic_fmt(
+                    format_args!("GroomRouter merge failed: {0}", e),
+                );
+            }
+        }
+    }
+    const _: fn() = || {
+        fn assert_impl_all<T: ?Sized + ::groom::response::Response>() {}
+        assert_impl_all::<OptionsResult>();
+    };
+    const _: fn() = || {
+        fn assert_impl_all<T: ?Sized + ::groom::response::Response>() {}
+        assert_impl_all::<OptionsResult>();
+    };
+}

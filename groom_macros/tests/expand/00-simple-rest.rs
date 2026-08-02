@@ -123,3 +123,22 @@ pub mod api_root {
         age: u8,
     }*/
 }
+
+#[Controller]
+mod options_connect {
+    #[Response()]
+    pub enum OptionsResult {
+        #[Response()]
+        Ok,
+    }
+
+    #[Route(method = "options", path = "/options-check")]
+    pub async fn options_route() -> OptionsResult {
+        OptionsResult::Ok
+    }
+
+    #[Route(method = "connect", path = "/tunnel")]
+    pub async fn connect_route() -> OptionsResult {
+        OptionsResult::Ok
+    }
+}

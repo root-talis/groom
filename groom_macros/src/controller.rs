@@ -307,16 +307,25 @@ fn generate_openapi_paths_setup_ast(
     let path = &route.path;
     let method = &route.method;
 
+    if matches!(method, HTTPMethod::Connect) {
+        // CONNECT routes keep axum routing (installed by generate_router_modifier_for_handler)
+        // but are omitted from OpenAPI: OpenAPI 3 path items cannot model CONNECT via
+        // utoipa's HttpMethod (the enum has no Connect variant).
+        return;
+    }
+
     let operation = match method {
-        HTTPMethod::Connect  => quote! {::utoipa::openapi::path::HttpMethod::Connect},
         HTTPMethod::Delete   => quote! {::utoipa::openapi::path::HttpMethod::Delete },
         HTTPMethod::Get      => quote! {::utoipa::openapi::path::HttpMethod::Get    },
         HTTPMethod::Head     => quote! {::utoipa::openapi::path::HttpMethod::Head   },
-        HTTPMethod::Options  => quote! {::utoipa::openapi::path::HttpMethod::Option },
+        HTTPMethod::Options  => quote! {::utoipa::openapi::path::HttpMethod::Options},
         HTTPMethod::Patch    => quote! {::utoipa::openapi::path::HttpMethod::Patch  },
         HTTPMethod::Post     => quote! {::utoipa::openapi::path::HttpMethod::Post   },
         HTTPMethod::Put      => quote! {::utoipa::openapi::path::HttpMethod::Put    },
         HTTPMethod::Trace    => quote! {::utoipa::openapi::path::HttpMethod::Trace  },
+        // The compiler cannot see that the early return above excludes CONNECT,
+        // so the match needs this arm. It is never reached.
+        HTTPMethod::Connect  => unreachable!("CONNECT is handled by the early return above"),
     };
 
     let summary_tk = match &docblock.summary {
