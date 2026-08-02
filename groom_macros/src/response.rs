@@ -262,15 +262,100 @@ fn populate_supported_mimes(
     }
 }
 
+/// Well-known status codes mapped to their `axum::http::StatusCode` constant names.
+///
+/// `extract_response_code` emits a `match` over these names whose subject is the
+/// validated `u16` literal; the compiler folds the match to a single named constant,
+/// so generated code carries no `Result` branch and no `unwrap`.
+const STATUS_CODE_CONSTANTS: &[(u16, &str)] = &[
+    (200, "OK"),
+    (201, "CREATED"),
+    (202, "ACCEPTED"),
+    (203, "NON_AUTHORITATIVE_INFORMATION"),
+    (204, "NO_CONTENT"),
+    (205, "RESET_CONTENT"),
+    (206, "PARTIAL_CONTENT"),
+    (207, "MULTI_STATUS"),
+    (208, "ALREADY_REPORTED"),
+    (226, "IM_USED"),
+    (300, "MULTIPLE_CHOICES"),
+    (301, "MOVED_PERMANENTLY"),
+    (302, "FOUND"),
+    (303, "SEE_OTHER"),
+    (304, "NOT_MODIFIED"),
+    (307, "TEMPORARY_REDIRECT"),
+    (308, "PERMANENT_REDIRECT"),
+    (400, "BAD_REQUEST"),
+    (401, "UNAUTHORIZED"),
+    (402, "PAYMENT_REQUIRED"),
+    (403, "FORBIDDEN"),
+    (404, "NOT_FOUND"),
+    (405, "METHOD_NOT_ALLOWED"),
+    (406, "NOT_ACCEPTABLE"),
+    (407, "PROXY_AUTHENTICATION_REQUIRED"),
+    (408, "REQUEST_TIMEOUT"),
+    (409, "CONFLICT"),
+    (410, "GONE"),
+    (411, "LENGTH_REQUIRED"),
+    (412, "PRECONDITION_FAILED"),
+    (413, "PAYLOAD_TOO_LARGE"),
+    (414, "URI_TOO_LONG"),
+    (415, "UNSUPPORTED_MEDIA_TYPE"),
+    (416, "RANGE_NOT_SATISFIABLE"),
+    (417, "EXPECTATION_FAILED"),
+    (418, "IM_A_TEAPOT"),
+    (421, "MISDIRECTED_REQUEST"),
+    (422, "UNPROCESSABLE_ENTITY"),
+    (423, "LOCKED"),
+    (424, "FAILED_DEPENDENCY"),
+    (425, "TOO_EARLY"),
+    (426, "UPGRADE_REQUIRED"),
+    (428, "PRECONDITION_REQUIRED"),
+    (429, "TOO_MANY_REQUESTS"),
+    (431, "REQUEST_HEADER_FIELDS_TOO_LARGE"),
+    (451, "UNAVAILABLE_FOR_LEGAL_REASONS"),
+    (500, "INTERNAL_SERVER_ERROR"),
+    (501, "NOT_IMPLEMENTED"),
+    (502, "BAD_GATEWAY"),
+    (503, "SERVICE_UNAVAILABLE"),
+    (504, "GATEWAY_TIMEOUT"),
+    (505, "HTTP_VERSION_NOT_SUPPORTED"),
+    (506, "VARIANT_ALSO_NEGOTIATES"),
+    (507, "INSUFFICIENT_STORAGE"),
+    (508, "LOOP_DETECTED"),
+    (510, "NOT_EXTENDED"),
+    (511, "NETWORK_AUTHENTICATION_REQUIRED"),
+];
+
 /// Extracts response HTTP code from `#[Response(code = ...)]` annotation.
 fn extract_response_code<T: ToTokens>(response_code: HTTPStatusCode, span: T) -> Result<(u16, TokenStream), TokenStream> {
     let response_code_u16 = response_code.0;
     let response_code_ts = match StatusCode::from_u16(response_code_u16) {
-        Ok(code) => {
-            let code = code.as_u16();
+        Ok(_) => {
+            // The code is validated at expand time right above. Emit a match over named
+            // `StatusCode` constants whose subject is the literal itself — the compiler
+            // folds the whole match to the constant, so generated code has no `Result`
+            // branch, no `from_u16` and no `unwrap`.
+            let mut arms: Vec<TokenStream> = STATUS_CODE_CONSTANTS
+                .iter()
+                .map(|(code, const_name)| {
+                    let code_u16_literal = *code;
+                    let const_ident = Ident::new(const_name, proc_macro2::Span::call_site());
+                    quote! {
+                        #code_u16_literal => ::axum::http::StatusCode::#const_ident,
+                    }
+                })
+                .collect();
+
+            arms.push(quote! {
+                _ => unreachable!("groom: status code {} was validated at expand time", #response_code_u16),
+            });
+
             quote! {
-                    ::axum::http::StatusCode::from_u16(#code).unwrap()
+                match #response_code_u16 {
+                    #(#arms)*
                 }
+            }
         },
         Err(e) => {
             return Err(

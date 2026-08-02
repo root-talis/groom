@@ -13,10 +13,154 @@ mod no_content_type {
         fn into_response_any_content_type(self) -> ::axum::response::Response {
             match self {
                 Self::Accepted => {
-                    (::axum::http::StatusCode::from_u16(202u16).unwrap()).into_response()
+                    (match 202u16 {
+                        200u16 => ::axum::http::StatusCode::OK,
+                        201u16 => ::axum::http::StatusCode::CREATED,
+                        202u16 => ::axum::http::StatusCode::ACCEPTED,
+                        203u16 => ::axum::http::StatusCode::NON_AUTHORITATIVE_INFORMATION,
+                        204u16 => ::axum::http::StatusCode::NO_CONTENT,
+                        205u16 => ::axum::http::StatusCode::RESET_CONTENT,
+                        206u16 => ::axum::http::StatusCode::PARTIAL_CONTENT,
+                        207u16 => ::axum::http::StatusCode::MULTI_STATUS,
+                        208u16 => ::axum::http::StatusCode::ALREADY_REPORTED,
+                        226u16 => ::axum::http::StatusCode::IM_USED,
+                        300u16 => ::axum::http::StatusCode::MULTIPLE_CHOICES,
+                        301u16 => ::axum::http::StatusCode::MOVED_PERMANENTLY,
+                        302u16 => ::axum::http::StatusCode::FOUND,
+                        303u16 => ::axum::http::StatusCode::SEE_OTHER,
+                        304u16 => ::axum::http::StatusCode::NOT_MODIFIED,
+                        307u16 => ::axum::http::StatusCode::TEMPORARY_REDIRECT,
+                        308u16 => ::axum::http::StatusCode::PERMANENT_REDIRECT,
+                        400u16 => ::axum::http::StatusCode::BAD_REQUEST,
+                        401u16 => ::axum::http::StatusCode::UNAUTHORIZED,
+                        402u16 => ::axum::http::StatusCode::PAYMENT_REQUIRED,
+                        403u16 => ::axum::http::StatusCode::FORBIDDEN,
+                        404u16 => ::axum::http::StatusCode::NOT_FOUND,
+                        405u16 => ::axum::http::StatusCode::METHOD_NOT_ALLOWED,
+                        406u16 => ::axum::http::StatusCode::NOT_ACCEPTABLE,
+                        407u16 => ::axum::http::StatusCode::PROXY_AUTHENTICATION_REQUIRED,
+                        408u16 => ::axum::http::StatusCode::REQUEST_TIMEOUT,
+                        409u16 => ::axum::http::StatusCode::CONFLICT,
+                        410u16 => ::axum::http::StatusCode::GONE,
+                        411u16 => ::axum::http::StatusCode::LENGTH_REQUIRED,
+                        412u16 => ::axum::http::StatusCode::PRECONDITION_FAILED,
+                        413u16 => ::axum::http::StatusCode::PAYLOAD_TOO_LARGE,
+                        414u16 => ::axum::http::StatusCode::URI_TOO_LONG,
+                        415u16 => ::axum::http::StatusCode::UNSUPPORTED_MEDIA_TYPE,
+                        416u16 => ::axum::http::StatusCode::RANGE_NOT_SATISFIABLE,
+                        417u16 => ::axum::http::StatusCode::EXPECTATION_FAILED,
+                        418u16 => ::axum::http::StatusCode::IM_A_TEAPOT,
+                        421u16 => ::axum::http::StatusCode::MISDIRECTED_REQUEST,
+                        422u16 => ::axum::http::StatusCode::UNPROCESSABLE_ENTITY,
+                        423u16 => ::axum::http::StatusCode::LOCKED,
+                        424u16 => ::axum::http::StatusCode::FAILED_DEPENDENCY,
+                        425u16 => ::axum::http::StatusCode::TOO_EARLY,
+                        426u16 => ::axum::http::StatusCode::UPGRADE_REQUIRED,
+                        428u16 => ::axum::http::StatusCode::PRECONDITION_REQUIRED,
+                        429u16 => ::axum::http::StatusCode::TOO_MANY_REQUESTS,
+                        431u16 => {
+                            ::axum::http::StatusCode::REQUEST_HEADER_FIELDS_TOO_LARGE
+                        }
+                        451u16 => ::axum::http::StatusCode::UNAVAILABLE_FOR_LEGAL_REASONS,
+                        500u16 => ::axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+                        501u16 => ::axum::http::StatusCode::NOT_IMPLEMENTED,
+                        502u16 => ::axum::http::StatusCode::BAD_GATEWAY,
+                        503u16 => ::axum::http::StatusCode::SERVICE_UNAVAILABLE,
+                        504u16 => ::axum::http::StatusCode::GATEWAY_TIMEOUT,
+                        505u16 => ::axum::http::StatusCode::HTTP_VERSION_NOT_SUPPORTED,
+                        506u16 => ::axum::http::StatusCode::VARIANT_ALSO_NEGOTIATES,
+                        507u16 => ::axum::http::StatusCode::INSUFFICIENT_STORAGE,
+                        508u16 => ::axum::http::StatusCode::LOOP_DETECTED,
+                        510u16 => ::axum::http::StatusCode::NOT_EXTENDED,
+                        511u16 => {
+                            ::axum::http::StatusCode::NETWORK_AUTHENTICATION_REQUIRED
+                        }
+                        _ => {
+                            ::core::panicking::panic_fmt(
+                                format_args!(
+                                    "internal error: entered unreachable code: {0}",
+                                    format_args!("groom: status code {0} was validated at expand time",
+                                    202u16,),
+                                ),
+                            );
+                        }
+                    })
+                        .into_response()
                 }
                 Self::NotFound => {
-                    (::axum::http::StatusCode::from_u16(404u16).unwrap()).into_response()
+                    (match 404u16 {
+                        200u16 => ::axum::http::StatusCode::OK,
+                        201u16 => ::axum::http::StatusCode::CREATED,
+                        202u16 => ::axum::http::StatusCode::ACCEPTED,
+                        203u16 => ::axum::http::StatusCode::NON_AUTHORITATIVE_INFORMATION,
+                        204u16 => ::axum::http::StatusCode::NO_CONTENT,
+                        205u16 => ::axum::http::StatusCode::RESET_CONTENT,
+                        206u16 => ::axum::http::StatusCode::PARTIAL_CONTENT,
+                        207u16 => ::axum::http::StatusCode::MULTI_STATUS,
+                        208u16 => ::axum::http::StatusCode::ALREADY_REPORTED,
+                        226u16 => ::axum::http::StatusCode::IM_USED,
+                        300u16 => ::axum::http::StatusCode::MULTIPLE_CHOICES,
+                        301u16 => ::axum::http::StatusCode::MOVED_PERMANENTLY,
+                        302u16 => ::axum::http::StatusCode::FOUND,
+                        303u16 => ::axum::http::StatusCode::SEE_OTHER,
+                        304u16 => ::axum::http::StatusCode::NOT_MODIFIED,
+                        307u16 => ::axum::http::StatusCode::TEMPORARY_REDIRECT,
+                        308u16 => ::axum::http::StatusCode::PERMANENT_REDIRECT,
+                        400u16 => ::axum::http::StatusCode::BAD_REQUEST,
+                        401u16 => ::axum::http::StatusCode::UNAUTHORIZED,
+                        402u16 => ::axum::http::StatusCode::PAYMENT_REQUIRED,
+                        403u16 => ::axum::http::StatusCode::FORBIDDEN,
+                        404u16 => ::axum::http::StatusCode::NOT_FOUND,
+                        405u16 => ::axum::http::StatusCode::METHOD_NOT_ALLOWED,
+                        406u16 => ::axum::http::StatusCode::NOT_ACCEPTABLE,
+                        407u16 => ::axum::http::StatusCode::PROXY_AUTHENTICATION_REQUIRED,
+                        408u16 => ::axum::http::StatusCode::REQUEST_TIMEOUT,
+                        409u16 => ::axum::http::StatusCode::CONFLICT,
+                        410u16 => ::axum::http::StatusCode::GONE,
+                        411u16 => ::axum::http::StatusCode::LENGTH_REQUIRED,
+                        412u16 => ::axum::http::StatusCode::PRECONDITION_FAILED,
+                        413u16 => ::axum::http::StatusCode::PAYLOAD_TOO_LARGE,
+                        414u16 => ::axum::http::StatusCode::URI_TOO_LONG,
+                        415u16 => ::axum::http::StatusCode::UNSUPPORTED_MEDIA_TYPE,
+                        416u16 => ::axum::http::StatusCode::RANGE_NOT_SATISFIABLE,
+                        417u16 => ::axum::http::StatusCode::EXPECTATION_FAILED,
+                        418u16 => ::axum::http::StatusCode::IM_A_TEAPOT,
+                        421u16 => ::axum::http::StatusCode::MISDIRECTED_REQUEST,
+                        422u16 => ::axum::http::StatusCode::UNPROCESSABLE_ENTITY,
+                        423u16 => ::axum::http::StatusCode::LOCKED,
+                        424u16 => ::axum::http::StatusCode::FAILED_DEPENDENCY,
+                        425u16 => ::axum::http::StatusCode::TOO_EARLY,
+                        426u16 => ::axum::http::StatusCode::UPGRADE_REQUIRED,
+                        428u16 => ::axum::http::StatusCode::PRECONDITION_REQUIRED,
+                        429u16 => ::axum::http::StatusCode::TOO_MANY_REQUESTS,
+                        431u16 => {
+                            ::axum::http::StatusCode::REQUEST_HEADER_FIELDS_TOO_LARGE
+                        }
+                        451u16 => ::axum::http::StatusCode::UNAVAILABLE_FOR_LEGAL_REASONS,
+                        500u16 => ::axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+                        501u16 => ::axum::http::StatusCode::NOT_IMPLEMENTED,
+                        502u16 => ::axum::http::StatusCode::BAD_GATEWAY,
+                        503u16 => ::axum::http::StatusCode::SERVICE_UNAVAILABLE,
+                        504u16 => ::axum::http::StatusCode::GATEWAY_TIMEOUT,
+                        505u16 => ::axum::http::StatusCode::HTTP_VERSION_NOT_SUPPORTED,
+                        506u16 => ::axum::http::StatusCode::VARIANT_ALSO_NEGOTIATES,
+                        507u16 => ::axum::http::StatusCode::INSUFFICIENT_STORAGE,
+                        508u16 => ::axum::http::StatusCode::LOOP_DETECTED,
+                        510u16 => ::axum::http::StatusCode::NOT_EXTENDED,
+                        511u16 => {
+                            ::axum::http::StatusCode::NETWORK_AUTHENTICATION_REQUIRED
+                        }
+                        _ => {
+                            ::core::panicking::panic_fmt(
+                                format_args!(
+                                    "internal error: entered unreachable code: {0}",
+                                    format_args!("groom: status code {0} was validated at expand time",
+                                    404u16,),
+                                ),
+                            );
+                        }
+                    })
+                        .into_response()
                 }
             }
         }
@@ -99,13 +243,164 @@ mod plaintext_only {
             match self {
                 Self::Ok(body) => {
                     (
-                        ::axum::http::StatusCode::from_u16(200u16).unwrap(),
+                        match 200u16 {
+                            200u16 => ::axum::http::StatusCode::OK,
+                            201u16 => ::axum::http::StatusCode::CREATED,
+                            202u16 => ::axum::http::StatusCode::ACCEPTED,
+                            203u16 => {
+                                ::axum::http::StatusCode::NON_AUTHORITATIVE_INFORMATION
+                            }
+                            204u16 => ::axum::http::StatusCode::NO_CONTENT,
+                            205u16 => ::axum::http::StatusCode::RESET_CONTENT,
+                            206u16 => ::axum::http::StatusCode::PARTIAL_CONTENT,
+                            207u16 => ::axum::http::StatusCode::MULTI_STATUS,
+                            208u16 => ::axum::http::StatusCode::ALREADY_REPORTED,
+                            226u16 => ::axum::http::StatusCode::IM_USED,
+                            300u16 => ::axum::http::StatusCode::MULTIPLE_CHOICES,
+                            301u16 => ::axum::http::StatusCode::MOVED_PERMANENTLY,
+                            302u16 => ::axum::http::StatusCode::FOUND,
+                            303u16 => ::axum::http::StatusCode::SEE_OTHER,
+                            304u16 => ::axum::http::StatusCode::NOT_MODIFIED,
+                            307u16 => ::axum::http::StatusCode::TEMPORARY_REDIRECT,
+                            308u16 => ::axum::http::StatusCode::PERMANENT_REDIRECT,
+                            400u16 => ::axum::http::StatusCode::BAD_REQUEST,
+                            401u16 => ::axum::http::StatusCode::UNAUTHORIZED,
+                            402u16 => ::axum::http::StatusCode::PAYMENT_REQUIRED,
+                            403u16 => ::axum::http::StatusCode::FORBIDDEN,
+                            404u16 => ::axum::http::StatusCode::NOT_FOUND,
+                            405u16 => ::axum::http::StatusCode::METHOD_NOT_ALLOWED,
+                            406u16 => ::axum::http::StatusCode::NOT_ACCEPTABLE,
+                            407u16 => {
+                                ::axum::http::StatusCode::PROXY_AUTHENTICATION_REQUIRED
+                            }
+                            408u16 => ::axum::http::StatusCode::REQUEST_TIMEOUT,
+                            409u16 => ::axum::http::StatusCode::CONFLICT,
+                            410u16 => ::axum::http::StatusCode::GONE,
+                            411u16 => ::axum::http::StatusCode::LENGTH_REQUIRED,
+                            412u16 => ::axum::http::StatusCode::PRECONDITION_FAILED,
+                            413u16 => ::axum::http::StatusCode::PAYLOAD_TOO_LARGE,
+                            414u16 => ::axum::http::StatusCode::URI_TOO_LONG,
+                            415u16 => ::axum::http::StatusCode::UNSUPPORTED_MEDIA_TYPE,
+                            416u16 => ::axum::http::StatusCode::RANGE_NOT_SATISFIABLE,
+                            417u16 => ::axum::http::StatusCode::EXPECTATION_FAILED,
+                            418u16 => ::axum::http::StatusCode::IM_A_TEAPOT,
+                            421u16 => ::axum::http::StatusCode::MISDIRECTED_REQUEST,
+                            422u16 => ::axum::http::StatusCode::UNPROCESSABLE_ENTITY,
+                            423u16 => ::axum::http::StatusCode::LOCKED,
+                            424u16 => ::axum::http::StatusCode::FAILED_DEPENDENCY,
+                            425u16 => ::axum::http::StatusCode::TOO_EARLY,
+                            426u16 => ::axum::http::StatusCode::UPGRADE_REQUIRED,
+                            428u16 => ::axum::http::StatusCode::PRECONDITION_REQUIRED,
+                            429u16 => ::axum::http::StatusCode::TOO_MANY_REQUESTS,
+                            431u16 => {
+                                ::axum::http::StatusCode::REQUEST_HEADER_FIELDS_TOO_LARGE
+                            }
+                            451u16 => {
+                                ::axum::http::StatusCode::UNAVAILABLE_FOR_LEGAL_REASONS
+                            }
+                            500u16 => ::axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+                            501u16 => ::axum::http::StatusCode::NOT_IMPLEMENTED,
+                            502u16 => ::axum::http::StatusCode::BAD_GATEWAY,
+                            503u16 => ::axum::http::StatusCode::SERVICE_UNAVAILABLE,
+                            504u16 => ::axum::http::StatusCode::GATEWAY_TIMEOUT,
+                            505u16 => {
+                                ::axum::http::StatusCode::HTTP_VERSION_NOT_SUPPORTED
+                            }
+                            506u16 => ::axum::http::StatusCode::VARIANT_ALSO_NEGOTIATES,
+                            507u16 => ::axum::http::StatusCode::INSUFFICIENT_STORAGE,
+                            508u16 => ::axum::http::StatusCode::LOOP_DETECTED,
+                            510u16 => ::axum::http::StatusCode::NOT_EXTENDED,
+                            511u16 => {
+                                ::axum::http::StatusCode::NETWORK_AUTHENTICATION_REQUIRED
+                            }
+                            _ => {
+                                ::core::panicking::panic_fmt(
+                                    format_args!(
+                                        "internal error: entered unreachable code: {0}",
+                                        format_args!("groom: status code {0} was validated at expand time",
+                                        200u16,),
+                                    ),
+                                );
+                            }
+                        },
                         Into::<String>::into(body),
                     )
                         .into_response()
                 }
                 Self::NotFound => {
-                    (::axum::http::StatusCode::from_u16(404u16).unwrap()).into_response()
+                    (match 404u16 {
+                        200u16 => ::axum::http::StatusCode::OK,
+                        201u16 => ::axum::http::StatusCode::CREATED,
+                        202u16 => ::axum::http::StatusCode::ACCEPTED,
+                        203u16 => ::axum::http::StatusCode::NON_AUTHORITATIVE_INFORMATION,
+                        204u16 => ::axum::http::StatusCode::NO_CONTENT,
+                        205u16 => ::axum::http::StatusCode::RESET_CONTENT,
+                        206u16 => ::axum::http::StatusCode::PARTIAL_CONTENT,
+                        207u16 => ::axum::http::StatusCode::MULTI_STATUS,
+                        208u16 => ::axum::http::StatusCode::ALREADY_REPORTED,
+                        226u16 => ::axum::http::StatusCode::IM_USED,
+                        300u16 => ::axum::http::StatusCode::MULTIPLE_CHOICES,
+                        301u16 => ::axum::http::StatusCode::MOVED_PERMANENTLY,
+                        302u16 => ::axum::http::StatusCode::FOUND,
+                        303u16 => ::axum::http::StatusCode::SEE_OTHER,
+                        304u16 => ::axum::http::StatusCode::NOT_MODIFIED,
+                        307u16 => ::axum::http::StatusCode::TEMPORARY_REDIRECT,
+                        308u16 => ::axum::http::StatusCode::PERMANENT_REDIRECT,
+                        400u16 => ::axum::http::StatusCode::BAD_REQUEST,
+                        401u16 => ::axum::http::StatusCode::UNAUTHORIZED,
+                        402u16 => ::axum::http::StatusCode::PAYMENT_REQUIRED,
+                        403u16 => ::axum::http::StatusCode::FORBIDDEN,
+                        404u16 => ::axum::http::StatusCode::NOT_FOUND,
+                        405u16 => ::axum::http::StatusCode::METHOD_NOT_ALLOWED,
+                        406u16 => ::axum::http::StatusCode::NOT_ACCEPTABLE,
+                        407u16 => ::axum::http::StatusCode::PROXY_AUTHENTICATION_REQUIRED,
+                        408u16 => ::axum::http::StatusCode::REQUEST_TIMEOUT,
+                        409u16 => ::axum::http::StatusCode::CONFLICT,
+                        410u16 => ::axum::http::StatusCode::GONE,
+                        411u16 => ::axum::http::StatusCode::LENGTH_REQUIRED,
+                        412u16 => ::axum::http::StatusCode::PRECONDITION_FAILED,
+                        413u16 => ::axum::http::StatusCode::PAYLOAD_TOO_LARGE,
+                        414u16 => ::axum::http::StatusCode::URI_TOO_LONG,
+                        415u16 => ::axum::http::StatusCode::UNSUPPORTED_MEDIA_TYPE,
+                        416u16 => ::axum::http::StatusCode::RANGE_NOT_SATISFIABLE,
+                        417u16 => ::axum::http::StatusCode::EXPECTATION_FAILED,
+                        418u16 => ::axum::http::StatusCode::IM_A_TEAPOT,
+                        421u16 => ::axum::http::StatusCode::MISDIRECTED_REQUEST,
+                        422u16 => ::axum::http::StatusCode::UNPROCESSABLE_ENTITY,
+                        423u16 => ::axum::http::StatusCode::LOCKED,
+                        424u16 => ::axum::http::StatusCode::FAILED_DEPENDENCY,
+                        425u16 => ::axum::http::StatusCode::TOO_EARLY,
+                        426u16 => ::axum::http::StatusCode::UPGRADE_REQUIRED,
+                        428u16 => ::axum::http::StatusCode::PRECONDITION_REQUIRED,
+                        429u16 => ::axum::http::StatusCode::TOO_MANY_REQUESTS,
+                        431u16 => {
+                            ::axum::http::StatusCode::REQUEST_HEADER_FIELDS_TOO_LARGE
+                        }
+                        451u16 => ::axum::http::StatusCode::UNAVAILABLE_FOR_LEGAL_REASONS,
+                        500u16 => ::axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+                        501u16 => ::axum::http::StatusCode::NOT_IMPLEMENTED,
+                        502u16 => ::axum::http::StatusCode::BAD_GATEWAY,
+                        503u16 => ::axum::http::StatusCode::SERVICE_UNAVAILABLE,
+                        504u16 => ::axum::http::StatusCode::GATEWAY_TIMEOUT,
+                        505u16 => ::axum::http::StatusCode::HTTP_VERSION_NOT_SUPPORTED,
+                        506u16 => ::axum::http::StatusCode::VARIANT_ALSO_NEGOTIATES,
+                        507u16 => ::axum::http::StatusCode::INSUFFICIENT_STORAGE,
+                        508u16 => ::axum::http::StatusCode::LOOP_DETECTED,
+                        510u16 => ::axum::http::StatusCode::NOT_EXTENDED,
+                        511u16 => {
+                            ::axum::http::StatusCode::NETWORK_AUTHENTICATION_REQUIRED
+                        }
+                        _ => {
+                            ::core::panicking::panic_fmt(
+                                format_args!(
+                                    "internal error: entered unreachable code: {0}",
+                                    format_args!("groom: status code {0} was validated at expand time",
+                                    404u16,),
+                                ),
+                            );
+                        }
+                    })
+                        .into_response()
                 }
             }
         }
@@ -307,13 +602,164 @@ mod html_only {
             match self {
                 Self::Ok(body) => {
                     (
-                        ::axum::http::StatusCode::from_u16(200u16).unwrap(),
+                        match 200u16 {
+                            200u16 => ::axum::http::StatusCode::OK,
+                            201u16 => ::axum::http::StatusCode::CREATED,
+                            202u16 => ::axum::http::StatusCode::ACCEPTED,
+                            203u16 => {
+                                ::axum::http::StatusCode::NON_AUTHORITATIVE_INFORMATION
+                            }
+                            204u16 => ::axum::http::StatusCode::NO_CONTENT,
+                            205u16 => ::axum::http::StatusCode::RESET_CONTENT,
+                            206u16 => ::axum::http::StatusCode::PARTIAL_CONTENT,
+                            207u16 => ::axum::http::StatusCode::MULTI_STATUS,
+                            208u16 => ::axum::http::StatusCode::ALREADY_REPORTED,
+                            226u16 => ::axum::http::StatusCode::IM_USED,
+                            300u16 => ::axum::http::StatusCode::MULTIPLE_CHOICES,
+                            301u16 => ::axum::http::StatusCode::MOVED_PERMANENTLY,
+                            302u16 => ::axum::http::StatusCode::FOUND,
+                            303u16 => ::axum::http::StatusCode::SEE_OTHER,
+                            304u16 => ::axum::http::StatusCode::NOT_MODIFIED,
+                            307u16 => ::axum::http::StatusCode::TEMPORARY_REDIRECT,
+                            308u16 => ::axum::http::StatusCode::PERMANENT_REDIRECT,
+                            400u16 => ::axum::http::StatusCode::BAD_REQUEST,
+                            401u16 => ::axum::http::StatusCode::UNAUTHORIZED,
+                            402u16 => ::axum::http::StatusCode::PAYMENT_REQUIRED,
+                            403u16 => ::axum::http::StatusCode::FORBIDDEN,
+                            404u16 => ::axum::http::StatusCode::NOT_FOUND,
+                            405u16 => ::axum::http::StatusCode::METHOD_NOT_ALLOWED,
+                            406u16 => ::axum::http::StatusCode::NOT_ACCEPTABLE,
+                            407u16 => {
+                                ::axum::http::StatusCode::PROXY_AUTHENTICATION_REQUIRED
+                            }
+                            408u16 => ::axum::http::StatusCode::REQUEST_TIMEOUT,
+                            409u16 => ::axum::http::StatusCode::CONFLICT,
+                            410u16 => ::axum::http::StatusCode::GONE,
+                            411u16 => ::axum::http::StatusCode::LENGTH_REQUIRED,
+                            412u16 => ::axum::http::StatusCode::PRECONDITION_FAILED,
+                            413u16 => ::axum::http::StatusCode::PAYLOAD_TOO_LARGE,
+                            414u16 => ::axum::http::StatusCode::URI_TOO_LONG,
+                            415u16 => ::axum::http::StatusCode::UNSUPPORTED_MEDIA_TYPE,
+                            416u16 => ::axum::http::StatusCode::RANGE_NOT_SATISFIABLE,
+                            417u16 => ::axum::http::StatusCode::EXPECTATION_FAILED,
+                            418u16 => ::axum::http::StatusCode::IM_A_TEAPOT,
+                            421u16 => ::axum::http::StatusCode::MISDIRECTED_REQUEST,
+                            422u16 => ::axum::http::StatusCode::UNPROCESSABLE_ENTITY,
+                            423u16 => ::axum::http::StatusCode::LOCKED,
+                            424u16 => ::axum::http::StatusCode::FAILED_DEPENDENCY,
+                            425u16 => ::axum::http::StatusCode::TOO_EARLY,
+                            426u16 => ::axum::http::StatusCode::UPGRADE_REQUIRED,
+                            428u16 => ::axum::http::StatusCode::PRECONDITION_REQUIRED,
+                            429u16 => ::axum::http::StatusCode::TOO_MANY_REQUESTS,
+                            431u16 => {
+                                ::axum::http::StatusCode::REQUEST_HEADER_FIELDS_TOO_LARGE
+                            }
+                            451u16 => {
+                                ::axum::http::StatusCode::UNAVAILABLE_FOR_LEGAL_REASONS
+                            }
+                            500u16 => ::axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+                            501u16 => ::axum::http::StatusCode::NOT_IMPLEMENTED,
+                            502u16 => ::axum::http::StatusCode::BAD_GATEWAY,
+                            503u16 => ::axum::http::StatusCode::SERVICE_UNAVAILABLE,
+                            504u16 => ::axum::http::StatusCode::GATEWAY_TIMEOUT,
+                            505u16 => {
+                                ::axum::http::StatusCode::HTTP_VERSION_NOT_SUPPORTED
+                            }
+                            506u16 => ::axum::http::StatusCode::VARIANT_ALSO_NEGOTIATES,
+                            507u16 => ::axum::http::StatusCode::INSUFFICIENT_STORAGE,
+                            508u16 => ::axum::http::StatusCode::LOOP_DETECTED,
+                            510u16 => ::axum::http::StatusCode::NOT_EXTENDED,
+                            511u16 => {
+                                ::axum::http::StatusCode::NETWORK_AUTHENTICATION_REQUIRED
+                            }
+                            _ => {
+                                ::core::panicking::panic_fmt(
+                                    format_args!(
+                                        "internal error: entered unreachable code: {0}",
+                                        format_args!("groom: status code {0} was validated at expand time",
+                                        200u16,),
+                                    ),
+                                );
+                            }
+                        },
                         <Struct as ::groom::response::HtmlFormat>::render(body),
                     )
                         .into_response()
                 }
                 Self::NotFound => {
-                    (::axum::http::StatusCode::from_u16(404u16).unwrap()).into_response()
+                    (match 404u16 {
+                        200u16 => ::axum::http::StatusCode::OK,
+                        201u16 => ::axum::http::StatusCode::CREATED,
+                        202u16 => ::axum::http::StatusCode::ACCEPTED,
+                        203u16 => ::axum::http::StatusCode::NON_AUTHORITATIVE_INFORMATION,
+                        204u16 => ::axum::http::StatusCode::NO_CONTENT,
+                        205u16 => ::axum::http::StatusCode::RESET_CONTENT,
+                        206u16 => ::axum::http::StatusCode::PARTIAL_CONTENT,
+                        207u16 => ::axum::http::StatusCode::MULTI_STATUS,
+                        208u16 => ::axum::http::StatusCode::ALREADY_REPORTED,
+                        226u16 => ::axum::http::StatusCode::IM_USED,
+                        300u16 => ::axum::http::StatusCode::MULTIPLE_CHOICES,
+                        301u16 => ::axum::http::StatusCode::MOVED_PERMANENTLY,
+                        302u16 => ::axum::http::StatusCode::FOUND,
+                        303u16 => ::axum::http::StatusCode::SEE_OTHER,
+                        304u16 => ::axum::http::StatusCode::NOT_MODIFIED,
+                        307u16 => ::axum::http::StatusCode::TEMPORARY_REDIRECT,
+                        308u16 => ::axum::http::StatusCode::PERMANENT_REDIRECT,
+                        400u16 => ::axum::http::StatusCode::BAD_REQUEST,
+                        401u16 => ::axum::http::StatusCode::UNAUTHORIZED,
+                        402u16 => ::axum::http::StatusCode::PAYMENT_REQUIRED,
+                        403u16 => ::axum::http::StatusCode::FORBIDDEN,
+                        404u16 => ::axum::http::StatusCode::NOT_FOUND,
+                        405u16 => ::axum::http::StatusCode::METHOD_NOT_ALLOWED,
+                        406u16 => ::axum::http::StatusCode::NOT_ACCEPTABLE,
+                        407u16 => ::axum::http::StatusCode::PROXY_AUTHENTICATION_REQUIRED,
+                        408u16 => ::axum::http::StatusCode::REQUEST_TIMEOUT,
+                        409u16 => ::axum::http::StatusCode::CONFLICT,
+                        410u16 => ::axum::http::StatusCode::GONE,
+                        411u16 => ::axum::http::StatusCode::LENGTH_REQUIRED,
+                        412u16 => ::axum::http::StatusCode::PRECONDITION_FAILED,
+                        413u16 => ::axum::http::StatusCode::PAYLOAD_TOO_LARGE,
+                        414u16 => ::axum::http::StatusCode::URI_TOO_LONG,
+                        415u16 => ::axum::http::StatusCode::UNSUPPORTED_MEDIA_TYPE,
+                        416u16 => ::axum::http::StatusCode::RANGE_NOT_SATISFIABLE,
+                        417u16 => ::axum::http::StatusCode::EXPECTATION_FAILED,
+                        418u16 => ::axum::http::StatusCode::IM_A_TEAPOT,
+                        421u16 => ::axum::http::StatusCode::MISDIRECTED_REQUEST,
+                        422u16 => ::axum::http::StatusCode::UNPROCESSABLE_ENTITY,
+                        423u16 => ::axum::http::StatusCode::LOCKED,
+                        424u16 => ::axum::http::StatusCode::FAILED_DEPENDENCY,
+                        425u16 => ::axum::http::StatusCode::TOO_EARLY,
+                        426u16 => ::axum::http::StatusCode::UPGRADE_REQUIRED,
+                        428u16 => ::axum::http::StatusCode::PRECONDITION_REQUIRED,
+                        429u16 => ::axum::http::StatusCode::TOO_MANY_REQUESTS,
+                        431u16 => {
+                            ::axum::http::StatusCode::REQUEST_HEADER_FIELDS_TOO_LARGE
+                        }
+                        451u16 => ::axum::http::StatusCode::UNAVAILABLE_FOR_LEGAL_REASONS,
+                        500u16 => ::axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+                        501u16 => ::axum::http::StatusCode::NOT_IMPLEMENTED,
+                        502u16 => ::axum::http::StatusCode::BAD_GATEWAY,
+                        503u16 => ::axum::http::StatusCode::SERVICE_UNAVAILABLE,
+                        504u16 => ::axum::http::StatusCode::GATEWAY_TIMEOUT,
+                        505u16 => ::axum::http::StatusCode::HTTP_VERSION_NOT_SUPPORTED,
+                        506u16 => ::axum::http::StatusCode::VARIANT_ALSO_NEGOTIATES,
+                        507u16 => ::axum::http::StatusCode::INSUFFICIENT_STORAGE,
+                        508u16 => ::axum::http::StatusCode::LOOP_DETECTED,
+                        510u16 => ::axum::http::StatusCode::NOT_EXTENDED,
+                        511u16 => {
+                            ::axum::http::StatusCode::NETWORK_AUTHENTICATION_REQUIRED
+                        }
+                        _ => {
+                            ::core::panicking::panic_fmt(
+                                format_args!(
+                                    "internal error: entered unreachable code: {0}",
+                                    format_args!("groom: status code {0} was validated at expand time",
+                                    404u16,),
+                                ),
+                            );
+                        }
+                    })
+                        .into_response()
                 }
             }
         }
@@ -495,13 +941,164 @@ mod json_only {
             match self {
                 Self::Ok(body) => {
                     (
-                        ::axum::http::StatusCode::from_u16(200u16).unwrap(),
+                        match 200u16 {
+                            200u16 => ::axum::http::StatusCode::OK,
+                            201u16 => ::axum::http::StatusCode::CREATED,
+                            202u16 => ::axum::http::StatusCode::ACCEPTED,
+                            203u16 => {
+                                ::axum::http::StatusCode::NON_AUTHORITATIVE_INFORMATION
+                            }
+                            204u16 => ::axum::http::StatusCode::NO_CONTENT,
+                            205u16 => ::axum::http::StatusCode::RESET_CONTENT,
+                            206u16 => ::axum::http::StatusCode::PARTIAL_CONTENT,
+                            207u16 => ::axum::http::StatusCode::MULTI_STATUS,
+                            208u16 => ::axum::http::StatusCode::ALREADY_REPORTED,
+                            226u16 => ::axum::http::StatusCode::IM_USED,
+                            300u16 => ::axum::http::StatusCode::MULTIPLE_CHOICES,
+                            301u16 => ::axum::http::StatusCode::MOVED_PERMANENTLY,
+                            302u16 => ::axum::http::StatusCode::FOUND,
+                            303u16 => ::axum::http::StatusCode::SEE_OTHER,
+                            304u16 => ::axum::http::StatusCode::NOT_MODIFIED,
+                            307u16 => ::axum::http::StatusCode::TEMPORARY_REDIRECT,
+                            308u16 => ::axum::http::StatusCode::PERMANENT_REDIRECT,
+                            400u16 => ::axum::http::StatusCode::BAD_REQUEST,
+                            401u16 => ::axum::http::StatusCode::UNAUTHORIZED,
+                            402u16 => ::axum::http::StatusCode::PAYMENT_REQUIRED,
+                            403u16 => ::axum::http::StatusCode::FORBIDDEN,
+                            404u16 => ::axum::http::StatusCode::NOT_FOUND,
+                            405u16 => ::axum::http::StatusCode::METHOD_NOT_ALLOWED,
+                            406u16 => ::axum::http::StatusCode::NOT_ACCEPTABLE,
+                            407u16 => {
+                                ::axum::http::StatusCode::PROXY_AUTHENTICATION_REQUIRED
+                            }
+                            408u16 => ::axum::http::StatusCode::REQUEST_TIMEOUT,
+                            409u16 => ::axum::http::StatusCode::CONFLICT,
+                            410u16 => ::axum::http::StatusCode::GONE,
+                            411u16 => ::axum::http::StatusCode::LENGTH_REQUIRED,
+                            412u16 => ::axum::http::StatusCode::PRECONDITION_FAILED,
+                            413u16 => ::axum::http::StatusCode::PAYLOAD_TOO_LARGE,
+                            414u16 => ::axum::http::StatusCode::URI_TOO_LONG,
+                            415u16 => ::axum::http::StatusCode::UNSUPPORTED_MEDIA_TYPE,
+                            416u16 => ::axum::http::StatusCode::RANGE_NOT_SATISFIABLE,
+                            417u16 => ::axum::http::StatusCode::EXPECTATION_FAILED,
+                            418u16 => ::axum::http::StatusCode::IM_A_TEAPOT,
+                            421u16 => ::axum::http::StatusCode::MISDIRECTED_REQUEST,
+                            422u16 => ::axum::http::StatusCode::UNPROCESSABLE_ENTITY,
+                            423u16 => ::axum::http::StatusCode::LOCKED,
+                            424u16 => ::axum::http::StatusCode::FAILED_DEPENDENCY,
+                            425u16 => ::axum::http::StatusCode::TOO_EARLY,
+                            426u16 => ::axum::http::StatusCode::UPGRADE_REQUIRED,
+                            428u16 => ::axum::http::StatusCode::PRECONDITION_REQUIRED,
+                            429u16 => ::axum::http::StatusCode::TOO_MANY_REQUESTS,
+                            431u16 => {
+                                ::axum::http::StatusCode::REQUEST_HEADER_FIELDS_TOO_LARGE
+                            }
+                            451u16 => {
+                                ::axum::http::StatusCode::UNAVAILABLE_FOR_LEGAL_REASONS
+                            }
+                            500u16 => ::axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+                            501u16 => ::axum::http::StatusCode::NOT_IMPLEMENTED,
+                            502u16 => ::axum::http::StatusCode::BAD_GATEWAY,
+                            503u16 => ::axum::http::StatusCode::SERVICE_UNAVAILABLE,
+                            504u16 => ::axum::http::StatusCode::GATEWAY_TIMEOUT,
+                            505u16 => {
+                                ::axum::http::StatusCode::HTTP_VERSION_NOT_SUPPORTED
+                            }
+                            506u16 => ::axum::http::StatusCode::VARIANT_ALSO_NEGOTIATES,
+                            507u16 => ::axum::http::StatusCode::INSUFFICIENT_STORAGE,
+                            508u16 => ::axum::http::StatusCode::LOOP_DETECTED,
+                            510u16 => ::axum::http::StatusCode::NOT_EXTENDED,
+                            511u16 => {
+                                ::axum::http::StatusCode::NETWORK_AUTHENTICATION_REQUIRED
+                            }
+                            _ => {
+                                ::core::panicking::panic_fmt(
+                                    format_args!(
+                                        "internal error: entered unreachable code: {0}",
+                                        format_args!("groom: status code {0} was validated at expand time",
+                                        200u16,),
+                                    ),
+                                );
+                            }
+                        },
                         ::axum::Json(body),
                     )
                         .into_response()
                 }
                 Self::NotFound => {
-                    (::axum::http::StatusCode::from_u16(404u16).unwrap()).into_response()
+                    (match 404u16 {
+                        200u16 => ::axum::http::StatusCode::OK,
+                        201u16 => ::axum::http::StatusCode::CREATED,
+                        202u16 => ::axum::http::StatusCode::ACCEPTED,
+                        203u16 => ::axum::http::StatusCode::NON_AUTHORITATIVE_INFORMATION,
+                        204u16 => ::axum::http::StatusCode::NO_CONTENT,
+                        205u16 => ::axum::http::StatusCode::RESET_CONTENT,
+                        206u16 => ::axum::http::StatusCode::PARTIAL_CONTENT,
+                        207u16 => ::axum::http::StatusCode::MULTI_STATUS,
+                        208u16 => ::axum::http::StatusCode::ALREADY_REPORTED,
+                        226u16 => ::axum::http::StatusCode::IM_USED,
+                        300u16 => ::axum::http::StatusCode::MULTIPLE_CHOICES,
+                        301u16 => ::axum::http::StatusCode::MOVED_PERMANENTLY,
+                        302u16 => ::axum::http::StatusCode::FOUND,
+                        303u16 => ::axum::http::StatusCode::SEE_OTHER,
+                        304u16 => ::axum::http::StatusCode::NOT_MODIFIED,
+                        307u16 => ::axum::http::StatusCode::TEMPORARY_REDIRECT,
+                        308u16 => ::axum::http::StatusCode::PERMANENT_REDIRECT,
+                        400u16 => ::axum::http::StatusCode::BAD_REQUEST,
+                        401u16 => ::axum::http::StatusCode::UNAUTHORIZED,
+                        402u16 => ::axum::http::StatusCode::PAYMENT_REQUIRED,
+                        403u16 => ::axum::http::StatusCode::FORBIDDEN,
+                        404u16 => ::axum::http::StatusCode::NOT_FOUND,
+                        405u16 => ::axum::http::StatusCode::METHOD_NOT_ALLOWED,
+                        406u16 => ::axum::http::StatusCode::NOT_ACCEPTABLE,
+                        407u16 => ::axum::http::StatusCode::PROXY_AUTHENTICATION_REQUIRED,
+                        408u16 => ::axum::http::StatusCode::REQUEST_TIMEOUT,
+                        409u16 => ::axum::http::StatusCode::CONFLICT,
+                        410u16 => ::axum::http::StatusCode::GONE,
+                        411u16 => ::axum::http::StatusCode::LENGTH_REQUIRED,
+                        412u16 => ::axum::http::StatusCode::PRECONDITION_FAILED,
+                        413u16 => ::axum::http::StatusCode::PAYLOAD_TOO_LARGE,
+                        414u16 => ::axum::http::StatusCode::URI_TOO_LONG,
+                        415u16 => ::axum::http::StatusCode::UNSUPPORTED_MEDIA_TYPE,
+                        416u16 => ::axum::http::StatusCode::RANGE_NOT_SATISFIABLE,
+                        417u16 => ::axum::http::StatusCode::EXPECTATION_FAILED,
+                        418u16 => ::axum::http::StatusCode::IM_A_TEAPOT,
+                        421u16 => ::axum::http::StatusCode::MISDIRECTED_REQUEST,
+                        422u16 => ::axum::http::StatusCode::UNPROCESSABLE_ENTITY,
+                        423u16 => ::axum::http::StatusCode::LOCKED,
+                        424u16 => ::axum::http::StatusCode::FAILED_DEPENDENCY,
+                        425u16 => ::axum::http::StatusCode::TOO_EARLY,
+                        426u16 => ::axum::http::StatusCode::UPGRADE_REQUIRED,
+                        428u16 => ::axum::http::StatusCode::PRECONDITION_REQUIRED,
+                        429u16 => ::axum::http::StatusCode::TOO_MANY_REQUESTS,
+                        431u16 => {
+                            ::axum::http::StatusCode::REQUEST_HEADER_FIELDS_TOO_LARGE
+                        }
+                        451u16 => ::axum::http::StatusCode::UNAVAILABLE_FOR_LEGAL_REASONS,
+                        500u16 => ::axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+                        501u16 => ::axum::http::StatusCode::NOT_IMPLEMENTED,
+                        502u16 => ::axum::http::StatusCode::BAD_GATEWAY,
+                        503u16 => ::axum::http::StatusCode::SERVICE_UNAVAILABLE,
+                        504u16 => ::axum::http::StatusCode::GATEWAY_TIMEOUT,
+                        505u16 => ::axum::http::StatusCode::HTTP_VERSION_NOT_SUPPORTED,
+                        506u16 => ::axum::http::StatusCode::VARIANT_ALSO_NEGOTIATES,
+                        507u16 => ::axum::http::StatusCode::INSUFFICIENT_STORAGE,
+                        508u16 => ::axum::http::StatusCode::LOOP_DETECTED,
+                        510u16 => ::axum::http::StatusCode::NOT_EXTENDED,
+                        511u16 => {
+                            ::axum::http::StatusCode::NETWORK_AUTHENTICATION_REQUIRED
+                        }
+                        _ => {
+                            ::core::panicking::panic_fmt(
+                                format_args!(
+                                    "internal error: entered unreachable code: {0}",
+                                    format_args!("groom: status code {0} was validated at expand time",
+                                    404u16,),
+                                ),
+                            );
+                        }
+                    })
+                        .into_response()
                 }
             }
         }
@@ -705,13 +1302,164 @@ mod multiple_content_types {
             match self {
                 Self::Ok(body) => {
                     (
-                        ::axum::http::StatusCode::from_u16(200u16).unwrap(),
+                        match 200u16 {
+                            200u16 => ::axum::http::StatusCode::OK,
+                            201u16 => ::axum::http::StatusCode::CREATED,
+                            202u16 => ::axum::http::StatusCode::ACCEPTED,
+                            203u16 => {
+                                ::axum::http::StatusCode::NON_AUTHORITATIVE_INFORMATION
+                            }
+                            204u16 => ::axum::http::StatusCode::NO_CONTENT,
+                            205u16 => ::axum::http::StatusCode::RESET_CONTENT,
+                            206u16 => ::axum::http::StatusCode::PARTIAL_CONTENT,
+                            207u16 => ::axum::http::StatusCode::MULTI_STATUS,
+                            208u16 => ::axum::http::StatusCode::ALREADY_REPORTED,
+                            226u16 => ::axum::http::StatusCode::IM_USED,
+                            300u16 => ::axum::http::StatusCode::MULTIPLE_CHOICES,
+                            301u16 => ::axum::http::StatusCode::MOVED_PERMANENTLY,
+                            302u16 => ::axum::http::StatusCode::FOUND,
+                            303u16 => ::axum::http::StatusCode::SEE_OTHER,
+                            304u16 => ::axum::http::StatusCode::NOT_MODIFIED,
+                            307u16 => ::axum::http::StatusCode::TEMPORARY_REDIRECT,
+                            308u16 => ::axum::http::StatusCode::PERMANENT_REDIRECT,
+                            400u16 => ::axum::http::StatusCode::BAD_REQUEST,
+                            401u16 => ::axum::http::StatusCode::UNAUTHORIZED,
+                            402u16 => ::axum::http::StatusCode::PAYMENT_REQUIRED,
+                            403u16 => ::axum::http::StatusCode::FORBIDDEN,
+                            404u16 => ::axum::http::StatusCode::NOT_FOUND,
+                            405u16 => ::axum::http::StatusCode::METHOD_NOT_ALLOWED,
+                            406u16 => ::axum::http::StatusCode::NOT_ACCEPTABLE,
+                            407u16 => {
+                                ::axum::http::StatusCode::PROXY_AUTHENTICATION_REQUIRED
+                            }
+                            408u16 => ::axum::http::StatusCode::REQUEST_TIMEOUT,
+                            409u16 => ::axum::http::StatusCode::CONFLICT,
+                            410u16 => ::axum::http::StatusCode::GONE,
+                            411u16 => ::axum::http::StatusCode::LENGTH_REQUIRED,
+                            412u16 => ::axum::http::StatusCode::PRECONDITION_FAILED,
+                            413u16 => ::axum::http::StatusCode::PAYLOAD_TOO_LARGE,
+                            414u16 => ::axum::http::StatusCode::URI_TOO_LONG,
+                            415u16 => ::axum::http::StatusCode::UNSUPPORTED_MEDIA_TYPE,
+                            416u16 => ::axum::http::StatusCode::RANGE_NOT_SATISFIABLE,
+                            417u16 => ::axum::http::StatusCode::EXPECTATION_FAILED,
+                            418u16 => ::axum::http::StatusCode::IM_A_TEAPOT,
+                            421u16 => ::axum::http::StatusCode::MISDIRECTED_REQUEST,
+                            422u16 => ::axum::http::StatusCode::UNPROCESSABLE_ENTITY,
+                            423u16 => ::axum::http::StatusCode::LOCKED,
+                            424u16 => ::axum::http::StatusCode::FAILED_DEPENDENCY,
+                            425u16 => ::axum::http::StatusCode::TOO_EARLY,
+                            426u16 => ::axum::http::StatusCode::UPGRADE_REQUIRED,
+                            428u16 => ::axum::http::StatusCode::PRECONDITION_REQUIRED,
+                            429u16 => ::axum::http::StatusCode::TOO_MANY_REQUESTS,
+                            431u16 => {
+                                ::axum::http::StatusCode::REQUEST_HEADER_FIELDS_TOO_LARGE
+                            }
+                            451u16 => {
+                                ::axum::http::StatusCode::UNAVAILABLE_FOR_LEGAL_REASONS
+                            }
+                            500u16 => ::axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+                            501u16 => ::axum::http::StatusCode::NOT_IMPLEMENTED,
+                            502u16 => ::axum::http::StatusCode::BAD_GATEWAY,
+                            503u16 => ::axum::http::StatusCode::SERVICE_UNAVAILABLE,
+                            504u16 => ::axum::http::StatusCode::GATEWAY_TIMEOUT,
+                            505u16 => {
+                                ::axum::http::StatusCode::HTTP_VERSION_NOT_SUPPORTED
+                            }
+                            506u16 => ::axum::http::StatusCode::VARIANT_ALSO_NEGOTIATES,
+                            507u16 => ::axum::http::StatusCode::INSUFFICIENT_STORAGE,
+                            508u16 => ::axum::http::StatusCode::LOOP_DETECTED,
+                            510u16 => ::axum::http::StatusCode::NOT_EXTENDED,
+                            511u16 => {
+                                ::axum::http::StatusCode::NETWORK_AUTHENTICATION_REQUIRED
+                            }
+                            _ => {
+                                ::core::panicking::panic_fmt(
+                                    format_args!(
+                                        "internal error: entered unreachable code: {0}",
+                                        format_args!("groom: status code {0} was validated at expand time",
+                                        200u16,),
+                                    ),
+                                );
+                            }
+                        },
                         Into::<String>::into(body),
                     )
                         .into_response()
                 }
                 Self::NotFound => {
-                    (::axum::http::StatusCode::from_u16(404u16).unwrap()).into_response()
+                    (match 404u16 {
+                        200u16 => ::axum::http::StatusCode::OK,
+                        201u16 => ::axum::http::StatusCode::CREATED,
+                        202u16 => ::axum::http::StatusCode::ACCEPTED,
+                        203u16 => ::axum::http::StatusCode::NON_AUTHORITATIVE_INFORMATION,
+                        204u16 => ::axum::http::StatusCode::NO_CONTENT,
+                        205u16 => ::axum::http::StatusCode::RESET_CONTENT,
+                        206u16 => ::axum::http::StatusCode::PARTIAL_CONTENT,
+                        207u16 => ::axum::http::StatusCode::MULTI_STATUS,
+                        208u16 => ::axum::http::StatusCode::ALREADY_REPORTED,
+                        226u16 => ::axum::http::StatusCode::IM_USED,
+                        300u16 => ::axum::http::StatusCode::MULTIPLE_CHOICES,
+                        301u16 => ::axum::http::StatusCode::MOVED_PERMANENTLY,
+                        302u16 => ::axum::http::StatusCode::FOUND,
+                        303u16 => ::axum::http::StatusCode::SEE_OTHER,
+                        304u16 => ::axum::http::StatusCode::NOT_MODIFIED,
+                        307u16 => ::axum::http::StatusCode::TEMPORARY_REDIRECT,
+                        308u16 => ::axum::http::StatusCode::PERMANENT_REDIRECT,
+                        400u16 => ::axum::http::StatusCode::BAD_REQUEST,
+                        401u16 => ::axum::http::StatusCode::UNAUTHORIZED,
+                        402u16 => ::axum::http::StatusCode::PAYMENT_REQUIRED,
+                        403u16 => ::axum::http::StatusCode::FORBIDDEN,
+                        404u16 => ::axum::http::StatusCode::NOT_FOUND,
+                        405u16 => ::axum::http::StatusCode::METHOD_NOT_ALLOWED,
+                        406u16 => ::axum::http::StatusCode::NOT_ACCEPTABLE,
+                        407u16 => ::axum::http::StatusCode::PROXY_AUTHENTICATION_REQUIRED,
+                        408u16 => ::axum::http::StatusCode::REQUEST_TIMEOUT,
+                        409u16 => ::axum::http::StatusCode::CONFLICT,
+                        410u16 => ::axum::http::StatusCode::GONE,
+                        411u16 => ::axum::http::StatusCode::LENGTH_REQUIRED,
+                        412u16 => ::axum::http::StatusCode::PRECONDITION_FAILED,
+                        413u16 => ::axum::http::StatusCode::PAYLOAD_TOO_LARGE,
+                        414u16 => ::axum::http::StatusCode::URI_TOO_LONG,
+                        415u16 => ::axum::http::StatusCode::UNSUPPORTED_MEDIA_TYPE,
+                        416u16 => ::axum::http::StatusCode::RANGE_NOT_SATISFIABLE,
+                        417u16 => ::axum::http::StatusCode::EXPECTATION_FAILED,
+                        418u16 => ::axum::http::StatusCode::IM_A_TEAPOT,
+                        421u16 => ::axum::http::StatusCode::MISDIRECTED_REQUEST,
+                        422u16 => ::axum::http::StatusCode::UNPROCESSABLE_ENTITY,
+                        423u16 => ::axum::http::StatusCode::LOCKED,
+                        424u16 => ::axum::http::StatusCode::FAILED_DEPENDENCY,
+                        425u16 => ::axum::http::StatusCode::TOO_EARLY,
+                        426u16 => ::axum::http::StatusCode::UPGRADE_REQUIRED,
+                        428u16 => ::axum::http::StatusCode::PRECONDITION_REQUIRED,
+                        429u16 => ::axum::http::StatusCode::TOO_MANY_REQUESTS,
+                        431u16 => {
+                            ::axum::http::StatusCode::REQUEST_HEADER_FIELDS_TOO_LARGE
+                        }
+                        451u16 => ::axum::http::StatusCode::UNAVAILABLE_FOR_LEGAL_REASONS,
+                        500u16 => ::axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+                        501u16 => ::axum::http::StatusCode::NOT_IMPLEMENTED,
+                        502u16 => ::axum::http::StatusCode::BAD_GATEWAY,
+                        503u16 => ::axum::http::StatusCode::SERVICE_UNAVAILABLE,
+                        504u16 => ::axum::http::StatusCode::GATEWAY_TIMEOUT,
+                        505u16 => ::axum::http::StatusCode::HTTP_VERSION_NOT_SUPPORTED,
+                        506u16 => ::axum::http::StatusCode::VARIANT_ALSO_NEGOTIATES,
+                        507u16 => ::axum::http::StatusCode::INSUFFICIENT_STORAGE,
+                        508u16 => ::axum::http::StatusCode::LOOP_DETECTED,
+                        510u16 => ::axum::http::StatusCode::NOT_EXTENDED,
+                        511u16 => {
+                            ::axum::http::StatusCode::NETWORK_AUTHENTICATION_REQUIRED
+                        }
+                        _ => {
+                            ::core::panicking::panic_fmt(
+                                format_args!(
+                                    "internal error: entered unreachable code: {0}",
+                                    format_args!("groom: status code {0} was validated at expand time",
+                                    404u16,),
+                                ),
+                            );
+                        }
+                    })
+                        .into_response()
                 }
             }
         }
@@ -719,13 +1467,164 @@ mod multiple_content_types {
             match self {
                 Self::Ok(body) => {
                     (
-                        ::axum::http::StatusCode::from_u16(200u16).unwrap(),
+                        match 200u16 {
+                            200u16 => ::axum::http::StatusCode::OK,
+                            201u16 => ::axum::http::StatusCode::CREATED,
+                            202u16 => ::axum::http::StatusCode::ACCEPTED,
+                            203u16 => {
+                                ::axum::http::StatusCode::NON_AUTHORITATIVE_INFORMATION
+                            }
+                            204u16 => ::axum::http::StatusCode::NO_CONTENT,
+                            205u16 => ::axum::http::StatusCode::RESET_CONTENT,
+                            206u16 => ::axum::http::StatusCode::PARTIAL_CONTENT,
+                            207u16 => ::axum::http::StatusCode::MULTI_STATUS,
+                            208u16 => ::axum::http::StatusCode::ALREADY_REPORTED,
+                            226u16 => ::axum::http::StatusCode::IM_USED,
+                            300u16 => ::axum::http::StatusCode::MULTIPLE_CHOICES,
+                            301u16 => ::axum::http::StatusCode::MOVED_PERMANENTLY,
+                            302u16 => ::axum::http::StatusCode::FOUND,
+                            303u16 => ::axum::http::StatusCode::SEE_OTHER,
+                            304u16 => ::axum::http::StatusCode::NOT_MODIFIED,
+                            307u16 => ::axum::http::StatusCode::TEMPORARY_REDIRECT,
+                            308u16 => ::axum::http::StatusCode::PERMANENT_REDIRECT,
+                            400u16 => ::axum::http::StatusCode::BAD_REQUEST,
+                            401u16 => ::axum::http::StatusCode::UNAUTHORIZED,
+                            402u16 => ::axum::http::StatusCode::PAYMENT_REQUIRED,
+                            403u16 => ::axum::http::StatusCode::FORBIDDEN,
+                            404u16 => ::axum::http::StatusCode::NOT_FOUND,
+                            405u16 => ::axum::http::StatusCode::METHOD_NOT_ALLOWED,
+                            406u16 => ::axum::http::StatusCode::NOT_ACCEPTABLE,
+                            407u16 => {
+                                ::axum::http::StatusCode::PROXY_AUTHENTICATION_REQUIRED
+                            }
+                            408u16 => ::axum::http::StatusCode::REQUEST_TIMEOUT,
+                            409u16 => ::axum::http::StatusCode::CONFLICT,
+                            410u16 => ::axum::http::StatusCode::GONE,
+                            411u16 => ::axum::http::StatusCode::LENGTH_REQUIRED,
+                            412u16 => ::axum::http::StatusCode::PRECONDITION_FAILED,
+                            413u16 => ::axum::http::StatusCode::PAYLOAD_TOO_LARGE,
+                            414u16 => ::axum::http::StatusCode::URI_TOO_LONG,
+                            415u16 => ::axum::http::StatusCode::UNSUPPORTED_MEDIA_TYPE,
+                            416u16 => ::axum::http::StatusCode::RANGE_NOT_SATISFIABLE,
+                            417u16 => ::axum::http::StatusCode::EXPECTATION_FAILED,
+                            418u16 => ::axum::http::StatusCode::IM_A_TEAPOT,
+                            421u16 => ::axum::http::StatusCode::MISDIRECTED_REQUEST,
+                            422u16 => ::axum::http::StatusCode::UNPROCESSABLE_ENTITY,
+                            423u16 => ::axum::http::StatusCode::LOCKED,
+                            424u16 => ::axum::http::StatusCode::FAILED_DEPENDENCY,
+                            425u16 => ::axum::http::StatusCode::TOO_EARLY,
+                            426u16 => ::axum::http::StatusCode::UPGRADE_REQUIRED,
+                            428u16 => ::axum::http::StatusCode::PRECONDITION_REQUIRED,
+                            429u16 => ::axum::http::StatusCode::TOO_MANY_REQUESTS,
+                            431u16 => {
+                                ::axum::http::StatusCode::REQUEST_HEADER_FIELDS_TOO_LARGE
+                            }
+                            451u16 => {
+                                ::axum::http::StatusCode::UNAVAILABLE_FOR_LEGAL_REASONS
+                            }
+                            500u16 => ::axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+                            501u16 => ::axum::http::StatusCode::NOT_IMPLEMENTED,
+                            502u16 => ::axum::http::StatusCode::BAD_GATEWAY,
+                            503u16 => ::axum::http::StatusCode::SERVICE_UNAVAILABLE,
+                            504u16 => ::axum::http::StatusCode::GATEWAY_TIMEOUT,
+                            505u16 => {
+                                ::axum::http::StatusCode::HTTP_VERSION_NOT_SUPPORTED
+                            }
+                            506u16 => ::axum::http::StatusCode::VARIANT_ALSO_NEGOTIATES,
+                            507u16 => ::axum::http::StatusCode::INSUFFICIENT_STORAGE,
+                            508u16 => ::axum::http::StatusCode::LOOP_DETECTED,
+                            510u16 => ::axum::http::StatusCode::NOT_EXTENDED,
+                            511u16 => {
+                                ::axum::http::StatusCode::NETWORK_AUTHENTICATION_REQUIRED
+                            }
+                            _ => {
+                                ::core::panicking::panic_fmt(
+                                    format_args!(
+                                        "internal error: entered unreachable code: {0}",
+                                        format_args!("groom: status code {0} was validated at expand time",
+                                        200u16,),
+                                    ),
+                                );
+                            }
+                        },
                         <Struct as ::groom::response::HtmlFormat>::render(body),
                     )
                         .into_response()
                 }
                 Self::NotFound => {
-                    (::axum::http::StatusCode::from_u16(404u16).unwrap()).into_response()
+                    (match 404u16 {
+                        200u16 => ::axum::http::StatusCode::OK,
+                        201u16 => ::axum::http::StatusCode::CREATED,
+                        202u16 => ::axum::http::StatusCode::ACCEPTED,
+                        203u16 => ::axum::http::StatusCode::NON_AUTHORITATIVE_INFORMATION,
+                        204u16 => ::axum::http::StatusCode::NO_CONTENT,
+                        205u16 => ::axum::http::StatusCode::RESET_CONTENT,
+                        206u16 => ::axum::http::StatusCode::PARTIAL_CONTENT,
+                        207u16 => ::axum::http::StatusCode::MULTI_STATUS,
+                        208u16 => ::axum::http::StatusCode::ALREADY_REPORTED,
+                        226u16 => ::axum::http::StatusCode::IM_USED,
+                        300u16 => ::axum::http::StatusCode::MULTIPLE_CHOICES,
+                        301u16 => ::axum::http::StatusCode::MOVED_PERMANENTLY,
+                        302u16 => ::axum::http::StatusCode::FOUND,
+                        303u16 => ::axum::http::StatusCode::SEE_OTHER,
+                        304u16 => ::axum::http::StatusCode::NOT_MODIFIED,
+                        307u16 => ::axum::http::StatusCode::TEMPORARY_REDIRECT,
+                        308u16 => ::axum::http::StatusCode::PERMANENT_REDIRECT,
+                        400u16 => ::axum::http::StatusCode::BAD_REQUEST,
+                        401u16 => ::axum::http::StatusCode::UNAUTHORIZED,
+                        402u16 => ::axum::http::StatusCode::PAYMENT_REQUIRED,
+                        403u16 => ::axum::http::StatusCode::FORBIDDEN,
+                        404u16 => ::axum::http::StatusCode::NOT_FOUND,
+                        405u16 => ::axum::http::StatusCode::METHOD_NOT_ALLOWED,
+                        406u16 => ::axum::http::StatusCode::NOT_ACCEPTABLE,
+                        407u16 => ::axum::http::StatusCode::PROXY_AUTHENTICATION_REQUIRED,
+                        408u16 => ::axum::http::StatusCode::REQUEST_TIMEOUT,
+                        409u16 => ::axum::http::StatusCode::CONFLICT,
+                        410u16 => ::axum::http::StatusCode::GONE,
+                        411u16 => ::axum::http::StatusCode::LENGTH_REQUIRED,
+                        412u16 => ::axum::http::StatusCode::PRECONDITION_FAILED,
+                        413u16 => ::axum::http::StatusCode::PAYLOAD_TOO_LARGE,
+                        414u16 => ::axum::http::StatusCode::URI_TOO_LONG,
+                        415u16 => ::axum::http::StatusCode::UNSUPPORTED_MEDIA_TYPE,
+                        416u16 => ::axum::http::StatusCode::RANGE_NOT_SATISFIABLE,
+                        417u16 => ::axum::http::StatusCode::EXPECTATION_FAILED,
+                        418u16 => ::axum::http::StatusCode::IM_A_TEAPOT,
+                        421u16 => ::axum::http::StatusCode::MISDIRECTED_REQUEST,
+                        422u16 => ::axum::http::StatusCode::UNPROCESSABLE_ENTITY,
+                        423u16 => ::axum::http::StatusCode::LOCKED,
+                        424u16 => ::axum::http::StatusCode::FAILED_DEPENDENCY,
+                        425u16 => ::axum::http::StatusCode::TOO_EARLY,
+                        426u16 => ::axum::http::StatusCode::UPGRADE_REQUIRED,
+                        428u16 => ::axum::http::StatusCode::PRECONDITION_REQUIRED,
+                        429u16 => ::axum::http::StatusCode::TOO_MANY_REQUESTS,
+                        431u16 => {
+                            ::axum::http::StatusCode::REQUEST_HEADER_FIELDS_TOO_LARGE
+                        }
+                        451u16 => ::axum::http::StatusCode::UNAVAILABLE_FOR_LEGAL_REASONS,
+                        500u16 => ::axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+                        501u16 => ::axum::http::StatusCode::NOT_IMPLEMENTED,
+                        502u16 => ::axum::http::StatusCode::BAD_GATEWAY,
+                        503u16 => ::axum::http::StatusCode::SERVICE_UNAVAILABLE,
+                        504u16 => ::axum::http::StatusCode::GATEWAY_TIMEOUT,
+                        505u16 => ::axum::http::StatusCode::HTTP_VERSION_NOT_SUPPORTED,
+                        506u16 => ::axum::http::StatusCode::VARIANT_ALSO_NEGOTIATES,
+                        507u16 => ::axum::http::StatusCode::INSUFFICIENT_STORAGE,
+                        508u16 => ::axum::http::StatusCode::LOOP_DETECTED,
+                        510u16 => ::axum::http::StatusCode::NOT_EXTENDED,
+                        511u16 => {
+                            ::axum::http::StatusCode::NETWORK_AUTHENTICATION_REQUIRED
+                        }
+                        _ => {
+                            ::core::panicking::panic_fmt(
+                                format_args!(
+                                    "internal error: entered unreachable code: {0}",
+                                    format_args!("groom: status code {0} was validated at expand time",
+                                    404u16,),
+                                ),
+                            );
+                        }
+                    })
+                        .into_response()
                 }
             }
         }
@@ -733,13 +1632,164 @@ mod multiple_content_types {
             match self {
                 Self::Ok(body) => {
                     (
-                        ::axum::http::StatusCode::from_u16(200u16).unwrap(),
+                        match 200u16 {
+                            200u16 => ::axum::http::StatusCode::OK,
+                            201u16 => ::axum::http::StatusCode::CREATED,
+                            202u16 => ::axum::http::StatusCode::ACCEPTED,
+                            203u16 => {
+                                ::axum::http::StatusCode::NON_AUTHORITATIVE_INFORMATION
+                            }
+                            204u16 => ::axum::http::StatusCode::NO_CONTENT,
+                            205u16 => ::axum::http::StatusCode::RESET_CONTENT,
+                            206u16 => ::axum::http::StatusCode::PARTIAL_CONTENT,
+                            207u16 => ::axum::http::StatusCode::MULTI_STATUS,
+                            208u16 => ::axum::http::StatusCode::ALREADY_REPORTED,
+                            226u16 => ::axum::http::StatusCode::IM_USED,
+                            300u16 => ::axum::http::StatusCode::MULTIPLE_CHOICES,
+                            301u16 => ::axum::http::StatusCode::MOVED_PERMANENTLY,
+                            302u16 => ::axum::http::StatusCode::FOUND,
+                            303u16 => ::axum::http::StatusCode::SEE_OTHER,
+                            304u16 => ::axum::http::StatusCode::NOT_MODIFIED,
+                            307u16 => ::axum::http::StatusCode::TEMPORARY_REDIRECT,
+                            308u16 => ::axum::http::StatusCode::PERMANENT_REDIRECT,
+                            400u16 => ::axum::http::StatusCode::BAD_REQUEST,
+                            401u16 => ::axum::http::StatusCode::UNAUTHORIZED,
+                            402u16 => ::axum::http::StatusCode::PAYMENT_REQUIRED,
+                            403u16 => ::axum::http::StatusCode::FORBIDDEN,
+                            404u16 => ::axum::http::StatusCode::NOT_FOUND,
+                            405u16 => ::axum::http::StatusCode::METHOD_NOT_ALLOWED,
+                            406u16 => ::axum::http::StatusCode::NOT_ACCEPTABLE,
+                            407u16 => {
+                                ::axum::http::StatusCode::PROXY_AUTHENTICATION_REQUIRED
+                            }
+                            408u16 => ::axum::http::StatusCode::REQUEST_TIMEOUT,
+                            409u16 => ::axum::http::StatusCode::CONFLICT,
+                            410u16 => ::axum::http::StatusCode::GONE,
+                            411u16 => ::axum::http::StatusCode::LENGTH_REQUIRED,
+                            412u16 => ::axum::http::StatusCode::PRECONDITION_FAILED,
+                            413u16 => ::axum::http::StatusCode::PAYLOAD_TOO_LARGE,
+                            414u16 => ::axum::http::StatusCode::URI_TOO_LONG,
+                            415u16 => ::axum::http::StatusCode::UNSUPPORTED_MEDIA_TYPE,
+                            416u16 => ::axum::http::StatusCode::RANGE_NOT_SATISFIABLE,
+                            417u16 => ::axum::http::StatusCode::EXPECTATION_FAILED,
+                            418u16 => ::axum::http::StatusCode::IM_A_TEAPOT,
+                            421u16 => ::axum::http::StatusCode::MISDIRECTED_REQUEST,
+                            422u16 => ::axum::http::StatusCode::UNPROCESSABLE_ENTITY,
+                            423u16 => ::axum::http::StatusCode::LOCKED,
+                            424u16 => ::axum::http::StatusCode::FAILED_DEPENDENCY,
+                            425u16 => ::axum::http::StatusCode::TOO_EARLY,
+                            426u16 => ::axum::http::StatusCode::UPGRADE_REQUIRED,
+                            428u16 => ::axum::http::StatusCode::PRECONDITION_REQUIRED,
+                            429u16 => ::axum::http::StatusCode::TOO_MANY_REQUESTS,
+                            431u16 => {
+                                ::axum::http::StatusCode::REQUEST_HEADER_FIELDS_TOO_LARGE
+                            }
+                            451u16 => {
+                                ::axum::http::StatusCode::UNAVAILABLE_FOR_LEGAL_REASONS
+                            }
+                            500u16 => ::axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+                            501u16 => ::axum::http::StatusCode::NOT_IMPLEMENTED,
+                            502u16 => ::axum::http::StatusCode::BAD_GATEWAY,
+                            503u16 => ::axum::http::StatusCode::SERVICE_UNAVAILABLE,
+                            504u16 => ::axum::http::StatusCode::GATEWAY_TIMEOUT,
+                            505u16 => {
+                                ::axum::http::StatusCode::HTTP_VERSION_NOT_SUPPORTED
+                            }
+                            506u16 => ::axum::http::StatusCode::VARIANT_ALSO_NEGOTIATES,
+                            507u16 => ::axum::http::StatusCode::INSUFFICIENT_STORAGE,
+                            508u16 => ::axum::http::StatusCode::LOOP_DETECTED,
+                            510u16 => ::axum::http::StatusCode::NOT_EXTENDED,
+                            511u16 => {
+                                ::axum::http::StatusCode::NETWORK_AUTHENTICATION_REQUIRED
+                            }
+                            _ => {
+                                ::core::panicking::panic_fmt(
+                                    format_args!(
+                                        "internal error: entered unreachable code: {0}",
+                                        format_args!("groom: status code {0} was validated at expand time",
+                                        200u16,),
+                                    ),
+                                );
+                            }
+                        },
                         ::axum::Json(body),
                     )
                         .into_response()
                 }
                 Self::NotFound => {
-                    (::axum::http::StatusCode::from_u16(404u16).unwrap()).into_response()
+                    (match 404u16 {
+                        200u16 => ::axum::http::StatusCode::OK,
+                        201u16 => ::axum::http::StatusCode::CREATED,
+                        202u16 => ::axum::http::StatusCode::ACCEPTED,
+                        203u16 => ::axum::http::StatusCode::NON_AUTHORITATIVE_INFORMATION,
+                        204u16 => ::axum::http::StatusCode::NO_CONTENT,
+                        205u16 => ::axum::http::StatusCode::RESET_CONTENT,
+                        206u16 => ::axum::http::StatusCode::PARTIAL_CONTENT,
+                        207u16 => ::axum::http::StatusCode::MULTI_STATUS,
+                        208u16 => ::axum::http::StatusCode::ALREADY_REPORTED,
+                        226u16 => ::axum::http::StatusCode::IM_USED,
+                        300u16 => ::axum::http::StatusCode::MULTIPLE_CHOICES,
+                        301u16 => ::axum::http::StatusCode::MOVED_PERMANENTLY,
+                        302u16 => ::axum::http::StatusCode::FOUND,
+                        303u16 => ::axum::http::StatusCode::SEE_OTHER,
+                        304u16 => ::axum::http::StatusCode::NOT_MODIFIED,
+                        307u16 => ::axum::http::StatusCode::TEMPORARY_REDIRECT,
+                        308u16 => ::axum::http::StatusCode::PERMANENT_REDIRECT,
+                        400u16 => ::axum::http::StatusCode::BAD_REQUEST,
+                        401u16 => ::axum::http::StatusCode::UNAUTHORIZED,
+                        402u16 => ::axum::http::StatusCode::PAYMENT_REQUIRED,
+                        403u16 => ::axum::http::StatusCode::FORBIDDEN,
+                        404u16 => ::axum::http::StatusCode::NOT_FOUND,
+                        405u16 => ::axum::http::StatusCode::METHOD_NOT_ALLOWED,
+                        406u16 => ::axum::http::StatusCode::NOT_ACCEPTABLE,
+                        407u16 => ::axum::http::StatusCode::PROXY_AUTHENTICATION_REQUIRED,
+                        408u16 => ::axum::http::StatusCode::REQUEST_TIMEOUT,
+                        409u16 => ::axum::http::StatusCode::CONFLICT,
+                        410u16 => ::axum::http::StatusCode::GONE,
+                        411u16 => ::axum::http::StatusCode::LENGTH_REQUIRED,
+                        412u16 => ::axum::http::StatusCode::PRECONDITION_FAILED,
+                        413u16 => ::axum::http::StatusCode::PAYLOAD_TOO_LARGE,
+                        414u16 => ::axum::http::StatusCode::URI_TOO_LONG,
+                        415u16 => ::axum::http::StatusCode::UNSUPPORTED_MEDIA_TYPE,
+                        416u16 => ::axum::http::StatusCode::RANGE_NOT_SATISFIABLE,
+                        417u16 => ::axum::http::StatusCode::EXPECTATION_FAILED,
+                        418u16 => ::axum::http::StatusCode::IM_A_TEAPOT,
+                        421u16 => ::axum::http::StatusCode::MISDIRECTED_REQUEST,
+                        422u16 => ::axum::http::StatusCode::UNPROCESSABLE_ENTITY,
+                        423u16 => ::axum::http::StatusCode::LOCKED,
+                        424u16 => ::axum::http::StatusCode::FAILED_DEPENDENCY,
+                        425u16 => ::axum::http::StatusCode::TOO_EARLY,
+                        426u16 => ::axum::http::StatusCode::UPGRADE_REQUIRED,
+                        428u16 => ::axum::http::StatusCode::PRECONDITION_REQUIRED,
+                        429u16 => ::axum::http::StatusCode::TOO_MANY_REQUESTS,
+                        431u16 => {
+                            ::axum::http::StatusCode::REQUEST_HEADER_FIELDS_TOO_LARGE
+                        }
+                        451u16 => ::axum::http::StatusCode::UNAVAILABLE_FOR_LEGAL_REASONS,
+                        500u16 => ::axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+                        501u16 => ::axum::http::StatusCode::NOT_IMPLEMENTED,
+                        502u16 => ::axum::http::StatusCode::BAD_GATEWAY,
+                        503u16 => ::axum::http::StatusCode::SERVICE_UNAVAILABLE,
+                        504u16 => ::axum::http::StatusCode::GATEWAY_TIMEOUT,
+                        505u16 => ::axum::http::StatusCode::HTTP_VERSION_NOT_SUPPORTED,
+                        506u16 => ::axum::http::StatusCode::VARIANT_ALSO_NEGOTIATES,
+                        507u16 => ::axum::http::StatusCode::INSUFFICIENT_STORAGE,
+                        508u16 => ::axum::http::StatusCode::LOOP_DETECTED,
+                        510u16 => ::axum::http::StatusCode::NOT_EXTENDED,
+                        511u16 => {
+                            ::axum::http::StatusCode::NETWORK_AUTHENTICATION_REQUIRED
+                        }
+                        _ => {
+                            ::core::panicking::panic_fmt(
+                                format_args!(
+                                    "internal error: entered unreachable code: {0}",
+                                    format_args!("groom: status code {0} was validated at expand time",
+                                    404u16,),
+                                ),
+                            );
+                        }
+                    })
+                        .into_response()
                 }
             }
         }
@@ -962,13 +2012,150 @@ mod named_struct_response {
     impl Named {
         fn into_response_text_html(self) -> ::axum::response::Response {
             (
-                ::axum::http::StatusCode::from_u16(200u16).unwrap(),
+                match 200u16 {
+                    200u16 => ::axum::http::StatusCode::OK,
+                    201u16 => ::axum::http::StatusCode::CREATED,
+                    202u16 => ::axum::http::StatusCode::ACCEPTED,
+                    203u16 => ::axum::http::StatusCode::NON_AUTHORITATIVE_INFORMATION,
+                    204u16 => ::axum::http::StatusCode::NO_CONTENT,
+                    205u16 => ::axum::http::StatusCode::RESET_CONTENT,
+                    206u16 => ::axum::http::StatusCode::PARTIAL_CONTENT,
+                    207u16 => ::axum::http::StatusCode::MULTI_STATUS,
+                    208u16 => ::axum::http::StatusCode::ALREADY_REPORTED,
+                    226u16 => ::axum::http::StatusCode::IM_USED,
+                    300u16 => ::axum::http::StatusCode::MULTIPLE_CHOICES,
+                    301u16 => ::axum::http::StatusCode::MOVED_PERMANENTLY,
+                    302u16 => ::axum::http::StatusCode::FOUND,
+                    303u16 => ::axum::http::StatusCode::SEE_OTHER,
+                    304u16 => ::axum::http::StatusCode::NOT_MODIFIED,
+                    307u16 => ::axum::http::StatusCode::TEMPORARY_REDIRECT,
+                    308u16 => ::axum::http::StatusCode::PERMANENT_REDIRECT,
+                    400u16 => ::axum::http::StatusCode::BAD_REQUEST,
+                    401u16 => ::axum::http::StatusCode::UNAUTHORIZED,
+                    402u16 => ::axum::http::StatusCode::PAYMENT_REQUIRED,
+                    403u16 => ::axum::http::StatusCode::FORBIDDEN,
+                    404u16 => ::axum::http::StatusCode::NOT_FOUND,
+                    405u16 => ::axum::http::StatusCode::METHOD_NOT_ALLOWED,
+                    406u16 => ::axum::http::StatusCode::NOT_ACCEPTABLE,
+                    407u16 => ::axum::http::StatusCode::PROXY_AUTHENTICATION_REQUIRED,
+                    408u16 => ::axum::http::StatusCode::REQUEST_TIMEOUT,
+                    409u16 => ::axum::http::StatusCode::CONFLICT,
+                    410u16 => ::axum::http::StatusCode::GONE,
+                    411u16 => ::axum::http::StatusCode::LENGTH_REQUIRED,
+                    412u16 => ::axum::http::StatusCode::PRECONDITION_FAILED,
+                    413u16 => ::axum::http::StatusCode::PAYLOAD_TOO_LARGE,
+                    414u16 => ::axum::http::StatusCode::URI_TOO_LONG,
+                    415u16 => ::axum::http::StatusCode::UNSUPPORTED_MEDIA_TYPE,
+                    416u16 => ::axum::http::StatusCode::RANGE_NOT_SATISFIABLE,
+                    417u16 => ::axum::http::StatusCode::EXPECTATION_FAILED,
+                    418u16 => ::axum::http::StatusCode::IM_A_TEAPOT,
+                    421u16 => ::axum::http::StatusCode::MISDIRECTED_REQUEST,
+                    422u16 => ::axum::http::StatusCode::UNPROCESSABLE_ENTITY,
+                    423u16 => ::axum::http::StatusCode::LOCKED,
+                    424u16 => ::axum::http::StatusCode::FAILED_DEPENDENCY,
+                    425u16 => ::axum::http::StatusCode::TOO_EARLY,
+                    426u16 => ::axum::http::StatusCode::UPGRADE_REQUIRED,
+                    428u16 => ::axum::http::StatusCode::PRECONDITION_REQUIRED,
+                    429u16 => ::axum::http::StatusCode::TOO_MANY_REQUESTS,
+                    431u16 => ::axum::http::StatusCode::REQUEST_HEADER_FIELDS_TOO_LARGE,
+                    451u16 => ::axum::http::StatusCode::UNAVAILABLE_FOR_LEGAL_REASONS,
+                    500u16 => ::axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+                    501u16 => ::axum::http::StatusCode::NOT_IMPLEMENTED,
+                    502u16 => ::axum::http::StatusCode::BAD_GATEWAY,
+                    503u16 => ::axum::http::StatusCode::SERVICE_UNAVAILABLE,
+                    504u16 => ::axum::http::StatusCode::GATEWAY_TIMEOUT,
+                    505u16 => ::axum::http::StatusCode::HTTP_VERSION_NOT_SUPPORTED,
+                    506u16 => ::axum::http::StatusCode::VARIANT_ALSO_NEGOTIATES,
+                    507u16 => ::axum::http::StatusCode::INSUFFICIENT_STORAGE,
+                    508u16 => ::axum::http::StatusCode::LOOP_DETECTED,
+                    510u16 => ::axum::http::StatusCode::NOT_EXTENDED,
+                    511u16 => ::axum::http::StatusCode::NETWORK_AUTHENTICATION_REQUIRED,
+                    _ => {
+                        ::core::panicking::panic_fmt(
+                            format_args!(
+                                "internal error: entered unreachable code: {0}",
+                                format_args!("groom: status code {0} was validated at expand time",
+                                200u16,),
+                            ),
+                        );
+                    }
+                },
                 <Named as ::groom::response::HtmlFormat>::render(self),
             )
                 .into_response()
         }
         fn into_response_application_json(self) -> ::axum::response::Response {
-            (::axum::http::StatusCode::from_u16(200u16).unwrap(), ::axum::Json(self))
+            (
+                match 200u16 {
+                    200u16 => ::axum::http::StatusCode::OK,
+                    201u16 => ::axum::http::StatusCode::CREATED,
+                    202u16 => ::axum::http::StatusCode::ACCEPTED,
+                    203u16 => ::axum::http::StatusCode::NON_AUTHORITATIVE_INFORMATION,
+                    204u16 => ::axum::http::StatusCode::NO_CONTENT,
+                    205u16 => ::axum::http::StatusCode::RESET_CONTENT,
+                    206u16 => ::axum::http::StatusCode::PARTIAL_CONTENT,
+                    207u16 => ::axum::http::StatusCode::MULTI_STATUS,
+                    208u16 => ::axum::http::StatusCode::ALREADY_REPORTED,
+                    226u16 => ::axum::http::StatusCode::IM_USED,
+                    300u16 => ::axum::http::StatusCode::MULTIPLE_CHOICES,
+                    301u16 => ::axum::http::StatusCode::MOVED_PERMANENTLY,
+                    302u16 => ::axum::http::StatusCode::FOUND,
+                    303u16 => ::axum::http::StatusCode::SEE_OTHER,
+                    304u16 => ::axum::http::StatusCode::NOT_MODIFIED,
+                    307u16 => ::axum::http::StatusCode::TEMPORARY_REDIRECT,
+                    308u16 => ::axum::http::StatusCode::PERMANENT_REDIRECT,
+                    400u16 => ::axum::http::StatusCode::BAD_REQUEST,
+                    401u16 => ::axum::http::StatusCode::UNAUTHORIZED,
+                    402u16 => ::axum::http::StatusCode::PAYMENT_REQUIRED,
+                    403u16 => ::axum::http::StatusCode::FORBIDDEN,
+                    404u16 => ::axum::http::StatusCode::NOT_FOUND,
+                    405u16 => ::axum::http::StatusCode::METHOD_NOT_ALLOWED,
+                    406u16 => ::axum::http::StatusCode::NOT_ACCEPTABLE,
+                    407u16 => ::axum::http::StatusCode::PROXY_AUTHENTICATION_REQUIRED,
+                    408u16 => ::axum::http::StatusCode::REQUEST_TIMEOUT,
+                    409u16 => ::axum::http::StatusCode::CONFLICT,
+                    410u16 => ::axum::http::StatusCode::GONE,
+                    411u16 => ::axum::http::StatusCode::LENGTH_REQUIRED,
+                    412u16 => ::axum::http::StatusCode::PRECONDITION_FAILED,
+                    413u16 => ::axum::http::StatusCode::PAYLOAD_TOO_LARGE,
+                    414u16 => ::axum::http::StatusCode::URI_TOO_LONG,
+                    415u16 => ::axum::http::StatusCode::UNSUPPORTED_MEDIA_TYPE,
+                    416u16 => ::axum::http::StatusCode::RANGE_NOT_SATISFIABLE,
+                    417u16 => ::axum::http::StatusCode::EXPECTATION_FAILED,
+                    418u16 => ::axum::http::StatusCode::IM_A_TEAPOT,
+                    421u16 => ::axum::http::StatusCode::MISDIRECTED_REQUEST,
+                    422u16 => ::axum::http::StatusCode::UNPROCESSABLE_ENTITY,
+                    423u16 => ::axum::http::StatusCode::LOCKED,
+                    424u16 => ::axum::http::StatusCode::FAILED_DEPENDENCY,
+                    425u16 => ::axum::http::StatusCode::TOO_EARLY,
+                    426u16 => ::axum::http::StatusCode::UPGRADE_REQUIRED,
+                    428u16 => ::axum::http::StatusCode::PRECONDITION_REQUIRED,
+                    429u16 => ::axum::http::StatusCode::TOO_MANY_REQUESTS,
+                    431u16 => ::axum::http::StatusCode::REQUEST_HEADER_FIELDS_TOO_LARGE,
+                    451u16 => ::axum::http::StatusCode::UNAVAILABLE_FOR_LEGAL_REASONS,
+                    500u16 => ::axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+                    501u16 => ::axum::http::StatusCode::NOT_IMPLEMENTED,
+                    502u16 => ::axum::http::StatusCode::BAD_GATEWAY,
+                    503u16 => ::axum::http::StatusCode::SERVICE_UNAVAILABLE,
+                    504u16 => ::axum::http::StatusCode::GATEWAY_TIMEOUT,
+                    505u16 => ::axum::http::StatusCode::HTTP_VERSION_NOT_SUPPORTED,
+                    506u16 => ::axum::http::StatusCode::VARIANT_ALSO_NEGOTIATES,
+                    507u16 => ::axum::http::StatusCode::INSUFFICIENT_STORAGE,
+                    508u16 => ::axum::http::StatusCode::LOOP_DETECTED,
+                    510u16 => ::axum::http::StatusCode::NOT_EXTENDED,
+                    511u16 => ::axum::http::StatusCode::NETWORK_AUTHENTICATION_REQUIRED,
+                    _ => {
+                        ::core::panicking::panic_fmt(
+                            format_args!(
+                                "internal error: entered unreachable code: {0}",
+                                format_args!("groom: status code {0} was validated at expand time",
+                                200u16,),
+                            ),
+                        );
+                    }
+                },
+                ::axum::Json(self),
+            )
                 .into_response()
         }
     }
@@ -1155,13 +2342,150 @@ mod unnamed_struct_response {
     impl Unnamed {
         fn into_response_text_html(self) -> ::axum::response::Response {
             (
-                ::axum::http::StatusCode::from_u16(200u16).unwrap(),
+                match 200u16 {
+                    200u16 => ::axum::http::StatusCode::OK,
+                    201u16 => ::axum::http::StatusCode::CREATED,
+                    202u16 => ::axum::http::StatusCode::ACCEPTED,
+                    203u16 => ::axum::http::StatusCode::NON_AUTHORITATIVE_INFORMATION,
+                    204u16 => ::axum::http::StatusCode::NO_CONTENT,
+                    205u16 => ::axum::http::StatusCode::RESET_CONTENT,
+                    206u16 => ::axum::http::StatusCode::PARTIAL_CONTENT,
+                    207u16 => ::axum::http::StatusCode::MULTI_STATUS,
+                    208u16 => ::axum::http::StatusCode::ALREADY_REPORTED,
+                    226u16 => ::axum::http::StatusCode::IM_USED,
+                    300u16 => ::axum::http::StatusCode::MULTIPLE_CHOICES,
+                    301u16 => ::axum::http::StatusCode::MOVED_PERMANENTLY,
+                    302u16 => ::axum::http::StatusCode::FOUND,
+                    303u16 => ::axum::http::StatusCode::SEE_OTHER,
+                    304u16 => ::axum::http::StatusCode::NOT_MODIFIED,
+                    307u16 => ::axum::http::StatusCode::TEMPORARY_REDIRECT,
+                    308u16 => ::axum::http::StatusCode::PERMANENT_REDIRECT,
+                    400u16 => ::axum::http::StatusCode::BAD_REQUEST,
+                    401u16 => ::axum::http::StatusCode::UNAUTHORIZED,
+                    402u16 => ::axum::http::StatusCode::PAYMENT_REQUIRED,
+                    403u16 => ::axum::http::StatusCode::FORBIDDEN,
+                    404u16 => ::axum::http::StatusCode::NOT_FOUND,
+                    405u16 => ::axum::http::StatusCode::METHOD_NOT_ALLOWED,
+                    406u16 => ::axum::http::StatusCode::NOT_ACCEPTABLE,
+                    407u16 => ::axum::http::StatusCode::PROXY_AUTHENTICATION_REQUIRED,
+                    408u16 => ::axum::http::StatusCode::REQUEST_TIMEOUT,
+                    409u16 => ::axum::http::StatusCode::CONFLICT,
+                    410u16 => ::axum::http::StatusCode::GONE,
+                    411u16 => ::axum::http::StatusCode::LENGTH_REQUIRED,
+                    412u16 => ::axum::http::StatusCode::PRECONDITION_FAILED,
+                    413u16 => ::axum::http::StatusCode::PAYLOAD_TOO_LARGE,
+                    414u16 => ::axum::http::StatusCode::URI_TOO_LONG,
+                    415u16 => ::axum::http::StatusCode::UNSUPPORTED_MEDIA_TYPE,
+                    416u16 => ::axum::http::StatusCode::RANGE_NOT_SATISFIABLE,
+                    417u16 => ::axum::http::StatusCode::EXPECTATION_FAILED,
+                    418u16 => ::axum::http::StatusCode::IM_A_TEAPOT,
+                    421u16 => ::axum::http::StatusCode::MISDIRECTED_REQUEST,
+                    422u16 => ::axum::http::StatusCode::UNPROCESSABLE_ENTITY,
+                    423u16 => ::axum::http::StatusCode::LOCKED,
+                    424u16 => ::axum::http::StatusCode::FAILED_DEPENDENCY,
+                    425u16 => ::axum::http::StatusCode::TOO_EARLY,
+                    426u16 => ::axum::http::StatusCode::UPGRADE_REQUIRED,
+                    428u16 => ::axum::http::StatusCode::PRECONDITION_REQUIRED,
+                    429u16 => ::axum::http::StatusCode::TOO_MANY_REQUESTS,
+                    431u16 => ::axum::http::StatusCode::REQUEST_HEADER_FIELDS_TOO_LARGE,
+                    451u16 => ::axum::http::StatusCode::UNAVAILABLE_FOR_LEGAL_REASONS,
+                    500u16 => ::axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+                    501u16 => ::axum::http::StatusCode::NOT_IMPLEMENTED,
+                    502u16 => ::axum::http::StatusCode::BAD_GATEWAY,
+                    503u16 => ::axum::http::StatusCode::SERVICE_UNAVAILABLE,
+                    504u16 => ::axum::http::StatusCode::GATEWAY_TIMEOUT,
+                    505u16 => ::axum::http::StatusCode::HTTP_VERSION_NOT_SUPPORTED,
+                    506u16 => ::axum::http::StatusCode::VARIANT_ALSO_NEGOTIATES,
+                    507u16 => ::axum::http::StatusCode::INSUFFICIENT_STORAGE,
+                    508u16 => ::axum::http::StatusCode::LOOP_DETECTED,
+                    510u16 => ::axum::http::StatusCode::NOT_EXTENDED,
+                    511u16 => ::axum::http::StatusCode::NETWORK_AUTHENTICATION_REQUIRED,
+                    _ => {
+                        ::core::panicking::panic_fmt(
+                            format_args!(
+                                "internal error: entered unreachable code: {0}",
+                                format_args!("groom: status code {0} was validated at expand time",
+                                200u16,),
+                            ),
+                        );
+                    }
+                },
                 <Unnamed as ::groom::response::HtmlFormat>::render(self),
             )
                 .into_response()
         }
         fn into_response_application_json(self) -> ::axum::response::Response {
-            (::axum::http::StatusCode::from_u16(200u16).unwrap(), ::axum::Json(self))
+            (
+                match 200u16 {
+                    200u16 => ::axum::http::StatusCode::OK,
+                    201u16 => ::axum::http::StatusCode::CREATED,
+                    202u16 => ::axum::http::StatusCode::ACCEPTED,
+                    203u16 => ::axum::http::StatusCode::NON_AUTHORITATIVE_INFORMATION,
+                    204u16 => ::axum::http::StatusCode::NO_CONTENT,
+                    205u16 => ::axum::http::StatusCode::RESET_CONTENT,
+                    206u16 => ::axum::http::StatusCode::PARTIAL_CONTENT,
+                    207u16 => ::axum::http::StatusCode::MULTI_STATUS,
+                    208u16 => ::axum::http::StatusCode::ALREADY_REPORTED,
+                    226u16 => ::axum::http::StatusCode::IM_USED,
+                    300u16 => ::axum::http::StatusCode::MULTIPLE_CHOICES,
+                    301u16 => ::axum::http::StatusCode::MOVED_PERMANENTLY,
+                    302u16 => ::axum::http::StatusCode::FOUND,
+                    303u16 => ::axum::http::StatusCode::SEE_OTHER,
+                    304u16 => ::axum::http::StatusCode::NOT_MODIFIED,
+                    307u16 => ::axum::http::StatusCode::TEMPORARY_REDIRECT,
+                    308u16 => ::axum::http::StatusCode::PERMANENT_REDIRECT,
+                    400u16 => ::axum::http::StatusCode::BAD_REQUEST,
+                    401u16 => ::axum::http::StatusCode::UNAUTHORIZED,
+                    402u16 => ::axum::http::StatusCode::PAYMENT_REQUIRED,
+                    403u16 => ::axum::http::StatusCode::FORBIDDEN,
+                    404u16 => ::axum::http::StatusCode::NOT_FOUND,
+                    405u16 => ::axum::http::StatusCode::METHOD_NOT_ALLOWED,
+                    406u16 => ::axum::http::StatusCode::NOT_ACCEPTABLE,
+                    407u16 => ::axum::http::StatusCode::PROXY_AUTHENTICATION_REQUIRED,
+                    408u16 => ::axum::http::StatusCode::REQUEST_TIMEOUT,
+                    409u16 => ::axum::http::StatusCode::CONFLICT,
+                    410u16 => ::axum::http::StatusCode::GONE,
+                    411u16 => ::axum::http::StatusCode::LENGTH_REQUIRED,
+                    412u16 => ::axum::http::StatusCode::PRECONDITION_FAILED,
+                    413u16 => ::axum::http::StatusCode::PAYLOAD_TOO_LARGE,
+                    414u16 => ::axum::http::StatusCode::URI_TOO_LONG,
+                    415u16 => ::axum::http::StatusCode::UNSUPPORTED_MEDIA_TYPE,
+                    416u16 => ::axum::http::StatusCode::RANGE_NOT_SATISFIABLE,
+                    417u16 => ::axum::http::StatusCode::EXPECTATION_FAILED,
+                    418u16 => ::axum::http::StatusCode::IM_A_TEAPOT,
+                    421u16 => ::axum::http::StatusCode::MISDIRECTED_REQUEST,
+                    422u16 => ::axum::http::StatusCode::UNPROCESSABLE_ENTITY,
+                    423u16 => ::axum::http::StatusCode::LOCKED,
+                    424u16 => ::axum::http::StatusCode::FAILED_DEPENDENCY,
+                    425u16 => ::axum::http::StatusCode::TOO_EARLY,
+                    426u16 => ::axum::http::StatusCode::UPGRADE_REQUIRED,
+                    428u16 => ::axum::http::StatusCode::PRECONDITION_REQUIRED,
+                    429u16 => ::axum::http::StatusCode::TOO_MANY_REQUESTS,
+                    431u16 => ::axum::http::StatusCode::REQUEST_HEADER_FIELDS_TOO_LARGE,
+                    451u16 => ::axum::http::StatusCode::UNAVAILABLE_FOR_LEGAL_REASONS,
+                    500u16 => ::axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+                    501u16 => ::axum::http::StatusCode::NOT_IMPLEMENTED,
+                    502u16 => ::axum::http::StatusCode::BAD_GATEWAY,
+                    503u16 => ::axum::http::StatusCode::SERVICE_UNAVAILABLE,
+                    504u16 => ::axum::http::StatusCode::GATEWAY_TIMEOUT,
+                    505u16 => ::axum::http::StatusCode::HTTP_VERSION_NOT_SUPPORTED,
+                    506u16 => ::axum::http::StatusCode::VARIANT_ALSO_NEGOTIATES,
+                    507u16 => ::axum::http::StatusCode::INSUFFICIENT_STORAGE,
+                    508u16 => ::axum::http::StatusCode::LOOP_DETECTED,
+                    510u16 => ::axum::http::StatusCode::NOT_EXTENDED,
+                    511u16 => ::axum::http::StatusCode::NETWORK_AUTHENTICATION_REQUIRED,
+                    _ => {
+                        ::core::panicking::panic_fmt(
+                            format_args!(
+                                "internal error: entered unreachable code: {0}",
+                                format_args!("groom: status code {0} was validated at expand time",
+                                200u16,),
+                            ),
+                        );
+                    }
+                },
+                ::axum::Json(self),
+            )
                 .into_response()
         }
     }
@@ -1340,7 +2664,75 @@ mod unit_struct_response {
     const __GROOM_RESPONSE_SUPPORTED_MIMES_Unit: &[::mime::Mime] = &[];
     impl Unit {
         fn into_response_any_content_type(self) -> ::axum::response::Response {
-            (::axum::http::StatusCode::from_u16(200u16).unwrap()).into_response()
+            (match 200u16 {
+                200u16 => ::axum::http::StatusCode::OK,
+                201u16 => ::axum::http::StatusCode::CREATED,
+                202u16 => ::axum::http::StatusCode::ACCEPTED,
+                203u16 => ::axum::http::StatusCode::NON_AUTHORITATIVE_INFORMATION,
+                204u16 => ::axum::http::StatusCode::NO_CONTENT,
+                205u16 => ::axum::http::StatusCode::RESET_CONTENT,
+                206u16 => ::axum::http::StatusCode::PARTIAL_CONTENT,
+                207u16 => ::axum::http::StatusCode::MULTI_STATUS,
+                208u16 => ::axum::http::StatusCode::ALREADY_REPORTED,
+                226u16 => ::axum::http::StatusCode::IM_USED,
+                300u16 => ::axum::http::StatusCode::MULTIPLE_CHOICES,
+                301u16 => ::axum::http::StatusCode::MOVED_PERMANENTLY,
+                302u16 => ::axum::http::StatusCode::FOUND,
+                303u16 => ::axum::http::StatusCode::SEE_OTHER,
+                304u16 => ::axum::http::StatusCode::NOT_MODIFIED,
+                307u16 => ::axum::http::StatusCode::TEMPORARY_REDIRECT,
+                308u16 => ::axum::http::StatusCode::PERMANENT_REDIRECT,
+                400u16 => ::axum::http::StatusCode::BAD_REQUEST,
+                401u16 => ::axum::http::StatusCode::UNAUTHORIZED,
+                402u16 => ::axum::http::StatusCode::PAYMENT_REQUIRED,
+                403u16 => ::axum::http::StatusCode::FORBIDDEN,
+                404u16 => ::axum::http::StatusCode::NOT_FOUND,
+                405u16 => ::axum::http::StatusCode::METHOD_NOT_ALLOWED,
+                406u16 => ::axum::http::StatusCode::NOT_ACCEPTABLE,
+                407u16 => ::axum::http::StatusCode::PROXY_AUTHENTICATION_REQUIRED,
+                408u16 => ::axum::http::StatusCode::REQUEST_TIMEOUT,
+                409u16 => ::axum::http::StatusCode::CONFLICT,
+                410u16 => ::axum::http::StatusCode::GONE,
+                411u16 => ::axum::http::StatusCode::LENGTH_REQUIRED,
+                412u16 => ::axum::http::StatusCode::PRECONDITION_FAILED,
+                413u16 => ::axum::http::StatusCode::PAYLOAD_TOO_LARGE,
+                414u16 => ::axum::http::StatusCode::URI_TOO_LONG,
+                415u16 => ::axum::http::StatusCode::UNSUPPORTED_MEDIA_TYPE,
+                416u16 => ::axum::http::StatusCode::RANGE_NOT_SATISFIABLE,
+                417u16 => ::axum::http::StatusCode::EXPECTATION_FAILED,
+                418u16 => ::axum::http::StatusCode::IM_A_TEAPOT,
+                421u16 => ::axum::http::StatusCode::MISDIRECTED_REQUEST,
+                422u16 => ::axum::http::StatusCode::UNPROCESSABLE_ENTITY,
+                423u16 => ::axum::http::StatusCode::LOCKED,
+                424u16 => ::axum::http::StatusCode::FAILED_DEPENDENCY,
+                425u16 => ::axum::http::StatusCode::TOO_EARLY,
+                426u16 => ::axum::http::StatusCode::UPGRADE_REQUIRED,
+                428u16 => ::axum::http::StatusCode::PRECONDITION_REQUIRED,
+                429u16 => ::axum::http::StatusCode::TOO_MANY_REQUESTS,
+                431u16 => ::axum::http::StatusCode::REQUEST_HEADER_FIELDS_TOO_LARGE,
+                451u16 => ::axum::http::StatusCode::UNAVAILABLE_FOR_LEGAL_REASONS,
+                500u16 => ::axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+                501u16 => ::axum::http::StatusCode::NOT_IMPLEMENTED,
+                502u16 => ::axum::http::StatusCode::BAD_GATEWAY,
+                503u16 => ::axum::http::StatusCode::SERVICE_UNAVAILABLE,
+                504u16 => ::axum::http::StatusCode::GATEWAY_TIMEOUT,
+                505u16 => ::axum::http::StatusCode::HTTP_VERSION_NOT_SUPPORTED,
+                506u16 => ::axum::http::StatusCode::VARIANT_ALSO_NEGOTIATES,
+                507u16 => ::axum::http::StatusCode::INSUFFICIENT_STORAGE,
+                508u16 => ::axum::http::StatusCode::LOOP_DETECTED,
+                510u16 => ::axum::http::StatusCode::NOT_EXTENDED,
+                511u16 => ::axum::http::StatusCode::NETWORK_AUTHENTICATION_REQUIRED,
+                _ => {
+                    ::core::panicking::panic_fmt(
+                        format_args!(
+                            "internal error: entered unreachable code: {0}",
+                            format_args!("groom: status code {0} was validated at expand time",
+                            200u16,),
+                        ),
+                    );
+                }
+            })
+                .into_response()
         }
     }
     impl ::groom::response::Response for Unit {
@@ -1420,7 +2812,75 @@ mod result_struct_struct {
     const __GROOM_RESPONSE_SUPPORTED_MIMES_Success: &[::mime::Mime] = &[];
     impl Success {
         fn into_response_any_content_type(self) -> ::axum::response::Response {
-            (::axum::http::StatusCode::from_u16(200u16).unwrap()).into_response()
+            (match 200u16 {
+                200u16 => ::axum::http::StatusCode::OK,
+                201u16 => ::axum::http::StatusCode::CREATED,
+                202u16 => ::axum::http::StatusCode::ACCEPTED,
+                203u16 => ::axum::http::StatusCode::NON_AUTHORITATIVE_INFORMATION,
+                204u16 => ::axum::http::StatusCode::NO_CONTENT,
+                205u16 => ::axum::http::StatusCode::RESET_CONTENT,
+                206u16 => ::axum::http::StatusCode::PARTIAL_CONTENT,
+                207u16 => ::axum::http::StatusCode::MULTI_STATUS,
+                208u16 => ::axum::http::StatusCode::ALREADY_REPORTED,
+                226u16 => ::axum::http::StatusCode::IM_USED,
+                300u16 => ::axum::http::StatusCode::MULTIPLE_CHOICES,
+                301u16 => ::axum::http::StatusCode::MOVED_PERMANENTLY,
+                302u16 => ::axum::http::StatusCode::FOUND,
+                303u16 => ::axum::http::StatusCode::SEE_OTHER,
+                304u16 => ::axum::http::StatusCode::NOT_MODIFIED,
+                307u16 => ::axum::http::StatusCode::TEMPORARY_REDIRECT,
+                308u16 => ::axum::http::StatusCode::PERMANENT_REDIRECT,
+                400u16 => ::axum::http::StatusCode::BAD_REQUEST,
+                401u16 => ::axum::http::StatusCode::UNAUTHORIZED,
+                402u16 => ::axum::http::StatusCode::PAYMENT_REQUIRED,
+                403u16 => ::axum::http::StatusCode::FORBIDDEN,
+                404u16 => ::axum::http::StatusCode::NOT_FOUND,
+                405u16 => ::axum::http::StatusCode::METHOD_NOT_ALLOWED,
+                406u16 => ::axum::http::StatusCode::NOT_ACCEPTABLE,
+                407u16 => ::axum::http::StatusCode::PROXY_AUTHENTICATION_REQUIRED,
+                408u16 => ::axum::http::StatusCode::REQUEST_TIMEOUT,
+                409u16 => ::axum::http::StatusCode::CONFLICT,
+                410u16 => ::axum::http::StatusCode::GONE,
+                411u16 => ::axum::http::StatusCode::LENGTH_REQUIRED,
+                412u16 => ::axum::http::StatusCode::PRECONDITION_FAILED,
+                413u16 => ::axum::http::StatusCode::PAYLOAD_TOO_LARGE,
+                414u16 => ::axum::http::StatusCode::URI_TOO_LONG,
+                415u16 => ::axum::http::StatusCode::UNSUPPORTED_MEDIA_TYPE,
+                416u16 => ::axum::http::StatusCode::RANGE_NOT_SATISFIABLE,
+                417u16 => ::axum::http::StatusCode::EXPECTATION_FAILED,
+                418u16 => ::axum::http::StatusCode::IM_A_TEAPOT,
+                421u16 => ::axum::http::StatusCode::MISDIRECTED_REQUEST,
+                422u16 => ::axum::http::StatusCode::UNPROCESSABLE_ENTITY,
+                423u16 => ::axum::http::StatusCode::LOCKED,
+                424u16 => ::axum::http::StatusCode::FAILED_DEPENDENCY,
+                425u16 => ::axum::http::StatusCode::TOO_EARLY,
+                426u16 => ::axum::http::StatusCode::UPGRADE_REQUIRED,
+                428u16 => ::axum::http::StatusCode::PRECONDITION_REQUIRED,
+                429u16 => ::axum::http::StatusCode::TOO_MANY_REQUESTS,
+                431u16 => ::axum::http::StatusCode::REQUEST_HEADER_FIELDS_TOO_LARGE,
+                451u16 => ::axum::http::StatusCode::UNAVAILABLE_FOR_LEGAL_REASONS,
+                500u16 => ::axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+                501u16 => ::axum::http::StatusCode::NOT_IMPLEMENTED,
+                502u16 => ::axum::http::StatusCode::BAD_GATEWAY,
+                503u16 => ::axum::http::StatusCode::SERVICE_UNAVAILABLE,
+                504u16 => ::axum::http::StatusCode::GATEWAY_TIMEOUT,
+                505u16 => ::axum::http::StatusCode::HTTP_VERSION_NOT_SUPPORTED,
+                506u16 => ::axum::http::StatusCode::VARIANT_ALSO_NEGOTIATES,
+                507u16 => ::axum::http::StatusCode::INSUFFICIENT_STORAGE,
+                508u16 => ::axum::http::StatusCode::LOOP_DETECTED,
+                510u16 => ::axum::http::StatusCode::NOT_EXTENDED,
+                511u16 => ::axum::http::StatusCode::NETWORK_AUTHENTICATION_REQUIRED,
+                _ => {
+                    ::core::panicking::panic_fmt(
+                        format_args!(
+                            "internal error: entered unreachable code: {0}",
+                            format_args!("groom: status code {0} was validated at expand time",
+                            200u16,),
+                        ),
+                    );
+                }
+            })
+                .into_response()
         }
     }
     impl ::groom::response::Response for Success {
@@ -1497,7 +2957,75 @@ mod result_struct_struct {
     const __GROOM_RESPONSE_SUPPORTED_MIMES_Error: &[::mime::Mime] = &[];
     impl Error {
         fn into_response_any_content_type(self) -> ::axum::response::Response {
-            (::axum::http::StatusCode::from_u16(404u16).unwrap()).into_response()
+            (match 404u16 {
+                200u16 => ::axum::http::StatusCode::OK,
+                201u16 => ::axum::http::StatusCode::CREATED,
+                202u16 => ::axum::http::StatusCode::ACCEPTED,
+                203u16 => ::axum::http::StatusCode::NON_AUTHORITATIVE_INFORMATION,
+                204u16 => ::axum::http::StatusCode::NO_CONTENT,
+                205u16 => ::axum::http::StatusCode::RESET_CONTENT,
+                206u16 => ::axum::http::StatusCode::PARTIAL_CONTENT,
+                207u16 => ::axum::http::StatusCode::MULTI_STATUS,
+                208u16 => ::axum::http::StatusCode::ALREADY_REPORTED,
+                226u16 => ::axum::http::StatusCode::IM_USED,
+                300u16 => ::axum::http::StatusCode::MULTIPLE_CHOICES,
+                301u16 => ::axum::http::StatusCode::MOVED_PERMANENTLY,
+                302u16 => ::axum::http::StatusCode::FOUND,
+                303u16 => ::axum::http::StatusCode::SEE_OTHER,
+                304u16 => ::axum::http::StatusCode::NOT_MODIFIED,
+                307u16 => ::axum::http::StatusCode::TEMPORARY_REDIRECT,
+                308u16 => ::axum::http::StatusCode::PERMANENT_REDIRECT,
+                400u16 => ::axum::http::StatusCode::BAD_REQUEST,
+                401u16 => ::axum::http::StatusCode::UNAUTHORIZED,
+                402u16 => ::axum::http::StatusCode::PAYMENT_REQUIRED,
+                403u16 => ::axum::http::StatusCode::FORBIDDEN,
+                404u16 => ::axum::http::StatusCode::NOT_FOUND,
+                405u16 => ::axum::http::StatusCode::METHOD_NOT_ALLOWED,
+                406u16 => ::axum::http::StatusCode::NOT_ACCEPTABLE,
+                407u16 => ::axum::http::StatusCode::PROXY_AUTHENTICATION_REQUIRED,
+                408u16 => ::axum::http::StatusCode::REQUEST_TIMEOUT,
+                409u16 => ::axum::http::StatusCode::CONFLICT,
+                410u16 => ::axum::http::StatusCode::GONE,
+                411u16 => ::axum::http::StatusCode::LENGTH_REQUIRED,
+                412u16 => ::axum::http::StatusCode::PRECONDITION_FAILED,
+                413u16 => ::axum::http::StatusCode::PAYLOAD_TOO_LARGE,
+                414u16 => ::axum::http::StatusCode::URI_TOO_LONG,
+                415u16 => ::axum::http::StatusCode::UNSUPPORTED_MEDIA_TYPE,
+                416u16 => ::axum::http::StatusCode::RANGE_NOT_SATISFIABLE,
+                417u16 => ::axum::http::StatusCode::EXPECTATION_FAILED,
+                418u16 => ::axum::http::StatusCode::IM_A_TEAPOT,
+                421u16 => ::axum::http::StatusCode::MISDIRECTED_REQUEST,
+                422u16 => ::axum::http::StatusCode::UNPROCESSABLE_ENTITY,
+                423u16 => ::axum::http::StatusCode::LOCKED,
+                424u16 => ::axum::http::StatusCode::FAILED_DEPENDENCY,
+                425u16 => ::axum::http::StatusCode::TOO_EARLY,
+                426u16 => ::axum::http::StatusCode::UPGRADE_REQUIRED,
+                428u16 => ::axum::http::StatusCode::PRECONDITION_REQUIRED,
+                429u16 => ::axum::http::StatusCode::TOO_MANY_REQUESTS,
+                431u16 => ::axum::http::StatusCode::REQUEST_HEADER_FIELDS_TOO_LARGE,
+                451u16 => ::axum::http::StatusCode::UNAVAILABLE_FOR_LEGAL_REASONS,
+                500u16 => ::axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+                501u16 => ::axum::http::StatusCode::NOT_IMPLEMENTED,
+                502u16 => ::axum::http::StatusCode::BAD_GATEWAY,
+                503u16 => ::axum::http::StatusCode::SERVICE_UNAVAILABLE,
+                504u16 => ::axum::http::StatusCode::GATEWAY_TIMEOUT,
+                505u16 => ::axum::http::StatusCode::HTTP_VERSION_NOT_SUPPORTED,
+                506u16 => ::axum::http::StatusCode::VARIANT_ALSO_NEGOTIATES,
+                507u16 => ::axum::http::StatusCode::INSUFFICIENT_STORAGE,
+                508u16 => ::axum::http::StatusCode::LOOP_DETECTED,
+                510u16 => ::axum::http::StatusCode::NOT_EXTENDED,
+                511u16 => ::axum::http::StatusCode::NETWORK_AUTHENTICATION_REQUIRED,
+                _ => {
+                    ::core::panicking::panic_fmt(
+                        format_args!(
+                            "internal error: entered unreachable code: {0}",
+                            format_args!("groom: status code {0} was validated at expand time",
+                            404u16,),
+                        ),
+                    );
+                }
+            })
+                .into_response()
         }
     }
     impl ::groom::response::Response for Error {
@@ -1713,7 +3241,74 @@ mod result_struct_enum {
     impl Success {
         fn into_response_text_plain(self) -> ::axum::response::Response {
             (
-                ::axum::http::StatusCode::from_u16(200u16).unwrap(),
+                match 200u16 {
+                    200u16 => ::axum::http::StatusCode::OK,
+                    201u16 => ::axum::http::StatusCode::CREATED,
+                    202u16 => ::axum::http::StatusCode::ACCEPTED,
+                    203u16 => ::axum::http::StatusCode::NON_AUTHORITATIVE_INFORMATION,
+                    204u16 => ::axum::http::StatusCode::NO_CONTENT,
+                    205u16 => ::axum::http::StatusCode::RESET_CONTENT,
+                    206u16 => ::axum::http::StatusCode::PARTIAL_CONTENT,
+                    207u16 => ::axum::http::StatusCode::MULTI_STATUS,
+                    208u16 => ::axum::http::StatusCode::ALREADY_REPORTED,
+                    226u16 => ::axum::http::StatusCode::IM_USED,
+                    300u16 => ::axum::http::StatusCode::MULTIPLE_CHOICES,
+                    301u16 => ::axum::http::StatusCode::MOVED_PERMANENTLY,
+                    302u16 => ::axum::http::StatusCode::FOUND,
+                    303u16 => ::axum::http::StatusCode::SEE_OTHER,
+                    304u16 => ::axum::http::StatusCode::NOT_MODIFIED,
+                    307u16 => ::axum::http::StatusCode::TEMPORARY_REDIRECT,
+                    308u16 => ::axum::http::StatusCode::PERMANENT_REDIRECT,
+                    400u16 => ::axum::http::StatusCode::BAD_REQUEST,
+                    401u16 => ::axum::http::StatusCode::UNAUTHORIZED,
+                    402u16 => ::axum::http::StatusCode::PAYMENT_REQUIRED,
+                    403u16 => ::axum::http::StatusCode::FORBIDDEN,
+                    404u16 => ::axum::http::StatusCode::NOT_FOUND,
+                    405u16 => ::axum::http::StatusCode::METHOD_NOT_ALLOWED,
+                    406u16 => ::axum::http::StatusCode::NOT_ACCEPTABLE,
+                    407u16 => ::axum::http::StatusCode::PROXY_AUTHENTICATION_REQUIRED,
+                    408u16 => ::axum::http::StatusCode::REQUEST_TIMEOUT,
+                    409u16 => ::axum::http::StatusCode::CONFLICT,
+                    410u16 => ::axum::http::StatusCode::GONE,
+                    411u16 => ::axum::http::StatusCode::LENGTH_REQUIRED,
+                    412u16 => ::axum::http::StatusCode::PRECONDITION_FAILED,
+                    413u16 => ::axum::http::StatusCode::PAYLOAD_TOO_LARGE,
+                    414u16 => ::axum::http::StatusCode::URI_TOO_LONG,
+                    415u16 => ::axum::http::StatusCode::UNSUPPORTED_MEDIA_TYPE,
+                    416u16 => ::axum::http::StatusCode::RANGE_NOT_SATISFIABLE,
+                    417u16 => ::axum::http::StatusCode::EXPECTATION_FAILED,
+                    418u16 => ::axum::http::StatusCode::IM_A_TEAPOT,
+                    421u16 => ::axum::http::StatusCode::MISDIRECTED_REQUEST,
+                    422u16 => ::axum::http::StatusCode::UNPROCESSABLE_ENTITY,
+                    423u16 => ::axum::http::StatusCode::LOCKED,
+                    424u16 => ::axum::http::StatusCode::FAILED_DEPENDENCY,
+                    425u16 => ::axum::http::StatusCode::TOO_EARLY,
+                    426u16 => ::axum::http::StatusCode::UPGRADE_REQUIRED,
+                    428u16 => ::axum::http::StatusCode::PRECONDITION_REQUIRED,
+                    429u16 => ::axum::http::StatusCode::TOO_MANY_REQUESTS,
+                    431u16 => ::axum::http::StatusCode::REQUEST_HEADER_FIELDS_TOO_LARGE,
+                    451u16 => ::axum::http::StatusCode::UNAVAILABLE_FOR_LEGAL_REASONS,
+                    500u16 => ::axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+                    501u16 => ::axum::http::StatusCode::NOT_IMPLEMENTED,
+                    502u16 => ::axum::http::StatusCode::BAD_GATEWAY,
+                    503u16 => ::axum::http::StatusCode::SERVICE_UNAVAILABLE,
+                    504u16 => ::axum::http::StatusCode::GATEWAY_TIMEOUT,
+                    505u16 => ::axum::http::StatusCode::HTTP_VERSION_NOT_SUPPORTED,
+                    506u16 => ::axum::http::StatusCode::VARIANT_ALSO_NEGOTIATES,
+                    507u16 => ::axum::http::StatusCode::INSUFFICIENT_STORAGE,
+                    508u16 => ::axum::http::StatusCode::LOOP_DETECTED,
+                    510u16 => ::axum::http::StatusCode::NOT_EXTENDED,
+                    511u16 => ::axum::http::StatusCode::NETWORK_AUTHENTICATION_REQUIRED,
+                    _ => {
+                        ::core::panicking::panic_fmt(
+                            format_args!(
+                                "internal error: entered unreachable code: {0}",
+                                format_args!("groom: status code {0} was validated at expand time",
+                                200u16,),
+                            ),
+                        );
+                    }
+                },
                 Into::<String>::into(self.0),
             )
                 .into_response()
@@ -1879,11 +3474,162 @@ mod result_struct_enum {
         fn into_response_text_plain(self) -> ::axum::response::Response {
             match self {
                 Self::NotFound => {
-                    (::axum::http::StatusCode::from_u16(404u16).unwrap()).into_response()
+                    (match 404u16 {
+                        200u16 => ::axum::http::StatusCode::OK,
+                        201u16 => ::axum::http::StatusCode::CREATED,
+                        202u16 => ::axum::http::StatusCode::ACCEPTED,
+                        203u16 => ::axum::http::StatusCode::NON_AUTHORITATIVE_INFORMATION,
+                        204u16 => ::axum::http::StatusCode::NO_CONTENT,
+                        205u16 => ::axum::http::StatusCode::RESET_CONTENT,
+                        206u16 => ::axum::http::StatusCode::PARTIAL_CONTENT,
+                        207u16 => ::axum::http::StatusCode::MULTI_STATUS,
+                        208u16 => ::axum::http::StatusCode::ALREADY_REPORTED,
+                        226u16 => ::axum::http::StatusCode::IM_USED,
+                        300u16 => ::axum::http::StatusCode::MULTIPLE_CHOICES,
+                        301u16 => ::axum::http::StatusCode::MOVED_PERMANENTLY,
+                        302u16 => ::axum::http::StatusCode::FOUND,
+                        303u16 => ::axum::http::StatusCode::SEE_OTHER,
+                        304u16 => ::axum::http::StatusCode::NOT_MODIFIED,
+                        307u16 => ::axum::http::StatusCode::TEMPORARY_REDIRECT,
+                        308u16 => ::axum::http::StatusCode::PERMANENT_REDIRECT,
+                        400u16 => ::axum::http::StatusCode::BAD_REQUEST,
+                        401u16 => ::axum::http::StatusCode::UNAUTHORIZED,
+                        402u16 => ::axum::http::StatusCode::PAYMENT_REQUIRED,
+                        403u16 => ::axum::http::StatusCode::FORBIDDEN,
+                        404u16 => ::axum::http::StatusCode::NOT_FOUND,
+                        405u16 => ::axum::http::StatusCode::METHOD_NOT_ALLOWED,
+                        406u16 => ::axum::http::StatusCode::NOT_ACCEPTABLE,
+                        407u16 => ::axum::http::StatusCode::PROXY_AUTHENTICATION_REQUIRED,
+                        408u16 => ::axum::http::StatusCode::REQUEST_TIMEOUT,
+                        409u16 => ::axum::http::StatusCode::CONFLICT,
+                        410u16 => ::axum::http::StatusCode::GONE,
+                        411u16 => ::axum::http::StatusCode::LENGTH_REQUIRED,
+                        412u16 => ::axum::http::StatusCode::PRECONDITION_FAILED,
+                        413u16 => ::axum::http::StatusCode::PAYLOAD_TOO_LARGE,
+                        414u16 => ::axum::http::StatusCode::URI_TOO_LONG,
+                        415u16 => ::axum::http::StatusCode::UNSUPPORTED_MEDIA_TYPE,
+                        416u16 => ::axum::http::StatusCode::RANGE_NOT_SATISFIABLE,
+                        417u16 => ::axum::http::StatusCode::EXPECTATION_FAILED,
+                        418u16 => ::axum::http::StatusCode::IM_A_TEAPOT,
+                        421u16 => ::axum::http::StatusCode::MISDIRECTED_REQUEST,
+                        422u16 => ::axum::http::StatusCode::UNPROCESSABLE_ENTITY,
+                        423u16 => ::axum::http::StatusCode::LOCKED,
+                        424u16 => ::axum::http::StatusCode::FAILED_DEPENDENCY,
+                        425u16 => ::axum::http::StatusCode::TOO_EARLY,
+                        426u16 => ::axum::http::StatusCode::UPGRADE_REQUIRED,
+                        428u16 => ::axum::http::StatusCode::PRECONDITION_REQUIRED,
+                        429u16 => ::axum::http::StatusCode::TOO_MANY_REQUESTS,
+                        431u16 => {
+                            ::axum::http::StatusCode::REQUEST_HEADER_FIELDS_TOO_LARGE
+                        }
+                        451u16 => ::axum::http::StatusCode::UNAVAILABLE_FOR_LEGAL_REASONS,
+                        500u16 => ::axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+                        501u16 => ::axum::http::StatusCode::NOT_IMPLEMENTED,
+                        502u16 => ::axum::http::StatusCode::BAD_GATEWAY,
+                        503u16 => ::axum::http::StatusCode::SERVICE_UNAVAILABLE,
+                        504u16 => ::axum::http::StatusCode::GATEWAY_TIMEOUT,
+                        505u16 => ::axum::http::StatusCode::HTTP_VERSION_NOT_SUPPORTED,
+                        506u16 => ::axum::http::StatusCode::VARIANT_ALSO_NEGOTIATES,
+                        507u16 => ::axum::http::StatusCode::INSUFFICIENT_STORAGE,
+                        508u16 => ::axum::http::StatusCode::LOOP_DETECTED,
+                        510u16 => ::axum::http::StatusCode::NOT_EXTENDED,
+                        511u16 => {
+                            ::axum::http::StatusCode::NETWORK_AUTHENTICATION_REQUIRED
+                        }
+                        _ => {
+                            ::core::panicking::panic_fmt(
+                                format_args!(
+                                    "internal error: entered unreachable code: {0}",
+                                    format_args!("groom: status code {0} was validated at expand time",
+                                    404u16,),
+                                ),
+                            );
+                        }
+                    })
+                        .into_response()
                 }
                 Self::NoAccess(body) => {
                     (
-                        ::axum::http::StatusCode::from_u16(400u16).unwrap(),
+                        match 400u16 {
+                            200u16 => ::axum::http::StatusCode::OK,
+                            201u16 => ::axum::http::StatusCode::CREATED,
+                            202u16 => ::axum::http::StatusCode::ACCEPTED,
+                            203u16 => {
+                                ::axum::http::StatusCode::NON_AUTHORITATIVE_INFORMATION
+                            }
+                            204u16 => ::axum::http::StatusCode::NO_CONTENT,
+                            205u16 => ::axum::http::StatusCode::RESET_CONTENT,
+                            206u16 => ::axum::http::StatusCode::PARTIAL_CONTENT,
+                            207u16 => ::axum::http::StatusCode::MULTI_STATUS,
+                            208u16 => ::axum::http::StatusCode::ALREADY_REPORTED,
+                            226u16 => ::axum::http::StatusCode::IM_USED,
+                            300u16 => ::axum::http::StatusCode::MULTIPLE_CHOICES,
+                            301u16 => ::axum::http::StatusCode::MOVED_PERMANENTLY,
+                            302u16 => ::axum::http::StatusCode::FOUND,
+                            303u16 => ::axum::http::StatusCode::SEE_OTHER,
+                            304u16 => ::axum::http::StatusCode::NOT_MODIFIED,
+                            307u16 => ::axum::http::StatusCode::TEMPORARY_REDIRECT,
+                            308u16 => ::axum::http::StatusCode::PERMANENT_REDIRECT,
+                            400u16 => ::axum::http::StatusCode::BAD_REQUEST,
+                            401u16 => ::axum::http::StatusCode::UNAUTHORIZED,
+                            402u16 => ::axum::http::StatusCode::PAYMENT_REQUIRED,
+                            403u16 => ::axum::http::StatusCode::FORBIDDEN,
+                            404u16 => ::axum::http::StatusCode::NOT_FOUND,
+                            405u16 => ::axum::http::StatusCode::METHOD_NOT_ALLOWED,
+                            406u16 => ::axum::http::StatusCode::NOT_ACCEPTABLE,
+                            407u16 => {
+                                ::axum::http::StatusCode::PROXY_AUTHENTICATION_REQUIRED
+                            }
+                            408u16 => ::axum::http::StatusCode::REQUEST_TIMEOUT,
+                            409u16 => ::axum::http::StatusCode::CONFLICT,
+                            410u16 => ::axum::http::StatusCode::GONE,
+                            411u16 => ::axum::http::StatusCode::LENGTH_REQUIRED,
+                            412u16 => ::axum::http::StatusCode::PRECONDITION_FAILED,
+                            413u16 => ::axum::http::StatusCode::PAYLOAD_TOO_LARGE,
+                            414u16 => ::axum::http::StatusCode::URI_TOO_LONG,
+                            415u16 => ::axum::http::StatusCode::UNSUPPORTED_MEDIA_TYPE,
+                            416u16 => ::axum::http::StatusCode::RANGE_NOT_SATISFIABLE,
+                            417u16 => ::axum::http::StatusCode::EXPECTATION_FAILED,
+                            418u16 => ::axum::http::StatusCode::IM_A_TEAPOT,
+                            421u16 => ::axum::http::StatusCode::MISDIRECTED_REQUEST,
+                            422u16 => ::axum::http::StatusCode::UNPROCESSABLE_ENTITY,
+                            423u16 => ::axum::http::StatusCode::LOCKED,
+                            424u16 => ::axum::http::StatusCode::FAILED_DEPENDENCY,
+                            425u16 => ::axum::http::StatusCode::TOO_EARLY,
+                            426u16 => ::axum::http::StatusCode::UPGRADE_REQUIRED,
+                            428u16 => ::axum::http::StatusCode::PRECONDITION_REQUIRED,
+                            429u16 => ::axum::http::StatusCode::TOO_MANY_REQUESTS,
+                            431u16 => {
+                                ::axum::http::StatusCode::REQUEST_HEADER_FIELDS_TOO_LARGE
+                            }
+                            451u16 => {
+                                ::axum::http::StatusCode::UNAVAILABLE_FOR_LEGAL_REASONS
+                            }
+                            500u16 => ::axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+                            501u16 => ::axum::http::StatusCode::NOT_IMPLEMENTED,
+                            502u16 => ::axum::http::StatusCode::BAD_GATEWAY,
+                            503u16 => ::axum::http::StatusCode::SERVICE_UNAVAILABLE,
+                            504u16 => ::axum::http::StatusCode::GATEWAY_TIMEOUT,
+                            505u16 => {
+                                ::axum::http::StatusCode::HTTP_VERSION_NOT_SUPPORTED
+                            }
+                            506u16 => ::axum::http::StatusCode::VARIANT_ALSO_NEGOTIATES,
+                            507u16 => ::axum::http::StatusCode::INSUFFICIENT_STORAGE,
+                            508u16 => ::axum::http::StatusCode::LOOP_DETECTED,
+                            510u16 => ::axum::http::StatusCode::NOT_EXTENDED,
+                            511u16 => {
+                                ::axum::http::StatusCode::NETWORK_AUTHENTICATION_REQUIRED
+                            }
+                            _ => {
+                                ::core::panicking::panic_fmt(
+                                    format_args!(
+                                        "internal error: entered unreachable code: {0}",
+                                        format_args!("groom: status code {0} was validated at expand time",
+                                        400u16,),
+                                    ),
+                                );
+                            }
+                        },
                         Into::<String>::into(body),
                     )
                         .into_response()
@@ -2302,14 +4048,172 @@ mod wrapped_enum {
             match self {
                 Self::Enum(body) => {
                     (
-                        ::axum::http::StatusCode::from_u16(200u16).unwrap(),
+                        match 200u16 {
+                            200u16 => ::axum::http::StatusCode::OK,
+                            201u16 => ::axum::http::StatusCode::CREATED,
+                            202u16 => ::axum::http::StatusCode::ACCEPTED,
+                            203u16 => {
+                                ::axum::http::StatusCode::NON_AUTHORITATIVE_INFORMATION
+                            }
+                            204u16 => ::axum::http::StatusCode::NO_CONTENT,
+                            205u16 => ::axum::http::StatusCode::RESET_CONTENT,
+                            206u16 => ::axum::http::StatusCode::PARTIAL_CONTENT,
+                            207u16 => ::axum::http::StatusCode::MULTI_STATUS,
+                            208u16 => ::axum::http::StatusCode::ALREADY_REPORTED,
+                            226u16 => ::axum::http::StatusCode::IM_USED,
+                            300u16 => ::axum::http::StatusCode::MULTIPLE_CHOICES,
+                            301u16 => ::axum::http::StatusCode::MOVED_PERMANENTLY,
+                            302u16 => ::axum::http::StatusCode::FOUND,
+                            303u16 => ::axum::http::StatusCode::SEE_OTHER,
+                            304u16 => ::axum::http::StatusCode::NOT_MODIFIED,
+                            307u16 => ::axum::http::StatusCode::TEMPORARY_REDIRECT,
+                            308u16 => ::axum::http::StatusCode::PERMANENT_REDIRECT,
+                            400u16 => ::axum::http::StatusCode::BAD_REQUEST,
+                            401u16 => ::axum::http::StatusCode::UNAUTHORIZED,
+                            402u16 => ::axum::http::StatusCode::PAYMENT_REQUIRED,
+                            403u16 => ::axum::http::StatusCode::FORBIDDEN,
+                            404u16 => ::axum::http::StatusCode::NOT_FOUND,
+                            405u16 => ::axum::http::StatusCode::METHOD_NOT_ALLOWED,
+                            406u16 => ::axum::http::StatusCode::NOT_ACCEPTABLE,
+                            407u16 => {
+                                ::axum::http::StatusCode::PROXY_AUTHENTICATION_REQUIRED
+                            }
+                            408u16 => ::axum::http::StatusCode::REQUEST_TIMEOUT,
+                            409u16 => ::axum::http::StatusCode::CONFLICT,
+                            410u16 => ::axum::http::StatusCode::GONE,
+                            411u16 => ::axum::http::StatusCode::LENGTH_REQUIRED,
+                            412u16 => ::axum::http::StatusCode::PRECONDITION_FAILED,
+                            413u16 => ::axum::http::StatusCode::PAYLOAD_TOO_LARGE,
+                            414u16 => ::axum::http::StatusCode::URI_TOO_LONG,
+                            415u16 => ::axum::http::StatusCode::UNSUPPORTED_MEDIA_TYPE,
+                            416u16 => ::axum::http::StatusCode::RANGE_NOT_SATISFIABLE,
+                            417u16 => ::axum::http::StatusCode::EXPECTATION_FAILED,
+                            418u16 => ::axum::http::StatusCode::IM_A_TEAPOT,
+                            421u16 => ::axum::http::StatusCode::MISDIRECTED_REQUEST,
+                            422u16 => ::axum::http::StatusCode::UNPROCESSABLE_ENTITY,
+                            423u16 => ::axum::http::StatusCode::LOCKED,
+                            424u16 => ::axum::http::StatusCode::FAILED_DEPENDENCY,
+                            425u16 => ::axum::http::StatusCode::TOO_EARLY,
+                            426u16 => ::axum::http::StatusCode::UPGRADE_REQUIRED,
+                            428u16 => ::axum::http::StatusCode::PRECONDITION_REQUIRED,
+                            429u16 => ::axum::http::StatusCode::TOO_MANY_REQUESTS,
+                            431u16 => {
+                                ::axum::http::StatusCode::REQUEST_HEADER_FIELDS_TOO_LARGE
+                            }
+                            451u16 => {
+                                ::axum::http::StatusCode::UNAVAILABLE_FOR_LEGAL_REASONS
+                            }
+                            500u16 => ::axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+                            501u16 => ::axum::http::StatusCode::NOT_IMPLEMENTED,
+                            502u16 => ::axum::http::StatusCode::BAD_GATEWAY,
+                            503u16 => ::axum::http::StatusCode::SERVICE_UNAVAILABLE,
+                            504u16 => ::axum::http::StatusCode::GATEWAY_TIMEOUT,
+                            505u16 => {
+                                ::axum::http::StatusCode::HTTP_VERSION_NOT_SUPPORTED
+                            }
+                            506u16 => ::axum::http::StatusCode::VARIANT_ALSO_NEGOTIATES,
+                            507u16 => ::axum::http::StatusCode::INSUFFICIENT_STORAGE,
+                            508u16 => ::axum::http::StatusCode::LOOP_DETECTED,
+                            510u16 => ::axum::http::StatusCode::NOT_EXTENDED,
+                            511u16 => {
+                                ::axum::http::StatusCode::NETWORK_AUTHENTICATION_REQUIRED
+                            }
+                            _ => {
+                                ::core::panicking::panic_fmt(
+                                    format_args!(
+                                        "internal error: entered unreachable code: {0}",
+                                        format_args!("groom: status code {0} was validated at expand time",
+                                        200u16,),
+                                    ),
+                                );
+                            }
+                        },
                         ::axum::Json(body),
                     )
                         .into_response()
                 }
                 Self::StructWithEnum(body) => {
                     (
-                        ::axum::http::StatusCode::from_u16(202u16).unwrap(),
+                        match 202u16 {
+                            200u16 => ::axum::http::StatusCode::OK,
+                            201u16 => ::axum::http::StatusCode::CREATED,
+                            202u16 => ::axum::http::StatusCode::ACCEPTED,
+                            203u16 => {
+                                ::axum::http::StatusCode::NON_AUTHORITATIVE_INFORMATION
+                            }
+                            204u16 => ::axum::http::StatusCode::NO_CONTENT,
+                            205u16 => ::axum::http::StatusCode::RESET_CONTENT,
+                            206u16 => ::axum::http::StatusCode::PARTIAL_CONTENT,
+                            207u16 => ::axum::http::StatusCode::MULTI_STATUS,
+                            208u16 => ::axum::http::StatusCode::ALREADY_REPORTED,
+                            226u16 => ::axum::http::StatusCode::IM_USED,
+                            300u16 => ::axum::http::StatusCode::MULTIPLE_CHOICES,
+                            301u16 => ::axum::http::StatusCode::MOVED_PERMANENTLY,
+                            302u16 => ::axum::http::StatusCode::FOUND,
+                            303u16 => ::axum::http::StatusCode::SEE_OTHER,
+                            304u16 => ::axum::http::StatusCode::NOT_MODIFIED,
+                            307u16 => ::axum::http::StatusCode::TEMPORARY_REDIRECT,
+                            308u16 => ::axum::http::StatusCode::PERMANENT_REDIRECT,
+                            400u16 => ::axum::http::StatusCode::BAD_REQUEST,
+                            401u16 => ::axum::http::StatusCode::UNAUTHORIZED,
+                            402u16 => ::axum::http::StatusCode::PAYMENT_REQUIRED,
+                            403u16 => ::axum::http::StatusCode::FORBIDDEN,
+                            404u16 => ::axum::http::StatusCode::NOT_FOUND,
+                            405u16 => ::axum::http::StatusCode::METHOD_NOT_ALLOWED,
+                            406u16 => ::axum::http::StatusCode::NOT_ACCEPTABLE,
+                            407u16 => {
+                                ::axum::http::StatusCode::PROXY_AUTHENTICATION_REQUIRED
+                            }
+                            408u16 => ::axum::http::StatusCode::REQUEST_TIMEOUT,
+                            409u16 => ::axum::http::StatusCode::CONFLICT,
+                            410u16 => ::axum::http::StatusCode::GONE,
+                            411u16 => ::axum::http::StatusCode::LENGTH_REQUIRED,
+                            412u16 => ::axum::http::StatusCode::PRECONDITION_FAILED,
+                            413u16 => ::axum::http::StatusCode::PAYLOAD_TOO_LARGE,
+                            414u16 => ::axum::http::StatusCode::URI_TOO_LONG,
+                            415u16 => ::axum::http::StatusCode::UNSUPPORTED_MEDIA_TYPE,
+                            416u16 => ::axum::http::StatusCode::RANGE_NOT_SATISFIABLE,
+                            417u16 => ::axum::http::StatusCode::EXPECTATION_FAILED,
+                            418u16 => ::axum::http::StatusCode::IM_A_TEAPOT,
+                            421u16 => ::axum::http::StatusCode::MISDIRECTED_REQUEST,
+                            422u16 => ::axum::http::StatusCode::UNPROCESSABLE_ENTITY,
+                            423u16 => ::axum::http::StatusCode::LOCKED,
+                            424u16 => ::axum::http::StatusCode::FAILED_DEPENDENCY,
+                            425u16 => ::axum::http::StatusCode::TOO_EARLY,
+                            426u16 => ::axum::http::StatusCode::UPGRADE_REQUIRED,
+                            428u16 => ::axum::http::StatusCode::PRECONDITION_REQUIRED,
+                            429u16 => ::axum::http::StatusCode::TOO_MANY_REQUESTS,
+                            431u16 => {
+                                ::axum::http::StatusCode::REQUEST_HEADER_FIELDS_TOO_LARGE
+                            }
+                            451u16 => {
+                                ::axum::http::StatusCode::UNAVAILABLE_FOR_LEGAL_REASONS
+                            }
+                            500u16 => ::axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+                            501u16 => ::axum::http::StatusCode::NOT_IMPLEMENTED,
+                            502u16 => ::axum::http::StatusCode::BAD_GATEWAY,
+                            503u16 => ::axum::http::StatusCode::SERVICE_UNAVAILABLE,
+                            504u16 => ::axum::http::StatusCode::GATEWAY_TIMEOUT,
+                            505u16 => {
+                                ::axum::http::StatusCode::HTTP_VERSION_NOT_SUPPORTED
+                            }
+                            506u16 => ::axum::http::StatusCode::VARIANT_ALSO_NEGOTIATES,
+                            507u16 => ::axum::http::StatusCode::INSUFFICIENT_STORAGE,
+                            508u16 => ::axum::http::StatusCode::LOOP_DETECTED,
+                            510u16 => ::axum::http::StatusCode::NOT_EXTENDED,
+                            511u16 => {
+                                ::axum::http::StatusCode::NETWORK_AUTHENTICATION_REQUIRED
+                            }
+                            _ => {
+                                ::core::panicking::panic_fmt(
+                                    format_args!(
+                                        "internal error: entered unreachable code: {0}",
+                                        format_args!("groom: status code {0} was validated at expand time",
+                                        202u16,),
+                                    ),
+                                );
+                            }
+                        },
                         ::axum::Json(body),
                     )
                         .into_response()
@@ -2595,7 +4499,77 @@ mod wrapped_enum {
     ];
     impl Error {
         fn into_response_application_json(self) -> ::axum::response::Response {
-            (::axum::http::StatusCode::from_u16(404u16).unwrap(), ::axum::Json(self))
+            (
+                match 404u16 {
+                    200u16 => ::axum::http::StatusCode::OK,
+                    201u16 => ::axum::http::StatusCode::CREATED,
+                    202u16 => ::axum::http::StatusCode::ACCEPTED,
+                    203u16 => ::axum::http::StatusCode::NON_AUTHORITATIVE_INFORMATION,
+                    204u16 => ::axum::http::StatusCode::NO_CONTENT,
+                    205u16 => ::axum::http::StatusCode::RESET_CONTENT,
+                    206u16 => ::axum::http::StatusCode::PARTIAL_CONTENT,
+                    207u16 => ::axum::http::StatusCode::MULTI_STATUS,
+                    208u16 => ::axum::http::StatusCode::ALREADY_REPORTED,
+                    226u16 => ::axum::http::StatusCode::IM_USED,
+                    300u16 => ::axum::http::StatusCode::MULTIPLE_CHOICES,
+                    301u16 => ::axum::http::StatusCode::MOVED_PERMANENTLY,
+                    302u16 => ::axum::http::StatusCode::FOUND,
+                    303u16 => ::axum::http::StatusCode::SEE_OTHER,
+                    304u16 => ::axum::http::StatusCode::NOT_MODIFIED,
+                    307u16 => ::axum::http::StatusCode::TEMPORARY_REDIRECT,
+                    308u16 => ::axum::http::StatusCode::PERMANENT_REDIRECT,
+                    400u16 => ::axum::http::StatusCode::BAD_REQUEST,
+                    401u16 => ::axum::http::StatusCode::UNAUTHORIZED,
+                    402u16 => ::axum::http::StatusCode::PAYMENT_REQUIRED,
+                    403u16 => ::axum::http::StatusCode::FORBIDDEN,
+                    404u16 => ::axum::http::StatusCode::NOT_FOUND,
+                    405u16 => ::axum::http::StatusCode::METHOD_NOT_ALLOWED,
+                    406u16 => ::axum::http::StatusCode::NOT_ACCEPTABLE,
+                    407u16 => ::axum::http::StatusCode::PROXY_AUTHENTICATION_REQUIRED,
+                    408u16 => ::axum::http::StatusCode::REQUEST_TIMEOUT,
+                    409u16 => ::axum::http::StatusCode::CONFLICT,
+                    410u16 => ::axum::http::StatusCode::GONE,
+                    411u16 => ::axum::http::StatusCode::LENGTH_REQUIRED,
+                    412u16 => ::axum::http::StatusCode::PRECONDITION_FAILED,
+                    413u16 => ::axum::http::StatusCode::PAYLOAD_TOO_LARGE,
+                    414u16 => ::axum::http::StatusCode::URI_TOO_LONG,
+                    415u16 => ::axum::http::StatusCode::UNSUPPORTED_MEDIA_TYPE,
+                    416u16 => ::axum::http::StatusCode::RANGE_NOT_SATISFIABLE,
+                    417u16 => ::axum::http::StatusCode::EXPECTATION_FAILED,
+                    418u16 => ::axum::http::StatusCode::IM_A_TEAPOT,
+                    421u16 => ::axum::http::StatusCode::MISDIRECTED_REQUEST,
+                    422u16 => ::axum::http::StatusCode::UNPROCESSABLE_ENTITY,
+                    423u16 => ::axum::http::StatusCode::LOCKED,
+                    424u16 => ::axum::http::StatusCode::FAILED_DEPENDENCY,
+                    425u16 => ::axum::http::StatusCode::TOO_EARLY,
+                    426u16 => ::axum::http::StatusCode::UPGRADE_REQUIRED,
+                    428u16 => ::axum::http::StatusCode::PRECONDITION_REQUIRED,
+                    429u16 => ::axum::http::StatusCode::TOO_MANY_REQUESTS,
+                    431u16 => ::axum::http::StatusCode::REQUEST_HEADER_FIELDS_TOO_LARGE,
+                    451u16 => ::axum::http::StatusCode::UNAVAILABLE_FOR_LEGAL_REASONS,
+                    500u16 => ::axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+                    501u16 => ::axum::http::StatusCode::NOT_IMPLEMENTED,
+                    502u16 => ::axum::http::StatusCode::BAD_GATEWAY,
+                    503u16 => ::axum::http::StatusCode::SERVICE_UNAVAILABLE,
+                    504u16 => ::axum::http::StatusCode::GATEWAY_TIMEOUT,
+                    505u16 => ::axum::http::StatusCode::HTTP_VERSION_NOT_SUPPORTED,
+                    506u16 => ::axum::http::StatusCode::VARIANT_ALSO_NEGOTIATES,
+                    507u16 => ::axum::http::StatusCode::INSUFFICIENT_STORAGE,
+                    508u16 => ::axum::http::StatusCode::LOOP_DETECTED,
+                    510u16 => ::axum::http::StatusCode::NOT_EXTENDED,
+                    511u16 => ::axum::http::StatusCode::NETWORK_AUTHENTICATION_REQUIRED,
+                    _ => {
+                        ::core::panicking::panic_fmt(
+                            format_args!(
+                                "internal error: entered unreachable code: {0}",
+                                format_args!("groom: status code {0} was validated at expand time",
+                                404u16,),
+                            ),
+                        );
+                    }
+                },
+                ::axum::Json(self),
+            )
                 .into_response()
         }
     }
