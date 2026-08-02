@@ -379,67 +379,37 @@ fn make_openapi_fragments_for_type(
     let mut response_impls: Vec<TokenStream> = Vec::new();
     let content_types = &fragments.response_args.format;
 
-    let mut component_init: Option<TokenStream> = None;
-
-    let mut add_component = false;
-
     if content_types.plain_text {
         response_impls.push(quote! {
             .content(
                 ::mime::TEXT_PLAIN_UTF_8.as_ref(),
                 ::utoipa::openapi::ContentBuilder::new()
-                    .schema({
-                        match <String as utoipa::PartialSchema>::schema() {
-                            ::utoipa::openapi::RefOr::T(s) => Some(s),
-                            ::utoipa::openapi::RefOr::Ref(_) => panic!("String schema for plain_text is ref"),
-                        }
-                    })
+                    .schema(Some(::groom::extract::ComponentsRegistry::schema_or_ref::<String>(components)))
                     //.example(Some("Hello, world!".into()))
                     .build()
             )
         });
-        
-        add_component = true;
     }
     if content_types.html {
         response_impls.push(quote! {
             .content(
                 ::mime::TEXT_HTML_UTF_8.as_ref(),
                 ::utoipa::openapi::ContentBuilder::new()
-                    .schema(
-                        match <String as utoipa::PartialSchema>::schema() {
-                            ::utoipa::openapi::RefOr::T(s) => Some(s),
-                            ::utoipa::openapi::RefOr::Ref(_) => panic!("String schema for html is ref"),
-                        }
-                    )
+                    .schema(Some(::groom::extract::ComponentsRegistry::schema_or_ref::<String>(components)))
                     //.example(Some("<h1>Hello, world!</h1>".into()))
                     .build()
             )
         });
-        
-        add_component = true;
     }
 
     if content_types.json {
-        let type_name = ty.to_string();
         response_impls.push(quote! {
             .content(
                 ::mime::APPLICATION_JSON.as_ref(),
                 ::utoipa::openapi::ContentBuilder::new()
-                    .schema(match <#ty as ::utoipa::PartialSchema>::schema() {
-                        ::utoipa::openapi::RefOr::T(s) => Some(
-                            components.add_components::<#ty>()
-                        ),
-                        ::utoipa::openapi::RefOr::Ref(_) => panic!("Type `{}` schema for application/json is ref", #type_name),
-                    })
+                    .schema(Some(components.add_components::<#ty>()))
                     .build()
             )
-        });
-    }
-
-    if add_component {
-        component_init = Some(quote! {
-            components.add_components::<#ty>();
         });
     }
 
@@ -452,10 +422,6 @@ fn make_openapi_fragments_for_type(
                 .build()
         );
     });
-
-    if let Some(tokens) = component_init {
-        fragments.openapi_impls.push(tokens);
-    }
 }
 
 /// Assembles final AST
@@ -496,12 +462,7 @@ fn make_new_ast(fragments: NewAstFragments)
                     .content(
                         ::mime::TEXT_PLAIN.as_ref(),
                         ::utoipa::openapi::ContentBuilder::new()
-                            .schema({
-                                match <String as utoipa::PartialSchema>::schema() {
-                                    ::utoipa::openapi::RefOr::T(s) => Some(s),
-                                    ::utoipa::openapi::RefOr::Ref(_) => panic!("String schema for plain_text is ref"),
-                                }
-                            })
+                            .schema(Some(::groom::extract::ComponentsRegistry::schema_or_ref::<String>(components)))
                             .build()
                     )
                     .build()

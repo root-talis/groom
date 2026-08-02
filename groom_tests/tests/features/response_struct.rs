@@ -424,18 +424,6 @@ pub fn test_openapi() {
                         ],
                         "type": ("object"),
                     },
-                    "NamedStructOnlyPlaintextResult": {
-                         "description": ("Named struct as a plaintext-only response"),
-                         "properties": {
-                             "v": {
-                                 "type": ("string"),
-                             },
-                         },
-                         "required": [
-                             ("v"),
-                         ],
-                         "type": ("object"),
-                     },
                 },
             },
             "paths": {

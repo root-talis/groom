@@ -57,6 +57,20 @@ impl ComponentsRegistry {
         }
     }
 
+    /// Returns `T`'s schema for inline content (html/plain String schemas, 406 body).
+    /// Never panics: a `RefOr::T` is returned inline; a `RefOr::Ref` has its named
+    /// sub-schemas registered (via `add_subcomponents`) so the reference resolves, and the
+    /// `Ref` is returned unchanged.
+    pub fn schema_or_ref<T: utoipa::PartialSchema + utoipa::ToSchema + 'static>(&mut self) -> RefOr<Schema> {
+        match T::schema() {
+            RefOr::T(s) => RefOr::T(s),
+            RefOr::Ref(r) => {
+                self.add_subcomponents::<T>();
+                RefOr::Ref(r)
+            }
+        }
+    }
+
     pub fn add_component(&mut self, name: String, schema: RefOr<Schema>, tid: Option<TypeId>) -> ComponentEntry {
         let schema = match schema {
             RefOr::T(s)   => s,

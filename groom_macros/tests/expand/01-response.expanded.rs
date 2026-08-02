@@ -449,21 +449,17 @@ mod plaintext_only {
                         .content(
                             ::mime::TEXT_PLAIN_UTF_8.as_ref(),
                             ::utoipa::openapi::ContentBuilder::new()
-                                .schema({
-                                    match <String as utoipa::PartialSchema>::schema() {
-                                        ::utoipa::openapi::RefOr::T(s) => Some(s),
-                                        ::utoipa::openapi::RefOr::Ref(_) => {
-                                            ::core::panicking::panic_fmt(
-                                                format_args!("String schema for plain_text is ref"),
-                                            );
-                                        }
-                                    }
-                                })
+                                .schema(
+                                    Some(
+                                        ::groom::extract::ComponentsRegistry::schema_or_ref::<
+                                            String,
+                                        >(components),
+                                    ),
+                                )
                                 .build(),
                         )
                         .build(),
                 );
-            components.add_components::<String>();
             let op = op
                 .response(
                     "404",
@@ -477,16 +473,13 @@ mod plaintext_only {
                         .content(
                             ::mime::TEXT_PLAIN.as_ref(),
                             ::utoipa::openapi::ContentBuilder::new()
-                                .schema({
-                                    match <String as utoipa::PartialSchema>::schema() {
-                                        ::utoipa::openapi::RefOr::T(s) => Some(s),
-                                        ::utoipa::openapi::RefOr::Ref(_) => {
-                                            ::core::panicking::panic_fmt(
-                                                format_args!("String schema for plain_text is ref"),
-                                            );
-                                        }
-                                    }
-                                })
+                                .schema(
+                                    Some(
+                                        ::groom::extract::ComponentsRegistry::schema_or_ref::<
+                                            String,
+                                        >(components),
+                                    ),
+                                )
                                 .build(),
                         )
                         .build(),
@@ -820,20 +813,16 @@ mod html_only {
                             ::mime::TEXT_HTML_UTF_8.as_ref(),
                             ::utoipa::openapi::ContentBuilder::new()
                                 .schema(
-                                    match <String as utoipa::PartialSchema>::schema() {
-                                        ::utoipa::openapi::RefOr::T(s) => Some(s),
-                                        ::utoipa::openapi::RefOr::Ref(_) => {
-                                            ::core::panicking::panic_fmt(
-                                                format_args!("String schema for html is ref"),
-                                            );
-                                        }
-                                    },
+                                    Some(
+                                        ::groom::extract::ComponentsRegistry::schema_or_ref::<
+                                            String,
+                                        >(components),
+                                    ),
                                 )
                                 .build(),
                         )
                         .build(),
                 );
-            components.add_components::<Struct>();
             let op = op
                 .response(
                     "404",
@@ -847,16 +836,13 @@ mod html_only {
                         .content(
                             ::mime::TEXT_PLAIN.as_ref(),
                             ::utoipa::openapi::ContentBuilder::new()
-                                .schema({
-                                    match <String as utoipa::PartialSchema>::schema() {
-                                        ::utoipa::openapi::RefOr::T(s) => Some(s),
-                                        ::utoipa::openapi::RefOr::Ref(_) => {
-                                            ::core::panicking::panic_fmt(
-                                                format_args!("String schema for plain_text is ref"),
-                                            );
-                                        }
-                                    }
-                                })
+                                .schema(
+                                    Some(
+                                        ::groom::extract::ComponentsRegistry::schema_or_ref::<
+                                            String,
+                                        >(components),
+                                    ),
+                                )
                                 .build(),
                         )
                         .build(),
@@ -1171,21 +1157,7 @@ mod json_only {
                         .content(
                             ::mime::APPLICATION_JSON.as_ref(),
                             ::utoipa::openapi::ContentBuilder::new()
-                                .schema(
-                                    match <StructJson as ::utoipa::PartialSchema>::schema() {
-                                        ::utoipa::openapi::RefOr::T(s) => {
-                                            Some(components.add_components::<StructJson>())
-                                        }
-                                        ::utoipa::openapi::RefOr::Ref(_) => {
-                                            ::core::panicking::panic_fmt(
-                                                format_args!(
-                                                    "Type `{0}` schema for application/json is ref",
-                                                    "StructJson",
-                                                ),
-                                            );
-                                        }
-                                    },
-                                )
+                                .schema(Some(components.add_components::<StructJson>()))
                                 .build(),
                         )
                         .build(),
@@ -1203,16 +1175,13 @@ mod json_only {
                         .content(
                             ::mime::TEXT_PLAIN.as_ref(),
                             ::utoipa::openapi::ContentBuilder::new()
-                                .schema({
-                                    match <String as utoipa::PartialSchema>::schema() {
-                                        ::utoipa::openapi::RefOr::T(s) => Some(s),
-                                        ::utoipa::openapi::RefOr::Ref(_) => {
-                                            ::core::panicking::panic_fmt(
-                                                format_args!("String schema for plain_text is ref"),
-                                            );
-                                        }
-                                    }
-                                })
+                                .schema(
+                                    Some(
+                                        ::groom::extract::ComponentsRegistry::schema_or_ref::<
+                                            String,
+                                        >(components),
+                                    ),
+                                )
                                 .build(),
                         )
                         .build(),
@@ -1875,55 +1844,35 @@ mod multiple_content_types {
                         .content(
                             ::mime::TEXT_PLAIN_UTF_8.as_ref(),
                             ::utoipa::openapi::ContentBuilder::new()
-                                .schema({
-                                    match <String as utoipa::PartialSchema>::schema() {
-                                        ::utoipa::openapi::RefOr::T(s) => Some(s),
-                                        ::utoipa::openapi::RefOr::Ref(_) => {
-                                            ::core::panicking::panic_fmt(
-                                                format_args!("String schema for plain_text is ref"),
-                                            );
-                                        }
-                                    }
-                                })
+                                .schema(
+                                    Some(
+                                        ::groom::extract::ComponentsRegistry::schema_or_ref::<
+                                            String,
+                                        >(components),
+                                    ),
+                                )
                                 .build(),
                         )
                         .content(
                             ::mime::TEXT_HTML_UTF_8.as_ref(),
                             ::utoipa::openapi::ContentBuilder::new()
                                 .schema(
-                                    match <String as utoipa::PartialSchema>::schema() {
-                                        ::utoipa::openapi::RefOr::T(s) => Some(s),
-                                        ::utoipa::openapi::RefOr::Ref(_) => {
-                                            ::core::panicking::panic_fmt(
-                                                format_args!("String schema for html is ref"),
-                                            );
-                                        }
-                                    },
+                                    Some(
+                                        ::groom::extract::ComponentsRegistry::schema_or_ref::<
+                                            String,
+                                        >(components),
+                                    ),
                                 )
                                 .build(),
                         )
                         .content(
                             ::mime::APPLICATION_JSON.as_ref(),
                             ::utoipa::openapi::ContentBuilder::new()
-                                .schema(
-                                    match <Struct as ::utoipa::PartialSchema>::schema() {
-                                        ::utoipa::openapi::RefOr::T(s) => {
-                                            Some(components.add_components::<Struct>())
-                                        }
-                                        ::utoipa::openapi::RefOr::Ref(_) => {
-                                            ::core::panicking::panic_fmt(
-                                                format_args!(
-                                                    "Type `{0}` schema for application/json is ref", "Struct",
-                                                ),
-                                            );
-                                        }
-                                    },
-                                )
+                                .schema(Some(components.add_components::<Struct>()))
                                 .build(),
                         )
                         .build(),
                 );
-            components.add_components::<Struct>();
             let op = op
                 .response(
                     "404",
@@ -1937,16 +1886,13 @@ mod multiple_content_types {
                         .content(
                             ::mime::TEXT_PLAIN.as_ref(),
                             ::utoipa::openapi::ContentBuilder::new()
-                                .schema({
-                                    match <String as utoipa::PartialSchema>::schema() {
-                                        ::utoipa::openapi::RefOr::T(s) => Some(s),
-                                        ::utoipa::openapi::RefOr::Ref(_) => {
-                                            ::core::panicking::panic_fmt(
-                                                format_args!("String schema for plain_text is ref"),
-                                            );
-                                        }
-                                    }
-                                })
+                                .schema(
+                                    Some(
+                                        ::groom::extract::ComponentsRegistry::schema_or_ref::<
+                                            String,
+                                        >(components),
+                                    ),
+                                )
                                 .build(),
                         )
                         .build(),
@@ -2251,39 +2197,22 @@ mod named_struct_response {
                             ::mime::TEXT_HTML_UTF_8.as_ref(),
                             ::utoipa::openapi::ContentBuilder::new()
                                 .schema(
-                                    match <String as utoipa::PartialSchema>::schema() {
-                                        ::utoipa::openapi::RefOr::T(s) => Some(s),
-                                        ::utoipa::openapi::RefOr::Ref(_) => {
-                                            ::core::panicking::panic_fmt(
-                                                format_args!("String schema for html is ref"),
-                                            );
-                                        }
-                                    },
+                                    Some(
+                                        ::groom::extract::ComponentsRegistry::schema_or_ref::<
+                                            String,
+                                        >(components),
+                                    ),
                                 )
                                 .build(),
                         )
                         .content(
                             ::mime::APPLICATION_JSON.as_ref(),
                             ::utoipa::openapi::ContentBuilder::new()
-                                .schema(
-                                    match <Named as ::utoipa::PartialSchema>::schema() {
-                                        ::utoipa::openapi::RefOr::T(s) => {
-                                            Some(components.add_components::<Named>())
-                                        }
-                                        ::utoipa::openapi::RefOr::Ref(_) => {
-                                            ::core::panicking::panic_fmt(
-                                                format_args!(
-                                                    "Type `{0}` schema for application/json is ref", "Named",
-                                                ),
-                                            );
-                                        }
-                                    },
-                                )
+                                .schema(Some(components.add_components::<Named>()))
                                 .build(),
                         )
                         .build(),
                 );
-            components.add_components::<Named>();
             let op = op
                 .response(
                     "406",
@@ -2292,16 +2221,13 @@ mod named_struct_response {
                         .content(
                             ::mime::TEXT_PLAIN.as_ref(),
                             ::utoipa::openapi::ContentBuilder::new()
-                                .schema({
-                                    match <String as utoipa::PartialSchema>::schema() {
-                                        ::utoipa::openapi::RefOr::T(s) => Some(s),
-                                        ::utoipa::openapi::RefOr::Ref(_) => {
-                                            ::core::panicking::panic_fmt(
-                                                format_args!("String schema for plain_text is ref"),
-                                            );
-                                        }
-                                    }
-                                })
+                                .schema(
+                                    Some(
+                                        ::groom::extract::ComponentsRegistry::schema_or_ref::<
+                                            String,
+                                        >(components),
+                                    ),
+                                )
                                 .build(),
                         )
                         .build(),
@@ -2592,39 +2518,22 @@ mod unnamed_struct_response {
                             ::mime::TEXT_HTML_UTF_8.as_ref(),
                             ::utoipa::openapi::ContentBuilder::new()
                                 .schema(
-                                    match <String as utoipa::PartialSchema>::schema() {
-                                        ::utoipa::openapi::RefOr::T(s) => Some(s),
-                                        ::utoipa::openapi::RefOr::Ref(_) => {
-                                            ::core::panicking::panic_fmt(
-                                                format_args!("String schema for html is ref"),
-                                            );
-                                        }
-                                    },
+                                    Some(
+                                        ::groom::extract::ComponentsRegistry::schema_or_ref::<
+                                            String,
+                                        >(components),
+                                    ),
                                 )
                                 .build(),
                         )
                         .content(
                             ::mime::APPLICATION_JSON.as_ref(),
                             ::utoipa::openapi::ContentBuilder::new()
-                                .schema(
-                                    match <String as ::utoipa::PartialSchema>::schema() {
-                                        ::utoipa::openapi::RefOr::T(s) => {
-                                            Some(components.add_components::<String>())
-                                        }
-                                        ::utoipa::openapi::RefOr::Ref(_) => {
-                                            ::core::panicking::panic_fmt(
-                                                format_args!(
-                                                    "Type `{0}` schema for application/json is ref", "String",
-                                                ),
-                                            );
-                                        }
-                                    },
-                                )
+                                .schema(Some(components.add_components::<String>()))
                                 .build(),
                         )
                         .build(),
                 );
-            components.add_components::<String>();
             let op = op
                 .response(
                     "406",
@@ -2633,16 +2542,13 @@ mod unnamed_struct_response {
                         .content(
                             ::mime::TEXT_PLAIN.as_ref(),
                             ::utoipa::openapi::ContentBuilder::new()
-                                .schema({
-                                    match <String as utoipa::PartialSchema>::schema() {
-                                        ::utoipa::openapi::RefOr::T(s) => Some(s),
-                                        ::utoipa::openapi::RefOr::Ref(_) => {
-                                            ::core::panicking::panic_fmt(
-                                                format_args!("String schema for plain_text is ref"),
-                                            );
-                                        }
-                                    }
-                                })
+                                .schema(
+                                    Some(
+                                        ::groom::extract::ComponentsRegistry::schema_or_ref::<
+                                            String,
+                                        >(components),
+                                    ),
+                                )
                                 .build(),
                         )
                         .build(),
@@ -3424,21 +3330,17 @@ mod result_struct_enum {
                         .content(
                             ::mime::TEXT_PLAIN_UTF_8.as_ref(),
                             ::utoipa::openapi::ContentBuilder::new()
-                                .schema({
-                                    match <String as utoipa::PartialSchema>::schema() {
-                                        ::utoipa::openapi::RefOr::T(s) => Some(s),
-                                        ::utoipa::openapi::RefOr::Ref(_) => {
-                                            ::core::panicking::panic_fmt(
-                                                format_args!("String schema for plain_text is ref"),
-                                            );
-                                        }
-                                    }
-                                })
+                                .schema(
+                                    Some(
+                                        ::groom::extract::ComponentsRegistry::schema_or_ref::<
+                                            String,
+                                        >(components),
+                                    ),
+                                )
                                 .build(),
                         )
                         .build(),
                 );
-            components.add_components::<String>();
             let op = op
                 .response(
                     "406",
@@ -3447,16 +3349,13 @@ mod result_struct_enum {
                         .content(
                             ::mime::TEXT_PLAIN.as_ref(),
                             ::utoipa::openapi::ContentBuilder::new()
-                                .schema({
-                                    match <String as utoipa::PartialSchema>::schema() {
-                                        ::utoipa::openapi::RefOr::T(s) => Some(s),
-                                        ::utoipa::openapi::RefOr::Ref(_) => {
-                                            ::core::panicking::panic_fmt(
-                                                format_args!("String schema for plain_text is ref"),
-                                            );
-                                        }
-                                    }
-                                })
+                                .schema(
+                                    Some(
+                                        ::groom::extract::ComponentsRegistry::schema_or_ref::<
+                                            String,
+                                        >(components),
+                                    ),
+                                )
                                 .build(),
                         )
                         .build(),
@@ -3763,21 +3662,17 @@ mod result_struct_enum {
                         .content(
                             ::mime::TEXT_PLAIN_UTF_8.as_ref(),
                             ::utoipa::openapi::ContentBuilder::new()
-                                .schema({
-                                    match <String as utoipa::PartialSchema>::schema() {
-                                        ::utoipa::openapi::RefOr::T(s) => Some(s),
-                                        ::utoipa::openapi::RefOr::Ref(_) => {
-                                            ::core::panicking::panic_fmt(
-                                                format_args!("String schema for plain_text is ref"),
-                                            );
-                                        }
-                                    }
-                                })
+                                .schema(
+                                    Some(
+                                        ::groom::extract::ComponentsRegistry::schema_or_ref::<
+                                            String,
+                                        >(components),
+                                    ),
+                                )
                                 .build(),
                         )
                         .build(),
                 );
-            components.add_components::<String>();
             let op = op
                 .response(
                     "406",
@@ -3786,16 +3681,13 @@ mod result_struct_enum {
                         .content(
                             ::mime::TEXT_PLAIN.as_ref(),
                             ::utoipa::openapi::ContentBuilder::new()
-                                .schema({
-                                    match <String as utoipa::PartialSchema>::schema() {
-                                        ::utoipa::openapi::RefOr::T(s) => Some(s),
-                                        ::utoipa::openapi::RefOr::Ref(_) => {
-                                            ::core::panicking::panic_fmt(
-                                                format_args!("String schema for plain_text is ref"),
-                                            );
-                                        }
-                                    }
-                                })
+                                .schema(
+                                    Some(
+                                        ::groom::extract::ComponentsRegistry::schema_or_ref::<
+                                            String,
+                                        >(components),
+                                    ),
+                                )
                                 .build(),
                         )
                         .build(),
@@ -4356,19 +4248,7 @@ mod wrapped_enum {
                             ::mime::APPLICATION_JSON.as_ref(),
                             ::utoipa::openapi::ContentBuilder::new()
                                 .schema(
-                                    match <EnumValueObject as ::utoipa::PartialSchema>::schema() {
-                                        ::utoipa::openapi::RefOr::T(s) => {
-                                            Some(components.add_components::<EnumValueObject>())
-                                        }
-                                        ::utoipa::openapi::RefOr::Ref(_) => {
-                                            ::core::panicking::panic_fmt(
-                                                format_args!(
-                                                    "Type `{0}` schema for application/json is ref",
-                                                    "EnumValueObject",
-                                                ),
-                                            );
-                                        }
-                                    },
+                                    Some(components.add_components::<EnumValueObject>()),
                                 )
                                 .build(),
                         )
@@ -4382,21 +4262,7 @@ mod wrapped_enum {
                         .content(
                             ::mime::APPLICATION_JSON.as_ref(),
                             ::utoipa::openapi::ContentBuilder::new()
-                                .schema(
-                                    match <WrapperStruct as ::utoipa::PartialSchema>::schema() {
-                                        ::utoipa::openapi::RefOr::T(s) => {
-                                            Some(components.add_components::<WrapperStruct>())
-                                        }
-                                        ::utoipa::openapi::RefOr::Ref(_) => {
-                                            ::core::panicking::panic_fmt(
-                                                format_args!(
-                                                    "Type `{0}` schema for application/json is ref",
-                                                    "WrapperStruct",
-                                                ),
-                                            );
-                                        }
-                                    },
-                                )
+                                .schema(Some(components.add_components::<WrapperStruct>()))
                                 .build(),
                         )
                         .build(),
@@ -4409,16 +4275,13 @@ mod wrapped_enum {
                         .content(
                             ::mime::TEXT_PLAIN.as_ref(),
                             ::utoipa::openapi::ContentBuilder::new()
-                                .schema({
-                                    match <String as utoipa::PartialSchema>::schema() {
-                                        ::utoipa::openapi::RefOr::T(s) => Some(s),
-                                        ::utoipa::openapi::RefOr::Ref(_) => {
-                                            ::core::panicking::panic_fmt(
-                                                format_args!("String schema for plain_text is ref"),
-                                            );
-                                        }
-                                    }
-                                })
+                                .schema(
+                                    Some(
+                                        ::groom::extract::ComponentsRegistry::schema_or_ref::<
+                                            String,
+                                        >(components),
+                                    ),
+                                )
                                 .build(),
                         )
                         .build(),
@@ -4718,20 +4581,7 @@ mod wrapped_enum {
                         .content(
                             ::mime::APPLICATION_JSON.as_ref(),
                             ::utoipa::openapi::ContentBuilder::new()
-                                .schema(
-                                    match <Error as ::utoipa::PartialSchema>::schema() {
-                                        ::utoipa::openapi::RefOr::T(s) => {
-                                            Some(components.add_components::<Error>())
-                                        }
-                                        ::utoipa::openapi::RefOr::Ref(_) => {
-                                            ::core::panicking::panic_fmt(
-                                                format_args!(
-                                                    "Type `{0}` schema for application/json is ref", "Error",
-                                                ),
-                                            );
-                                        }
-                                    },
-                                )
+                                .schema(Some(components.add_components::<Error>()))
                                 .build(),
                         )
                         .build(),
@@ -4744,16 +4594,13 @@ mod wrapped_enum {
                         .content(
                             ::mime::TEXT_PLAIN.as_ref(),
                             ::utoipa::openapi::ContentBuilder::new()
-                                .schema({
-                                    match <String as utoipa::PartialSchema>::schema() {
-                                        ::utoipa::openapi::RefOr::T(s) => Some(s),
-                                        ::utoipa::openapi::RefOr::Ref(_) => {
-                                            ::core::panicking::panic_fmt(
-                                                format_args!("String schema for plain_text is ref"),
-                                            );
-                                        }
-                                    }
-                                })
+                                .schema(
+                                    Some(
+                                        ::groom::extract::ComponentsRegistry::schema_or_ref::<
+                                            String,
+                                        >(components),
+                                    ),
+                                )
                                 .build(),
                         )
                         .build(),
