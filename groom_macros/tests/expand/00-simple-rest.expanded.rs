@@ -424,9 +424,20 @@ pub mod api_root {
                     match (negotiated.type_(), negotiated.subtype()) {
                         (::mime::TEXT, mime::PLAIN) => self.into_response_text_plain(),
                         _ => {
+                            if true {
+                                if !false {
+                                    {
+                                        ::core::panicking::panic_fmt(
+                                            format_args!(
+                                                "groom: negotiated mime not covered by response arms",
+                                            ),
+                                        );
+                                    }
+                                }
+                            }
                             (
-                                ::axum::http::StatusCode::BAD_REQUEST,
-                                "Content-Type negotiation produced an unexpected type/subtype pair.",
+                                ::axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+                                "internal server error",
                             )
                                 .into_response()
                         }
@@ -1042,9 +1053,20 @@ pub mod api_root {
                     match (negotiated.type_(), negotiated.subtype()) {
                         (::mime::TEXT, mime::PLAIN) => self.into_response_text_plain(),
                         _ => {
+                            if true {
+                                if !false {
+                                    {
+                                        ::core::panicking::panic_fmt(
+                                            format_args!(
+                                                "groom: negotiated mime not covered by response arms",
+                                            ),
+                                        );
+                                    }
+                                }
+                            }
                             (
-                                ::axum::http::StatusCode::BAD_REQUEST,
-                                "Content-Type negotiation produced an unexpected type/subtype pair.",
+                                ::axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+                                "internal server error",
                             )
                                 .into_response()
                         }
@@ -1600,9 +1622,20 @@ pub mod api_root {
                     match (negotiated.type_(), negotiated.subtype()) {
                         (::mime::TEXT, mime::PLAIN) => self.into_response_text_plain(),
                         _ => {
+                            if true {
+                                if !false {
+                                    {
+                                        ::core::panicking::panic_fmt(
+                                            format_args!(
+                                                "groom: negotiated mime not covered by response arms",
+                                            ),
+                                        );
+                                    }
+                                }
+                            }
                             (
-                                ::axum::http::StatusCode::BAD_REQUEST,
-                                "Content-Type negotiation produced an unexpected type/subtype pair.",
+                                ::axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+                                "internal server error",
                             )
                                 .into_response()
                         }
@@ -1892,9 +1925,20 @@ pub mod api_root {
                             self.into_response_application_json()
                         }
                         _ => {
+                            if true {
+                                if !false {
+                                    {
+                                        ::core::panicking::panic_fmt(
+                                            format_args!(
+                                                "groom: negotiated mime not covered by response arms",
+                                            ),
+                                        );
+                                    }
+                                }
+                            }
                             (
-                                ::axum::http::StatusCode::BAD_REQUEST,
-                                "Content-Type negotiation produced an unexpected type/subtype pair.",
+                                ::axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+                                "internal server error",
                             )
                                 .into_response()
                         }

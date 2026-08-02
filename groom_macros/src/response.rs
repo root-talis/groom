@@ -612,8 +612,12 @@ fn make_groom_into_response_function(
                         #(#mime_type_matches)*
 
                         _ => {
-                            // todo: somehow log this error?
-                            (::axum::http::StatusCode::BAD_REQUEST, "Content-Type negotiation produced an unexpected type/subtype pair.")
+                            // The mime came from the pre-run `__groom_negotiate_content_type`
+                            // call, so this arm is unreachable in a correct build. Fail fast
+                            // in debug builds; return a neutral 500 in release (the body must
+                            // not reveal the framework, per D-13).
+                            debug_assert!(false, "groom: negotiated mime not covered by response arms");
+                            (::axum::http::StatusCode::INTERNAL_SERVER_ERROR, "internal server error")
                                 .into_response()
                         }
                     }
