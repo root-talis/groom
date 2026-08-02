@@ -1,11 +1,103 @@
 use std::collections::HashMap;
 use std::marker::PhantomData;
 
+use utoipa::openapi::path::{HttpMethod, PathItem};
+
 use crate::extract::ComponentsRegistry;
 
 use super::error::MergeError;
 use super::traits::{OpenApiSpecLayer, SpecLayerModifier};
 use super::{MergeResult, NotValidated};
+
+/// Bit mask of HTTP methods a per-path spec layer is tagged for (D-13 / D-14).
+///
+/// Mapped to utoipa's eight `HttpMethod` variants — no external bitflags crate.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub(crate) struct MethodFlags(u8);
+
+impl MethodFlags {
+    const GET: u8 = 1 << 0;
+    const PUT: u8 = 1 << 1;
+    const POST: u8 = 1 << 2;
+    const DELETE: u8 = 1 << 3;
+    const OPTIONS: u8 = 1 << 4;
+    const HEAD: u8 = 1 << 5;
+    const PATCH: u8 = 1 << 6;
+    const TRACE: u8 = 1 << 7;
+
+    pub(crate) fn empty() -> Self {
+        Self(0)
+    }
+
+    pub(crate) fn from_path_item(item: &PathItem) -> Self {
+        let mut flags = Self::empty();
+        if item.get.is_some() {
+            flags = flags.union_method(HttpMethod::Get);
+        }
+        if item.put.is_some() {
+            flags = flags.union_method(HttpMethod::Put);
+        }
+        if item.post.is_some() {
+            flags = flags.union_method(HttpMethod::Post);
+        }
+        if item.delete.is_some() {
+            flags = flags.union_method(HttpMethod::Delete);
+        }
+        if item.options.is_some() {
+            flags = flags.union_method(HttpMethod::Options);
+        }
+        if item.head.is_some() {
+            flags = flags.union_method(HttpMethod::Head);
+        }
+        if item.patch.is_some() {
+            flags = flags.union_method(HttpMethod::Patch);
+        }
+        if item.trace.is_some() {
+            flags = flags.union_method(HttpMethod::Trace);
+        }
+        flags
+    }
+
+    pub(crate) fn union(self, other: Self) -> Self {
+        Self(self.0 | other.0)
+    }
+
+    pub(crate) fn union_method(self, method: HttpMethod) -> Self {
+        Self(self.0 | Self::bit(&method))
+    }
+
+    pub(crate) fn contains(self, method: &HttpMethod) -> bool {
+        self.0 & Self::bit(method) != 0
+    }
+
+    fn bit(method: &HttpMethod) -> u8 {
+        match method {
+            HttpMethod::Get => Self::GET,
+            HttpMethod::Put => Self::PUT,
+            HttpMethod::Post => Self::POST,
+            HttpMethod::Delete => Self::DELETE,
+            HttpMethod::Options => Self::OPTIONS,
+            HttpMethod::Head => Self::HEAD,
+            HttpMethod::Patch => Self::PATCH,
+            HttpMethod::Trace => Self::TRACE,
+        }
+    }
+}
+
+/// A per-path OpenAPI spec layer tagged with the methods present at attach time.
+pub(crate) struct SpecLayerBinding {
+    pub(crate) methods: MethodFlags,
+    pub(crate) layer: Box<dyn SpecLayerModifier>,
+}
+
+impl SpecLayerBinding {
+    pub(crate) fn clone_binding(&self) -> Self {
+        Self {
+            methods: self.methods,
+            layer: self.layer.clone_box(),
+        }
+    }
+}
 
 pub struct GroomRouter<S = (), V = NotValidated> {
     pub(crate) router: axum::Router<S>,
@@ -13,7 +105,7 @@ pub struct GroomRouter<S = (), V = NotValidated> {
     pub(crate) openapi_paths: Vec<(String, utoipa::openapi::path::PathItem)>,
     /// Per-path spec layers, keyed by path string. Ensures that when controllers are
     /// merged, spec layers only apply to the operations they were attached to.
-    pub(crate) path_spec_layers: HashMap<String, Vec<Box<dyn SpecLayerModifier>>>,
+    pub(crate) path_spec_layers: HashMap<String, Vec<SpecLayerBinding>>,
     pub(crate) _marker: PhantomData<V>,
 }
 
@@ -25,7 +117,7 @@ impl<S: Clone + Send + Sync + 'static, V> GroomRouter<S, V> {
         registry: ComponentsRegistry,
         openapi_paths: Vec<(String, utoipa::openapi::path::PathItem)>,
     ) -> Self {
-        let path_spec_layers: HashMap<String, Vec<Box<dyn SpecLayerModifier>>> = openapi_paths
+        let path_spec_layers: HashMap<String, Vec<SpecLayerBinding>> = openapi_paths
             .iter()
             .map(|(path, _)| (path.clone(), Vec::new()))
             .collect();
@@ -65,7 +157,12 @@ impl<S: Clone + Send + Sync + 'static> GroomRouter<S, NotValidated> {
         openapi_paths.extend(other.openapi_paths);
 
         let mut path_spec_layers = self.path_spec_layers;
-        path_spec_layers.extend(other.path_spec_layers);
+        for (path, other_layers) in other.path_spec_layers {
+            path_spec_layers
+                .entry(path)
+                .or_default()
+                .extend(other_layers);
+        }
 
         let registry = self.registry
             .merge(other.registry)
@@ -86,13 +183,17 @@ impl<S: Clone + Send + Sync + 'static> GroomRouter<S, NotValidated> {
         for (p, item) in other.openapi_paths {
             let prefixed_path = super::prepend_path(path, &p);
 
-            let spec_layers: Vec<Box<dyn SpecLayerModifier>> = other.path_spec_layers
+            let spec_layers: Vec<SpecLayerBinding> = other
+                .path_spec_layers
                 .get(&p)
-                .map(|layers| layers.iter().map(|s| s.clone_box()).collect())
+                .map(|layers| layers.iter().map(SpecLayerBinding::clone_binding).collect())
                 .unwrap_or_default();
 
             openapi_paths.push((prefixed_path.clone(), item));
-            path_spec_layers.insert(prefixed_path, spec_layers);
+            path_spec_layers
+                .entry(prefixed_path)
+                .or_default()
+                .extend(spec_layers);
         }
 
         let registry = self.registry
@@ -158,9 +259,23 @@ impl<S: Clone + Send + Sync + 'static> GroomRouter<S, NotValidated> {
     {
         let boxed = spec_layer.clone_box();
 
+        // Methods present on each path at attach time (union across duplicate path keys).
+        let mut methods_by_path: HashMap<&str, MethodFlags> = HashMap::new();
+        for (path, item) in &self.openapi_paths {
+            let entry = methods_by_path.entry(path.as_str()).or_default();
+            *entry = entry.union(MethodFlags::from_path_item(item));
+        }
+
         let mut path_spec_layers = self.path_spec_layers;
-        for layers in path_spec_layers.values_mut() {
-            layers.push(boxed.clone_box());
+        for (path, layers) in path_spec_layers.iter_mut() {
+            let methods = methods_by_path
+                .get(path.as_str())
+                .copied()
+                .unwrap_or_else(MethodFlags::empty);
+            layers.push(SpecLayerBinding {
+                methods,
+                layer: boxed.clone_box(),
+            });
         }
 
         Self {

@@ -64,7 +64,7 @@ impl<S: Clone, V: Clone> Clone for GroomRouter<S, V> {
             registry: self.registry.clone(),
             openapi_paths: self.openapi_paths.clone(),
             path_spec_layers: self.path_spec_layers.iter().map(
-                |(k, layers)| (k.clone(), layers.iter().map(|s| s.clone_box()).collect())
+                |(k, layers)| (k.clone(), layers.iter().map(core::SpecLayerBinding::clone_binding).collect())
             ).collect(),
             _marker: std::marker::PhantomData,
         }

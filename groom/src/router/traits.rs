@@ -344,4 +344,63 @@ mod tests {
         assert_eq!(api.info.title, "ORDERED",
             "modify_operation must run before modify_openapi");
     }
+
+    /// Same-path merge must append per-path layers and apply modify_operation
+    /// only to methods present when each layer was attached (P002 / D-10, D-13, D-14).
+    #[test]
+    fn test_same_path_merge_keeps_method_affinity_for_spec_layers() {
+        use utoipa::OpenApi;
+        use utoipa::openapi::path::{PathItemBuilder, HttpMethod, OperationBuilder};
+
+        #[derive(OpenApi)]
+        #[openapi(info(title = "test", version = "0.1.0"))]
+        struct ApiDoc;
+
+        let get_op = OperationBuilder::new().operation_id(Some("get_foo")).build();
+        let get_item = PathItemBuilder::new()
+            .operation(HttpMethod::Get, get_op)
+            .build();
+        let post_op = OperationBuilder::new().operation_id(Some("post_foo")).build();
+        let post_item = PathItemBuilder::new()
+            .operation(HttpMethod::Post, post_op)
+            .build();
+
+        let r1: GroomRouter<()> = GroomRouter::from_controller_parts(
+            axum::Router::new(),
+            ComponentsRegistry::new(),
+            vec![("/foo".to_string(), get_item)],
+        )
+        .layer_with_spec(OperationTagSpecLayer {
+            tag: "get-only".into(),
+        });
+        let r2: GroomRouter<()> = GroomRouter::from_controller_parts(
+            axum::Router::new(),
+            ComponentsRegistry::new(),
+            vec![("/foo".to_string(), post_item)],
+        )
+        .layer_with_spec(OperationTagSpecLayer {
+            tag: "post-only".into(),
+        });
+
+        let merged = r1.merge(r2).unwrap();
+        assert_eq!(
+            merged.path_spec_layers["/foo"].len(),
+            2,
+            "same-path merge must append both controllers' spec layers"
+        );
+
+        let api = merged.validate().unwrap().to_openapi(ApiDoc::openapi());
+        let foo = api.paths.paths.get("/foo").expect("/foo should exist");
+
+        assert_eq!(
+            foo.get.as_ref().unwrap().description.as_deref(),
+            Some("get-only"),
+            "GET must receive only the get-only layer"
+        );
+        assert_eq!(
+            foo.post.as_ref().unwrap().description.as_deref(),
+            Some("post-only"),
+            "POST must receive only the post-only layer"
+        );
+    }
 }

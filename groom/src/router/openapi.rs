@@ -45,8 +45,15 @@ impl<S: Clone + Send + Sync + 'static> GroomRouter<S, Validated> {
             if let Some(layers) = self.path_spec_layers.get(path_str.as_str()) {
                 for (method, operation_opt) in methods {
                     if let Some(operation) = operation_opt {
-                        for spec_layer in layers {
-                            spec_layer.modify_operation(path_str.as_str(), &method, operation);
+                        for binding in layers {
+                            if !binding.methods.contains(&method) {
+                                continue;
+                            }
+                            binding.layer.modify_operation(
+                                path_str.as_str(),
+                                &method,
+                                operation,
+                            );
                         }
                     }
                 }
@@ -54,13 +61,14 @@ impl<S: Clone + Send + Sync + 'static> GroomRouter<S, Validated> {
         }
 
         // Whole-spec modification: invoke all unique spec layers across all paths
+        // (pointer dedup remains until P003 introduces whole_spec_layers).
         let mut seen_ptrs: HashSet<*const dyn SpecLayerModifier> = HashSet::new();
         for layers in self.path_spec_layers.values() {
-            for spec_layer in layers {
-                let ptr = spec_layer.as_ref() as *const dyn SpecLayerModifier;
+            for binding in layers {
+                let ptr = binding.layer.as_ref() as *const dyn SpecLayerModifier;
                 if !seen_ptrs.contains(&ptr) {
                     seen_ptrs.insert(ptr);
-                    spec_layer.modify_openapi(&mut api);
+                    binding.layer.modify_openapi(&mut api);
                 }
             }
         }
