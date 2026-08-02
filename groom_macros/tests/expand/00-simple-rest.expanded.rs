@@ -521,6 +521,7 @@ pub mod api_root {
             match ::groom::content_negotiation::negotiate_parameter_insensitive(
                 accept,
                 &__GROOM_RESPONSE_SUPPORTED_MIMES_GetRootResponse,
+                Some(&__GROOM_RESPONSE_SUPPORTED_MIMES_GetRootResponse[0usize]),
             ) {
                 Some(negotiated) => Ok(Some(negotiated.to_owned())),
                 None => {
@@ -1117,6 +1118,7 @@ pub mod api_root {
             match ::groom::content_negotiation::negotiate_parameter_insensitive(
                 accept,
                 &__GROOM_RESPONSE_SUPPORTED_MIMES_RqConsQueryResponse,
+                Some(&__GROOM_RESPONSE_SUPPORTED_MIMES_RqConsQueryResponse[0usize]),
             ) {
                 Some(negotiated) => Ok(Some(negotiated.to_owned())),
                 None => {
@@ -1644,6 +1646,7 @@ pub mod api_root {
             match ::groom::content_negotiation::negotiate_parameter_insensitive(
                 accept,
                 &__GROOM_RESPONSE_SUPPORTED_MIMES_RqConsPathResponse,
+                Some(&__GROOM_RESPONSE_SUPPORTED_MIMES_RqConsPathResponse[0usize]),
             ) {
                 Some(negotiated) => Ok(Some(negotiated.to_owned())),
                 None => {
@@ -1926,6 +1929,7 @@ pub mod api_root {
             match ::groom::content_negotiation::negotiate_parameter_insensitive(
                 accept,
                 &__GROOM_RESPONSE_SUPPORTED_MIMES_RespJsonResponse,
+                Some(&__GROOM_RESPONSE_SUPPORTED_MIMES_RespJsonResponse[0usize]),
             ) {
                 Some(negotiated) => Ok(Some(negotiated.to_owned())),
                 None => {

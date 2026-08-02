@@ -445,7 +445,8 @@ fn make_new_ast(fragments: NewAstFragments)
         make_groom_negotiate_content_type_function(
             &fragments,
             resp_args,
-        );
+            resp_args_span,
+        )?;
 
     let formatter_functions = &fragments.formatter_functions;
     let type_assertions = &fragments.type_assertions;
@@ -600,34 +601,75 @@ fn make_groom_into_response_function(
 fn make_groom_negotiate_content_type_function(
     fragments: &NewAstFragments,
     resp_args: &ResponseArgsBase,
-) -> TokenStream
+    resp_args_span: &TokenStream,
+) -> Result<TokenStream, TokenStream>
 {
     let supported_mimes_ident = &fragments.supported_mimes_ident;
 
     if !resp_args.format.is_any() {
         // any-content type: accepts every content type by design, no negotiation
-        quote! {
+        Ok(quote! {
             fn __groom_negotiate_content_type(_accept: &::accept_header::Accept)
                 -> ::core::result::Result<Option<::mime::Mime>, ::axum::response::Response>
             {
                 Ok(None)
             }
-        }
+        })
     } else {
-        quote! {
+        let default_format =
+            detect_default_format(&fragments.item_ident, resp_args, resp_args_span)?;
+        let default_mime_ref = match default_format {
+            Some(fmt) => {
+                let index = default_format_index_in_supported(resp_args, fmt);
+                quote! { Some(&#supported_mimes_ident[#index]) }
+            }
+            None => quote! { None },
+        };
+
+        Ok(quote! {
             fn __groom_negotiate_content_type(accept: &::accept_header::Accept)
                 -> ::core::result::Result<Option<::mime::Mime>, ::axum::response::Response>
             {
                 match ::groom::content_negotiation::negotiate_parameter_insensitive(
                     accept,
                     &#supported_mimes_ident,
+                    #default_mime_ref,
                 ) {
                     Some(negotiated) => Ok(Some(negotiated.to_owned())),
                     None => Err(::groom::response::not_acceptable(#supported_mimes_ident)),
                 }
             }
+        })
+    }
+}
+
+/// Index of `default` in the `__GROOM_RESPONSE_SUPPORTED_MIMES_*` const, matching
+/// `populate_supported_mimes` order (plain_text, html, json).
+fn default_format_index_in_supported(
+    resp_args: &ResponseArgsBase,
+    default: ResponseFormat,
+) -> usize {
+    let mut index = 0usize;
+    if resp_args.format.plain_text {
+        if default == ResponseFormat::PlainText {
+            return index;
+        }
+        index += 1;
+    }
+    if resp_args.format.html {
+        if default == ResponseFormat::Html {
+            return index;
+        }
+        index += 1;
+    }
+    if resp_args.format.json {
+        if default == ResponseFormat::Json {
+            return index;
         }
     }
+    panic!(
+        "bug in groom: default_format not in formats list after detect_default_format"
+    );
 }
 
 /// Attempts to infer `default_format` value of `#[Response]` annotation if it is applicable.

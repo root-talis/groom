@@ -116,6 +116,18 @@ pub async fn status_default_json() {
     ;
 }
 
+/// Accept `*/*` must honor `default_format="json"` (not hard-coded HTML preference).
+#[tokio::test]
+pub async fn status_default_json_accept_star_star() {
+    let r = controller::into_router().validate().unwrap().to_axum_router();
+
+    Req::get("/status").accept("*/*").call(&r).await
+        .assert_status(200)
+        .assert_body(DataObject::default_json_str())
+        .assert_content_type("application/json")
+    ;
+}
+
 /// Tests that handler picks default html format by default
 #[tokio::test]
 pub async fn status_default_html() {
@@ -420,14 +432,14 @@ pub async fn test_html_or_text_weights() {
         .assert_content_type("text/html; charset=utf-8")
     ;
 
-    // HTML has higher priority over plain text when content-type */* is specified.
+    // Accept `*/*` uses default_format (html for this handler).
     Req::get("/html-or-text").accept("*/*").call(&r).await
         .assert_status(200)
         .assert_body("<h1>Hello, world!</h1>")
         .assert_content_type("text/html; charset=utf-8")
     ;
 
-    // HTML has higher priority over plain text when no Accept header is
+    // Missing Accept also uses default_format (html for this handler).
     Req::get("/html-or-text").call(&r).await
         .assert_status(200)
         .assert_body("<h1>Hello, world!</h1>")

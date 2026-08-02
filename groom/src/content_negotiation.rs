@@ -68,11 +68,13 @@ fn get_header_as_string(headers: &HeaderMap, header_name: HeaderName, error_name
 /// others). `accept-header`'s `negotiate()` compares full `Mime`s including
 /// parameters, so a `text/plain; charset=utf-8` supported list would otherwise 406 a
 /// plain `Accept: text/plain`. The parser pre-sorts `accept.types` by q-weight, so
-/// iterating in order preserves priority; `*/*` (stored in `accept.wildcard`) falls
-/// back to the html mime, else the first supported.
+/// iterating in order preserves priority. When only `*/*` matches (stored in
+/// `accept.wildcard`), this uses `default` when that mime is in `supported`
+/// (type_/subtype_ match); otherwise it uses the first supported mime.
 pub fn negotiate_parameter_insensitive<'a>(
     accept: &Accept,
     supported: &'a [Mime],
+    default: Option<&'a Mime>,
 ) -> Option<&'a Mime> {
     for media_type in &accept.types {
         if let Some(supported) = supported.iter().find(|mime| {
@@ -83,9 +85,12 @@ pub fn negotiate_parameter_insensitive<'a>(
         }
     }
     if accept.wildcard.is_some() {
-        return supported
-            .iter()
-            .find(|mime| mime.type_() == mime::TEXT && mime.subtype() == mime::HTML)
+        return default
+            .and_then(|d| {
+                supported.iter().find(|mime| {
+                    mime.type_() == d.type_() && mime.subtype() == d.subtype()
+                })
+            })
             .or_else(|| supported.first());
     }
     None

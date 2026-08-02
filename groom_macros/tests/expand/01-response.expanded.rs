@@ -480,6 +480,7 @@ mod plaintext_only {
             match ::groom::content_negotiation::negotiate_parameter_insensitive(
                 accept,
                 &__GROOM_RESPONSE_SUPPORTED_MIMES_RespPlaintextResponse,
+                Some(&__GROOM_RESPONSE_SUPPORTED_MIMES_RespPlaintextResponse[0usize]),
             ) {
                 Some(negotiated) => Ok(Some(negotiated.to_owned())),
                 None => {
@@ -830,6 +831,7 @@ mod html_only {
             match ::groom::content_negotiation::negotiate_parameter_insensitive(
                 accept,
                 &__GROOM_RESPONSE_SUPPORTED_MIMES_RespHtmlResponse,
+                Some(&__GROOM_RESPONSE_SUPPORTED_MIMES_RespHtmlResponse[0usize]),
             ) {
                 Some(negotiated) => Ok(Some(negotiated.to_owned())),
                 None => {
@@ -1158,6 +1160,7 @@ mod json_only {
             match ::groom::content_negotiation::negotiate_parameter_insensitive(
                 accept,
                 &__GROOM_RESPONSE_SUPPORTED_MIMES_RespJsonResponse,
+                Some(&__GROOM_RESPONSE_SUPPORTED_MIMES_RespJsonResponse[0usize]),
             ) {
                 Some(negotiated) => Ok(Some(negotiated.to_owned())),
                 None => {
@@ -1858,6 +1861,7 @@ mod multiple_content_types {
             match ::groom::content_negotiation::negotiate_parameter_insensitive(
                 accept,
                 &__GROOM_RESPONSE_SUPPORTED_MIMES_RespMultipleTypesResponse,
+                Some(&__GROOM_RESPONSE_SUPPORTED_MIMES_RespMultipleTypesResponse[2usize]),
             ) {
                 Some(negotiated) => Ok(Some(negotiated.to_owned())),
                 None => {
@@ -2182,6 +2186,7 @@ mod named_struct_response {
             match ::groom::content_negotiation::negotiate_parameter_insensitive(
                 accept,
                 &__GROOM_RESPONSE_SUPPORTED_MIMES_Named,
+                Some(&__GROOM_RESPONSE_SUPPORTED_MIMES_Named[1usize]),
             ) {
                 Some(negotiated) => Ok(Some(negotiated.to_owned())),
                 None => {
@@ -2498,6 +2503,7 @@ mod unnamed_struct_response {
             match ::groom::content_negotiation::negotiate_parameter_insensitive(
                 accept,
                 &__GROOM_RESPONSE_SUPPORTED_MIMES_Unnamed,
+                Some(&__GROOM_RESPONSE_SUPPORTED_MIMES_Unnamed[1usize]),
             ) {
                 Some(negotiated) => Ok(Some(negotiated.to_owned())),
                 None => {
@@ -3270,6 +3276,7 @@ mod result_struct_enum {
             match ::groom::content_negotiation::negotiate_parameter_insensitive(
                 accept,
                 &__GROOM_RESPONSE_SUPPORTED_MIMES_Success,
+                Some(&__GROOM_RESPONSE_SUPPORTED_MIMES_Success[0usize]),
             ) {
                 Some(negotiated) => Ok(Some(negotiated.to_owned())),
                 None => {
@@ -3598,6 +3605,7 @@ mod result_struct_enum {
             match ::groom::content_negotiation::negotiate_parameter_insensitive(
                 accept,
                 &__GROOM_RESPONSE_SUPPORTED_MIMES_Error,
+                Some(&__GROOM_RESPONSE_SUPPORTED_MIMES_Error[0usize]),
             ) {
                 Some(negotiated) => Ok(Some(negotiated.to_owned())),
                 None => {
@@ -4177,6 +4185,7 @@ mod wrapped_enum {
             match ::groom::content_negotiation::negotiate_parameter_insensitive(
                 accept,
                 &__GROOM_RESPONSE_SUPPORTED_MIMES_Resp,
+                Some(&__GROOM_RESPONSE_SUPPORTED_MIMES_Resp[0usize]),
             ) {
                 Some(negotiated) => Ok(Some(negotiated.to_owned())),
                 None => {
@@ -4485,6 +4494,7 @@ mod wrapped_enum {
             match ::groom::content_negotiation::negotiate_parameter_insensitive(
                 accept,
                 &__GROOM_RESPONSE_SUPPORTED_MIMES_Error,
+                Some(&__GROOM_RESPONSE_SUPPORTED_MIMES_Error[0usize]),
             ) {
                 Some(negotiated) => Ok(Some(negotiated.to_owned())),
                 None => {
