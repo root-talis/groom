@@ -670,21 +670,21 @@ fn make_mime_types_matches_for_content_negotiation(
     if resp_args.format.plain_text {
         let formatter = &fragments.into_response_text_plain_ident;
         result.push(quote! {
-            (::mime::TEXT, mime::PLAIN) => self.#formatter(),
+            (::mime::TEXT, ::mime::PLAIN) => self.#formatter(),
         });
     }
 
     if resp_args.format.html {
         let formatter = &fragments.into_response_text_html_ident;
         result.push(quote! {
-            (::mime::TEXT, mime::HTML) => self.#formatter(),
+            (::mime::TEXT, ::mime::HTML) => self.#formatter(),
         });
     }
 
     if resp_args.format.json {
         let formatter = &fragments.into_response_application_json_ident;
         result.push(quote! {
-            (::mime::APPLICATION, mime::JSON) => self.#formatter(),
+            (::mime::APPLICATION, ::mime::JSON) => self.#formatter(),
         });
     }
 

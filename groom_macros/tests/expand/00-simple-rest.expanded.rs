@@ -422,7 +422,7 @@ pub mod api_root {
                 None => self.into_response_text_plain(),
                 Some(negotiated) => {
                     match (negotiated.type_(), negotiated.subtype()) {
-                        (::mime::TEXT, mime::PLAIN) => self.into_response_text_plain(),
+                        (::mime::TEXT, ::mime::PLAIN) => self.into_response_text_plain(),
                         _ => {
                             if true {
                                 if !false {
@@ -1040,7 +1040,7 @@ pub mod api_root {
                 None => self.into_response_text_plain(),
                 Some(negotiated) => {
                     match (negotiated.type_(), negotiated.subtype()) {
-                        (::mime::TEXT, mime::PLAIN) => self.into_response_text_plain(),
+                        (::mime::TEXT, ::mime::PLAIN) => self.into_response_text_plain(),
                         _ => {
                             if true {
                                 if !false {
@@ -1598,7 +1598,7 @@ pub mod api_root {
                 None => self.into_response_text_plain(),
                 Some(negotiated) => {
                     match (negotiated.type_(), negotiated.subtype()) {
-                        (::mime::TEXT, mime::PLAIN) => self.into_response_text_plain(),
+                        (::mime::TEXT, ::mime::PLAIN) => self.into_response_text_plain(),
                         _ => {
                             if true {
                                 if !false {
@@ -1892,7 +1892,7 @@ pub mod api_root {
                 None => self.into_response_application_json(),
                 Some(negotiated) => {
                     match (negotiated.type_(), negotiated.subtype()) {
-                        (::mime::APPLICATION, mime::JSON) => {
+                        (::mime::APPLICATION, ::mime::JSON) => {
                             self.into_response_application_json()
                         }
                         _ => {

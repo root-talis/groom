@@ -414,7 +414,7 @@ mod plaintext_only {
                 None => self.into_response_text_plain(),
                 Some(negotiated) => {
                     match (negotiated.type_(), negotiated.subtype()) {
-                        (::mime::TEXT, mime::PLAIN) => self.into_response_text_plain(),
+                        (::mime::TEXT, ::mime::PLAIN) => self.into_response_text_plain(),
                         _ => {
                             if true {
                                 if !false {
@@ -777,7 +777,7 @@ mod html_only {
                 None => self.into_response_text_html(),
                 Some(negotiated) => {
                     match (negotiated.type_(), negotiated.subtype()) {
-                        (::mime::TEXT, mime::HTML) => self.into_response_text_html(),
+                        (::mime::TEXT, ::mime::HTML) => self.into_response_text_html(),
                         _ => {
                             if true {
                                 if !false {
@@ -1120,7 +1120,7 @@ mod json_only {
                 None => self.into_response_application_json(),
                 Some(negotiated) => {
                     match (negotiated.type_(), negotiated.subtype()) {
-                        (::mime::APPLICATION, mime::JSON) => {
+                        (::mime::APPLICATION, ::mime::JSON) => {
                             self.into_response_application_json()
                         }
                         _ => {
@@ -1805,9 +1805,9 @@ mod multiple_content_types {
                 None => self.into_response_application_json(),
                 Some(negotiated) => {
                     match (negotiated.type_(), negotiated.subtype()) {
-                        (::mime::TEXT, mime::PLAIN) => self.into_response_text_plain(),
-                        (::mime::TEXT, mime::HTML) => self.into_response_text_html(),
-                        (::mime::APPLICATION, mime::JSON) => {
+                        (::mime::TEXT, ::mime::PLAIN) => self.into_response_text_plain(),
+                        (::mime::TEXT, ::mime::HTML) => self.into_response_text_html(),
+                        (::mime::APPLICATION, ::mime::JSON) => {
                             self.into_response_application_json()
                         }
                         _ => {
@@ -2158,8 +2158,8 @@ mod named_struct_response {
                 None => self.into_response_application_json(),
                 Some(negotiated) => {
                     match (negotiated.type_(), negotiated.subtype()) {
-                        (::mime::TEXT, mime::HTML) => self.into_response_text_html(),
-                        (::mime::APPLICATION, mime::JSON) => {
+                        (::mime::TEXT, ::mime::HTML) => self.into_response_text_html(),
+                        (::mime::APPLICATION, ::mime::JSON) => {
                             self.into_response_application_json()
                         }
                         _ => {
@@ -2479,8 +2479,8 @@ mod unnamed_struct_response {
                 None => self.into_response_application_json(),
                 Some(negotiated) => {
                     match (negotiated.type_(), negotiated.subtype()) {
-                        (::mime::TEXT, mime::HTML) => self.into_response_text_html(),
-                        (::mime::APPLICATION, mime::JSON) => {
+                        (::mime::TEXT, ::mime::HTML) => self.into_response_text_html(),
+                        (::mime::APPLICATION, ::mime::JSON) => {
                             self.into_response_application_json()
                         }
                         _ => {
@@ -3295,7 +3295,7 @@ mod result_struct_enum {
                 None => self.into_response_text_plain(),
                 Some(negotiated) => {
                     match (negotiated.type_(), negotiated.subtype()) {
-                        (::mime::TEXT, mime::PLAIN) => self.into_response_text_plain(),
+                        (::mime::TEXT, ::mime::PLAIN) => self.into_response_text_plain(),
                         _ => {
                             if true {
                                 if !false {
@@ -3622,7 +3622,7 @@ mod result_struct_enum {
                 None => self.into_response_text_plain(),
                 Some(negotiated) => {
                     match (negotiated.type_(), negotiated.subtype()) {
-                        (::mime::TEXT, mime::PLAIN) => self.into_response_text_plain(),
+                        (::mime::TEXT, ::mime::PLAIN) => self.into_response_text_plain(),
                         _ => {
                             if true {
                                 if !false {
@@ -4210,7 +4210,7 @@ mod wrapped_enum {
                 None => self.into_response_application_json(),
                 Some(negotiated) => {
                     match (negotiated.type_(), negotiated.subtype()) {
-                        (::mime::APPLICATION, mime::JSON) => {
+                        (::mime::APPLICATION, ::mime::JSON) => {
                             self.into_response_application_json()
                         }
                         _ => {
@@ -4544,7 +4544,7 @@ mod wrapped_enum {
                 None => self.into_response_application_json(),
                 Some(negotiated) => {
                     match (negotiated.type_(), negotiated.subtype()) {
-                        (::mime::APPLICATION, mime::JSON) => {
+                        (::mime::APPLICATION, ::mime::JSON) => {
                             self.into_response_application_json()
                         }
                         _ => {
