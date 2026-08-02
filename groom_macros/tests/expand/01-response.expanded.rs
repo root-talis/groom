@@ -194,35 +194,23 @@ mod no_content_type {
             Ok(None)
         }
         fn __groom_check_response_codes(
-            context: &str,
+            context: impl ::core::fmt::Display,
             codes: &mut ::groom::runtime_checks::HTTPCodeSet,
         ) {
-            let context = ::alloc::__export::must_use({
-                ::alloc::fmt::format(
-                    format_args!("{0} / enum `RespJsonResponse`", context),
-                )
-            });
+            let context = format_args!("{0} / enum `RespJsonResponse`", context);
             codes
                 .ensure_distinct(
-                    ::alloc::__export::must_use({
-                        ::alloc::fmt::format(
-                            format_args!("{0} / variant `Accepted`", context),
-                        )
-                    }),
+                    format_args!("{0} / variant `Accepted`", context),
                     202u16,
                 );
             codes
                 .ensure_distinct(
-                    ::alloc::__export::must_use({
-                        ::alloc::fmt::format(
-                            format_args!("{0} / variant `NotFound`", context),
-                        )
-                    }),
+                    format_args!("{0} / variant `NotFound`", context),
                     404u16,
                 );
         }
         fn __groom_check_response_formats(
-            context: &str,
+            context: impl ::core::fmt::Display,
             formats: &mut ::groom::runtime_checks::HTTPFormatsSet,
         ) {
             formats.record(context, &__GROOM_RESPONSE_SUPPORTED_MIMES_RespJsonResponse);
@@ -504,33 +492,19 @@ mod plaintext_only {
             }
         }
         fn __groom_check_response_codes(
-            context: &str,
+            context: impl ::core::fmt::Display,
             codes: &mut ::groom::runtime_checks::HTTPCodeSet,
         ) {
-            let context = ::alloc::__export::must_use({
-                ::alloc::fmt::format(
-                    format_args!("{0} / enum `RespPlaintextResponse`", context),
-                )
-            });
+            let context = format_args!("{0} / enum `RespPlaintextResponse`", context);
+            codes.ensure_distinct(format_args!("{0} / variant `Ok`", context), 200u16);
             codes
                 .ensure_distinct(
-                    ::alloc::__export::must_use({
-                        ::alloc::fmt::format(format_args!("{0} / variant `Ok`", context))
-                    }),
-                    200u16,
-                );
-            codes
-                .ensure_distinct(
-                    ::alloc::__export::must_use({
-                        ::alloc::fmt::format(
-                            format_args!("{0} / variant `NotFound`", context),
-                        )
-                    }),
+                    format_args!("{0} / variant `NotFound`", context),
                     404u16,
                 );
         }
         fn __groom_check_response_formats(
-            context: &str,
+            context: impl ::core::fmt::Display,
             formats: &mut ::groom::runtime_checks::HTTPFormatsSet,
         ) {
             formats
@@ -868,33 +842,19 @@ mod html_only {
             }
         }
         fn __groom_check_response_codes(
-            context: &str,
+            context: impl ::core::fmt::Display,
             codes: &mut ::groom::runtime_checks::HTTPCodeSet,
         ) {
-            let context = ::alloc::__export::must_use({
-                ::alloc::fmt::format(
-                    format_args!("{0} / enum `RespHtmlResponse`", context),
-                )
-            });
+            let context = format_args!("{0} / enum `RespHtmlResponse`", context);
+            codes.ensure_distinct(format_args!("{0} / variant `Ok`", context), 200u16);
             codes
                 .ensure_distinct(
-                    ::alloc::__export::must_use({
-                        ::alloc::fmt::format(format_args!("{0} / variant `Ok`", context))
-                    }),
-                    200u16,
-                );
-            codes
-                .ensure_distinct(
-                    ::alloc::__export::must_use({
-                        ::alloc::fmt::format(
-                            format_args!("{0} / variant `NotFound`", context),
-                        )
-                    }),
+                    format_args!("{0} / variant `NotFound`", context),
                     404u16,
                 );
         }
         fn __groom_check_response_formats(
-            context: &str,
+            context: impl ::core::fmt::Display,
             formats: &mut ::groom::runtime_checks::HTTPFormatsSet,
         ) {
             formats.record(context, &__GROOM_RESPONSE_SUPPORTED_MIMES_RespHtmlResponse);
@@ -1210,33 +1170,19 @@ mod json_only {
             }
         }
         fn __groom_check_response_codes(
-            context: &str,
+            context: impl ::core::fmt::Display,
             codes: &mut ::groom::runtime_checks::HTTPCodeSet,
         ) {
-            let context = ::alloc::__export::must_use({
-                ::alloc::fmt::format(
-                    format_args!("{0} / enum `RespJsonResponse`", context),
-                )
-            });
+            let context = format_args!("{0} / enum `RespJsonResponse`", context);
+            codes.ensure_distinct(format_args!("{0} / variant `Ok`", context), 200u16);
             codes
                 .ensure_distinct(
-                    ::alloc::__export::must_use({
-                        ::alloc::fmt::format(format_args!("{0} / variant `Ok`", context))
-                    }),
-                    200u16,
-                );
-            codes
-                .ensure_distinct(
-                    ::alloc::__export::must_use({
-                        ::alloc::fmt::format(
-                            format_args!("{0} / variant `NotFound`", context),
-                        )
-                    }),
+                    format_args!("{0} / variant `NotFound`", context),
                     404u16,
                 );
         }
         fn __groom_check_response_formats(
-            context: &str,
+            context: impl ::core::fmt::Display,
             formats: &mut ::groom::runtime_checks::HTTPFormatsSet,
         ) {
             formats.record(context, &__GROOM_RESPONSE_SUPPORTED_MIMES_RespJsonResponse);
@@ -1924,33 +1870,21 @@ mod multiple_content_types {
             }
         }
         fn __groom_check_response_codes(
-            context: &str,
+            context: impl ::core::fmt::Display,
             codes: &mut ::groom::runtime_checks::HTTPCodeSet,
         ) {
-            let context = ::alloc::__export::must_use({
-                ::alloc::fmt::format(
-                    format_args!("{0} / enum `RespMultipleTypesResponse`", context),
-                )
-            });
+            let context = format_args!(
+                "{0} / enum `RespMultipleTypesResponse`", context,
+            );
+            codes.ensure_distinct(format_args!("{0} / variant `Ok`", context), 200u16);
             codes
                 .ensure_distinct(
-                    ::alloc::__export::must_use({
-                        ::alloc::fmt::format(format_args!("{0} / variant `Ok`", context))
-                    }),
-                    200u16,
-                );
-            codes
-                .ensure_distinct(
-                    ::alloc::__export::must_use({
-                        ::alloc::fmt::format(
-                            format_args!("{0} / variant `NotFound`", context),
-                        )
-                    }),
+                    format_args!("{0} / variant `NotFound`", context),
                     404u16,
                 );
         }
         fn __groom_check_response_formats(
-            context: &str,
+            context: impl ::core::fmt::Display,
             formats: &mut ::groom::runtime_checks::HTTPFormatsSet,
         ) {
             formats
@@ -2260,21 +2194,13 @@ mod named_struct_response {
             }
         }
         fn __groom_check_response_codes(
-            context: &str,
+            context: impl ::core::fmt::Display,
             codes: &mut ::groom::runtime_checks::HTTPCodeSet,
         ) {
-            codes
-                .ensure_distinct(
-                    ::alloc::__export::must_use({
-                        ::alloc::fmt::format(
-                            format_args!("{0} / struct `Named`", context),
-                        )
-                    }),
-                    200u16,
-                )
+            codes.ensure_distinct(format_args!("{0} / struct `Named`", context), 200u16)
         }
         fn __groom_check_response_formats(
-            context: &str,
+            context: impl ::core::fmt::Display,
             formats: &mut ::groom::runtime_checks::HTTPFormatsSet,
         ) {
             formats.record(context, &__GROOM_RESPONSE_SUPPORTED_MIMES_Named);
@@ -2584,21 +2510,14 @@ mod unnamed_struct_response {
             }
         }
         fn __groom_check_response_codes(
-            context: &str,
+            context: impl ::core::fmt::Display,
             codes: &mut ::groom::runtime_checks::HTTPCodeSet,
         ) {
             codes
-                .ensure_distinct(
-                    ::alloc::__export::must_use({
-                        ::alloc::fmt::format(
-                            format_args!("{0} / struct `Unnamed`", context),
-                        )
-                    }),
-                    200u16,
-                )
+                .ensure_distinct(format_args!("{0} / struct `Unnamed`", context), 200u16)
         }
         fn __groom_check_response_formats(
-            context: &str,
+            context: impl ::core::fmt::Display,
             formats: &mut ::groom::runtime_checks::HTTPFormatsSet,
         ) {
             formats.record(context, &__GROOM_RESPONSE_SUPPORTED_MIMES_Unnamed);
@@ -2745,21 +2664,13 @@ mod unit_struct_response {
             Ok(None)
         }
         fn __groom_check_response_codes(
-            context: &str,
+            context: impl ::core::fmt::Display,
             codes: &mut ::groom::runtime_checks::HTTPCodeSet,
         ) {
-            codes
-                .ensure_distinct(
-                    ::alloc::__export::must_use({
-                        ::alloc::fmt::format(
-                            format_args!("{0} / struct `Unit`", context),
-                        )
-                    }),
-                    200u16,
-                )
+            codes.ensure_distinct(format_args!("{0} / struct `Unit`", context), 200u16)
         }
         fn __groom_check_response_formats(
-            context: &str,
+            context: impl ::core::fmt::Display,
             formats: &mut ::groom::runtime_checks::HTTPFormatsSet,
         ) {
             formats.record(context, &__GROOM_RESPONSE_SUPPORTED_MIMES_Unit);
@@ -2893,21 +2804,14 @@ mod result_struct_struct {
             Ok(None)
         }
         fn __groom_check_response_codes(
-            context: &str,
+            context: impl ::core::fmt::Display,
             codes: &mut ::groom::runtime_checks::HTTPCodeSet,
         ) {
             codes
-                .ensure_distinct(
-                    ::alloc::__export::must_use({
-                        ::alloc::fmt::format(
-                            format_args!("{0} / struct `Success`", context),
-                        )
-                    }),
-                    200u16,
-                )
+                .ensure_distinct(format_args!("{0} / struct `Success`", context), 200u16)
         }
         fn __groom_check_response_formats(
-            context: &str,
+            context: impl ::core::fmt::Display,
             formats: &mut ::groom::runtime_checks::HTTPFormatsSet,
         ) {
             formats.record(context, &__GROOM_RESPONSE_SUPPORTED_MIMES_Success);
@@ -3038,21 +2942,13 @@ mod result_struct_struct {
             Ok(None)
         }
         fn __groom_check_response_codes(
-            context: &str,
+            context: impl ::core::fmt::Display,
             codes: &mut ::groom::runtime_checks::HTTPCodeSet,
         ) {
-            codes
-                .ensure_distinct(
-                    ::alloc::__export::must_use({
-                        ::alloc::fmt::format(
-                            format_args!("{0} / struct `Error`", context),
-                        )
-                    }),
-                    404u16,
-                )
+            codes.ensure_distinct(format_args!("{0} / struct `Error`", context), 404u16)
         }
         fn __groom_check_response_formats(
-            context: &str,
+            context: impl ::core::fmt::Display,
             formats: &mut ::groom::runtime_checks::HTTPFormatsSet,
         ) {
             formats.record(context, &__GROOM_RESPONSE_SUPPORTED_MIMES_Error);
@@ -3082,15 +2978,13 @@ mod result_struct_struct {
         result.__groom_into_response(negotiated.as_ref())
     }
     fn __groom_runtime_checks() {
-        let context = "Groom runtime check of mod `result_struct_struct`".to_string();
+        let context = "Groom runtime check of mod `result_struct_struct`";
         let mut codes = ::groom::runtime_checks::HTTPCodeSet::new();
         <Result<
             Success,
             Error,
         >>::__groom_check_response_codes(
-            &::alloc::__export::must_use({
-                ::alloc::fmt::format(format_args!("{0}: handler `foo`", context))
-            }),
+            format_args!("{0}: handler `foo`", context),
             &mut codes,
         );
         let mut formats = ::groom::runtime_checks::HTTPFormatsSet::new();
@@ -3098,9 +2992,7 @@ mod result_struct_struct {
             Success,
             Error,
         >>::__groom_check_response_formats(
-            &::alloc::__export::must_use({
-                ::alloc::fmt::format(format_args!("{0}: handler `foo`", context))
-            }),
+            format_args!("{0}: handler `foo`", context),
             &mut formats,
         );
     }
@@ -3394,21 +3286,14 @@ mod result_struct_enum {
             }
         }
         fn __groom_check_response_codes(
-            context: &str,
+            context: impl ::core::fmt::Display,
             codes: &mut ::groom::runtime_checks::HTTPCodeSet,
         ) {
             codes
-                .ensure_distinct(
-                    ::alloc::__export::must_use({
-                        ::alloc::fmt::format(
-                            format_args!("{0} / struct `Success`", context),
-                        )
-                    }),
-                    200u16,
-                )
+                .ensure_distinct(format_args!("{0} / struct `Success`", context), 200u16)
         }
         fn __groom_check_response_formats(
-            context: &str,
+            context: impl ::core::fmt::Display,
             formats: &mut ::groom::runtime_checks::HTTPFormatsSet,
         ) {
             formats.record(context, &__GROOM_RESPONSE_SUPPORTED_MIMES_Success);
@@ -3729,33 +3614,23 @@ mod result_struct_enum {
             }
         }
         fn __groom_check_response_codes(
-            context: &str,
+            context: impl ::core::fmt::Display,
             codes: &mut ::groom::runtime_checks::HTTPCodeSet,
         ) {
-            let context = ::alloc::__export::must_use({
-                ::alloc::fmt::format(format_args!("{0} / enum `Error`", context))
-            });
+            let context = format_args!("{0} / enum `Error`", context);
             codes
                 .ensure_distinct(
-                    ::alloc::__export::must_use({
-                        ::alloc::fmt::format(
-                            format_args!("{0} / variant `NotFound`", context),
-                        )
-                    }),
+                    format_args!("{0} / variant `NotFound`", context),
                     404u16,
                 );
             codes
                 .ensure_distinct(
-                    ::alloc::__export::must_use({
-                        ::alloc::fmt::format(
-                            format_args!("{0} / variant `NoAccess`", context),
-                        )
-                    }),
+                    format_args!("{0} / variant `NoAccess`", context),
                     400u16,
                 );
         }
         fn __groom_check_response_formats(
-            context: &str,
+            context: impl ::core::fmt::Display,
             formats: &mut ::groom::runtime_checks::HTTPFormatsSet,
         ) {
             formats.record(context, &__GROOM_RESPONSE_SUPPORTED_MIMES_Error);
@@ -3826,15 +3701,13 @@ mod result_struct_enum {
         result.__groom_into_response(negotiated.as_ref())
     }
     fn __groom_runtime_checks() {
-        let context = "Groom runtime check of mod `result_struct_enum`".to_string();
+        let context = "Groom runtime check of mod `result_struct_enum`";
         let mut codes = ::groom::runtime_checks::HTTPCodeSet::new();
         <Result<
             Success,
             Error,
         >>::__groom_check_response_codes(
-            &::alloc::__export::must_use({
-                ::alloc::fmt::format(format_args!("{0}: handler `foo`", context))
-            }),
+            format_args!("{0}: handler `foo`", context),
             &mut codes,
         );
         let mut formats = ::groom::runtime_checks::HTTPFormatsSet::new();
@@ -3842,9 +3715,7 @@ mod result_struct_enum {
             Success,
             Error,
         >>::__groom_check_response_formats(
-            &::alloc::__export::must_use({
-                ::alloc::fmt::format(format_args!("{0}: handler `foo`", context))
-            }),
+            format_args!("{0}: handler `foo`", context),
             &mut formats,
         );
     }
@@ -4326,33 +4197,19 @@ mod wrapped_enum {
             }
         }
         fn __groom_check_response_codes(
-            context: &str,
+            context: impl ::core::fmt::Display,
             codes: &mut ::groom::runtime_checks::HTTPCodeSet,
         ) {
-            let context = ::alloc::__export::must_use({
-                ::alloc::fmt::format(format_args!("{0} / enum `Resp`", context))
-            });
+            let context = format_args!("{0} / enum `Resp`", context);
+            codes.ensure_distinct(format_args!("{0} / variant `Enum`", context), 200u16);
             codes
                 .ensure_distinct(
-                    ::alloc::__export::must_use({
-                        ::alloc::fmt::format(
-                            format_args!("{0} / variant `Enum`", context),
-                        )
-                    }),
-                    200u16,
-                );
-            codes
-                .ensure_distinct(
-                    ::alloc::__export::must_use({
-                        ::alloc::fmt::format(
-                            format_args!("{0} / variant `StructWithEnum`", context),
-                        )
-                    }),
+                    format_args!("{0} / variant `StructWithEnum`", context),
                     202u16,
                 );
         }
         fn __groom_check_response_formats(
-            context: &str,
+            context: impl ::core::fmt::Display,
             formats: &mut ::groom::runtime_checks::HTTPFormatsSet,
         ) {
             formats.record(context, &__GROOM_RESPONSE_SUPPORTED_MIMES_Resp);
@@ -4648,21 +4505,13 @@ mod wrapped_enum {
             }
         }
         fn __groom_check_response_codes(
-            context: &str,
+            context: impl ::core::fmt::Display,
             codes: &mut ::groom::runtime_checks::HTTPCodeSet,
         ) {
-            codes
-                .ensure_distinct(
-                    ::alloc::__export::must_use({
-                        ::alloc::fmt::format(
-                            format_args!("{0} / struct `Error`", context),
-                        )
-                    }),
-                    404u16,
-                )
+            codes.ensure_distinct(format_args!("{0} / struct `Error`", context), 404u16)
         }
         fn __groom_check_response_formats(
-            context: &str,
+            context: impl ::core::fmt::Display,
             formats: &mut ::groom::runtime_checks::HTTPFormatsSet,
         ) {
             formats.record(context, &__GROOM_RESPONSE_SUPPORTED_MIMES_Error);
@@ -4739,15 +4588,13 @@ mod wrapped_enum {
         result.__groom_into_response(negotiated.as_ref())
     }
     fn __groom_runtime_checks() {
-        let context = "Groom runtime check of mod `wrapped_enum`".to_string();
+        let context = "Groom runtime check of mod `wrapped_enum`";
         let mut codes = ::groom::runtime_checks::HTTPCodeSet::new();
         <Result<
             Resp,
             Error,
         >>::__groom_check_response_codes(
-            &::alloc::__export::must_use({
-                ::alloc::fmt::format(format_args!("{0}: handler `foo`", context))
-            }),
+            format_args!("{0}: handler `foo`", context),
             &mut codes,
         );
         let mut formats = ::groom::runtime_checks::HTTPFormatsSet::new();
@@ -4755,9 +4602,7 @@ mod wrapped_enum {
             Resp,
             Error,
         >>::__groom_check_response_formats(
-            &::alloc::__export::must_use({
-                ::alloc::fmt::format(format_args!("{0}: handler `foo`", context))
-            }),
+            format_args!("{0}: handler `foo`", context),
             &mut formats,
         );
     }

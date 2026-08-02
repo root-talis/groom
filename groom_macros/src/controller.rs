@@ -172,10 +172,10 @@ fn parse_handler_function(
         let context_format = format!("{{context}}: handler `{ident}`");
         mod_fragments.runtime_checks.push(quote! {
             let mut codes = ::groom::runtime_checks::HTTPCodeSet::new();
-            <#ty>::__groom_check_response_codes(&format!(#context_format), &mut codes);
+            <#ty>::__groom_check_response_codes(format_args!(#context_format), &mut codes);
 
             let mut formats = ::groom::runtime_checks::HTTPFormatsSet::new();
-            <#ty>::__groom_check_response_formats(&format!(#context_format), &mut formats);
+            <#ty>::__groom_check_response_formats(format_args!(#context_format), &mut formats);
         });
     }
 
@@ -484,7 +484,8 @@ fn generate_new_mod_ast(
             #(#module_items)*
 
             fn __groom_runtime_checks() {
-                let context = #runtime_checks_context.to_string();
+                // Static module label — no String allocation on the success path.
+                let context = #runtime_checks_context;
                 #(#runtime_checks)*
             }
 

@@ -29,17 +29,17 @@ where T: Response, E: Response
         }
     }
 
-    fn __groom_check_response_codes(context: &str, codes: &mut HTTPCodeSet) {
-        T::__groom_check_response_codes(&format!("{context} / Result<Ok, _>"), codes);
-        E::__groom_check_response_codes(&format!("{context} / Result<_, Err>"), codes);
+    fn __groom_check_response_codes(context: impl ::std::fmt::Display, codes: &mut HTTPCodeSet) {
+        T::__groom_check_response_codes(format_args!("{context} / Result<Ok, _>"), codes);
+        E::__groom_check_response_codes(format_args!("{context} / Result<_, Err>"), codes);
     }
 
-    fn __groom_check_response_formats(context: &str, formats: &mut HTTPFormatsSet) {
+    fn __groom_check_response_formats(context: impl ::std::fmt::Display, formats: &mut HTTPFormatsSet) {
         let mut ok_formats = HTTPFormatsSet::new();
         let mut err_formats = HTTPFormatsSet::new();
-        T::__groom_check_response_formats(&format!("{context} / Result<Ok, _>"), &mut ok_formats);
-        E::__groom_check_response_formats(&format!("{context} / Result<_, Err>"), &mut err_formats);
-        ok_formats.assert_same_as(&format!("{context} / Result<Ok, _>"), &err_formats);
+        T::__groom_check_response_formats(format_args!("{context} / Result<Ok, _>"), &mut ok_formats);
+        E::__groom_check_response_formats(format_args!("{context} / Result<_, Err>"), &mut err_formats);
+        ok_formats.assert_same_as(format_args!("{context} / Result<Ok, _>"), &err_formats);
         formats.merge(&ok_formats);
     }
 }

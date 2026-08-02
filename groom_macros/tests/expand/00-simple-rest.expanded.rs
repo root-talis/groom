@@ -533,42 +533,24 @@ pub mod api_root {
             }
         }
         fn __groom_check_response_codes(
-            context: &str,
+            context: impl ::core::fmt::Display,
             codes: &mut ::groom::runtime_checks::HTTPCodeSet,
         ) {
-            let context = ::alloc::__export::must_use({
-                ::alloc::fmt::format(
-                    format_args!("{0} / enum `GetRootResponse`", context),
-                )
-            });
+            let context = format_args!("{0} / enum `GetRootResponse`", context);
+            codes.ensure_distinct(format_args!("{0} / variant `Ok`", context), 200u16);
             codes
                 .ensure_distinct(
-                    ::alloc::__export::must_use({
-                        ::alloc::fmt::format(format_args!("{0} / variant `Ok`", context))
-                    }),
-                    200u16,
-                );
-            codes
-                .ensure_distinct(
-                    ::alloc::__export::must_use({
-                        ::alloc::fmt::format(
-                            format_args!("{0} / variant `BadRequest`", context),
-                        )
-                    }),
+                    format_args!("{0} / variant `BadRequest`", context),
                     400u16,
                 );
             codes
                 .ensure_distinct(
-                    ::alloc::__export::must_use({
-                        ::alloc::fmt::format(
-                            format_args!("{0} / variant `Forbidden`", context),
-                        )
-                    }),
+                    format_args!("{0} / variant `Forbidden`", context),
                     401u16,
                 );
         }
         fn __groom_check_response_formats(
-            context: &str,
+            context: impl ::core::fmt::Display,
             formats: &mut ::groom::runtime_checks::HTTPFormatsSet,
         ) {
             formats.record(context, &__GROOM_RESPONSE_SUPPORTED_MIMES_GetRootResponse);
@@ -1147,33 +1129,19 @@ pub mod api_root {
             }
         }
         fn __groom_check_response_codes(
-            context: &str,
+            context: impl ::core::fmt::Display,
             codes: &mut ::groom::runtime_checks::HTTPCodeSet,
         ) {
-            let context = ::alloc::__export::must_use({
-                ::alloc::fmt::format(
-                    format_args!("{0} / enum `RqConsQueryResponse`", context),
-                )
-            });
+            let context = format_args!("{0} / enum `RqConsQueryResponse`", context);
+            codes.ensure_distinct(format_args!("{0} / variant `Ok`", context), 200u16);
             codes
                 .ensure_distinct(
-                    ::alloc::__export::must_use({
-                        ::alloc::fmt::format(format_args!("{0} / variant `Ok`", context))
-                    }),
-                    200u16,
-                );
-            codes
-                .ensure_distinct(
-                    ::alloc::__export::must_use({
-                        ::alloc::fmt::format(
-                            format_args!("{0} / variant `BadRequest`", context),
-                        )
-                    }),
+                    format_args!("{0} / variant `BadRequest`", context),
                     400u16,
                 );
         }
         fn __groom_check_response_formats(
-            context: &str,
+            context: impl ::core::fmt::Display,
             formats: &mut ::groom::runtime_checks::HTTPFormatsSet,
         ) {
             formats
@@ -1688,24 +1656,14 @@ pub mod api_root {
             }
         }
         fn __groom_check_response_codes(
-            context: &str,
+            context: impl ::core::fmt::Display,
             codes: &mut ::groom::runtime_checks::HTTPCodeSet,
         ) {
-            let context = ::alloc::__export::must_use({
-                ::alloc::fmt::format(
-                    format_args!("{0} / enum `RqConsPathResponse`", context),
-                )
-            });
-            codes
-                .ensure_distinct(
-                    ::alloc::__export::must_use({
-                        ::alloc::fmt::format(format_args!("{0} / variant `Ok`", context))
-                    }),
-                    200u16,
-                );
+            let context = format_args!("{0} / enum `RqConsPathResponse`", context);
+            codes.ensure_distinct(format_args!("{0} / variant `Ok`", context), 200u16);
         }
         fn __groom_check_response_formats(
-            context: &str,
+            context: impl ::core::fmt::Display,
             formats: &mut ::groom::runtime_checks::HTTPFormatsSet,
         ) {
             formats
@@ -1980,24 +1938,14 @@ pub mod api_root {
             }
         }
         fn __groom_check_response_codes(
-            context: &str,
+            context: impl ::core::fmt::Display,
             codes: &mut ::groom::runtime_checks::HTTPCodeSet,
         ) {
-            let context = ::alloc::__export::must_use({
-                ::alloc::fmt::format(
-                    format_args!("{0} / enum `RespJsonResponse`", context),
-                )
-            });
-            codes
-                .ensure_distinct(
-                    ::alloc::__export::must_use({
-                        ::alloc::fmt::format(format_args!("{0} / variant `Ok`", context))
-                    }),
-                    200u16,
-                );
+            let context = format_args!("{0} / enum `RespJsonResponse`", context);
+            codes.ensure_distinct(format_args!("{0} / variant `Ok`", context), 200u16);
         }
         fn __groom_check_response_formats(
-            context: &str,
+            context: impl ::core::fmt::Display,
             formats: &mut ::groom::runtime_checks::HTTPFormatsSet,
         ) {
             formats.record(context, &__GROOM_RESPONSE_SUPPORTED_MIMES_RespJsonResponse);
@@ -2045,83 +1993,55 @@ pub mod api_root {
         assert_impl_any_token(previous._static_assertions_impl_any());
     };
     fn __groom_runtime_checks() {
-        let context = "Groom runtime check of mod `api_root`".to_string();
+        let context = "Groom runtime check of mod `api_root`";
         let mut codes = ::groom::runtime_checks::HTTPCodeSet::new();
         <GetRootResponse>::__groom_check_response_codes(
-            &::alloc::__export::must_use({
-                ::alloc::fmt::format(format_args!("{0}: handler `get_root`", context))
-            }),
+            format_args!("{0}: handler `get_root`", context),
             &mut codes,
         );
         let mut formats = ::groom::runtime_checks::HTTPFormatsSet::new();
         <GetRootResponse>::__groom_check_response_formats(
-            &::alloc::__export::must_use({
-                ::alloc::fmt::format(format_args!("{0}: handler `get_root`", context))
-            }),
+            format_args!("{0}: handler `get_root`", context),
             &mut formats,
         );
         let mut codes = ::groom::runtime_checks::HTTPCodeSet::new();
         <GetRootResponse>::__groom_check_response_codes(
-            &::alloc::__export::must_use({
-                ::alloc::fmt::format(format_args!("{0}: handler `post_root`", context))
-            }),
+            format_args!("{0}: handler `post_root`", context),
             &mut codes,
         );
         let mut formats = ::groom::runtime_checks::HTTPFormatsSet::new();
         <GetRootResponse>::__groom_check_response_formats(
-            &::alloc::__export::must_use({
-                ::alloc::fmt::format(format_args!("{0}: handler `post_root`", context))
-            }),
+            format_args!("{0}: handler `post_root`", context),
             &mut formats,
         );
         let mut codes = ::groom::runtime_checks::HTTPCodeSet::new();
         <RqConsQueryResponse>::__groom_check_response_codes(
-            &::alloc::__export::must_use({
-                ::alloc::fmt::format(
-                    format_args!("{0}: handler `rq_cons_query_struct`", context),
-                )
-            }),
+            format_args!("{0}: handler `rq_cons_query_struct`", context),
             &mut codes,
         );
         let mut formats = ::groom::runtime_checks::HTTPFormatsSet::new();
         <RqConsQueryResponse>::__groom_check_response_formats(
-            &::alloc::__export::must_use({
-                ::alloc::fmt::format(
-                    format_args!("{0}: handler `rq_cons_query_struct`", context),
-                )
-            }),
+            format_args!("{0}: handler `rq_cons_query_struct`", context),
             &mut formats,
         );
         let mut codes = ::groom::runtime_checks::HTTPCodeSet::new();
         <RqConsPathResponse>::__groom_check_response_codes(
-            &::alloc::__export::must_use({
-                ::alloc::fmt::format(
-                    format_args!("{0}: handler `rq_cons_path_struct`", context),
-                )
-            }),
+            format_args!("{0}: handler `rq_cons_path_struct`", context),
             &mut codes,
         );
         let mut formats = ::groom::runtime_checks::HTTPFormatsSet::new();
         <RqConsPathResponse>::__groom_check_response_formats(
-            &::alloc::__export::must_use({
-                ::alloc::fmt::format(
-                    format_args!("{0}: handler `rq_cons_path_struct`", context),
-                )
-            }),
+            format_args!("{0}: handler `rq_cons_path_struct`", context),
             &mut formats,
         );
         let mut codes = ::groom::runtime_checks::HTTPCodeSet::new();
         <RespJsonResponse>::__groom_check_response_codes(
-            &::alloc::__export::must_use({
-                ::alloc::fmt::format(format_args!("{0}: handler `resp_json`", context))
-            }),
+            format_args!("{0}: handler `resp_json`", context),
             &mut codes,
         );
         let mut formats = ::groom::runtime_checks::HTTPFormatsSet::new();
         <RespJsonResponse>::__groom_check_response_formats(
-            &::alloc::__export::must_use({
-                ::alloc::fmt::format(format_args!("{0}: handler `resp_json`", context))
-            }),
+            format_args!("{0}: handler `resp_json`", context),
             &mut formats,
         );
     }
@@ -2531,22 +2451,14 @@ mod options_connect {
             Ok(None)
         }
         fn __groom_check_response_codes(
-            context: &str,
+            context: impl ::core::fmt::Display,
             codes: &mut ::groom::runtime_checks::HTTPCodeSet,
         ) {
-            let context = ::alloc::__export::must_use({
-                ::alloc::fmt::format(format_args!("{0} / enum `OptionsResult`", context))
-            });
-            codes
-                .ensure_distinct(
-                    ::alloc::__export::must_use({
-                        ::alloc::fmt::format(format_args!("{0} / variant `Ok`", context))
-                    }),
-                    200u16,
-                );
+            let context = format_args!("{0} / enum `OptionsResult`", context);
+            codes.ensure_distinct(format_args!("{0} / variant `Ok`", context), 200u16);
         }
         fn __groom_check_response_formats(
-            context: &str,
+            context: impl ::core::fmt::Display,
             formats: &mut ::groom::runtime_checks::HTTPFormatsSet,
         ) {
             formats.record(context, &__GROOM_RESPONSE_SUPPORTED_MIMES_OptionsResult);
@@ -2599,41 +2511,25 @@ mod options_connect {
         result.__groom_into_response(negotiated.as_ref())
     }
     fn __groom_runtime_checks() {
-        let context = "Groom runtime check of mod `options_connect`".to_string();
+        let context = "Groom runtime check of mod `options_connect`";
         let mut codes = ::groom::runtime_checks::HTTPCodeSet::new();
         <OptionsResult>::__groom_check_response_codes(
-            &::alloc::__export::must_use({
-                ::alloc::fmt::format(
-                    format_args!("{0}: handler `options_route`", context),
-                )
-            }),
+            format_args!("{0}: handler `options_route`", context),
             &mut codes,
         );
         let mut formats = ::groom::runtime_checks::HTTPFormatsSet::new();
         <OptionsResult>::__groom_check_response_formats(
-            &::alloc::__export::must_use({
-                ::alloc::fmt::format(
-                    format_args!("{0}: handler `options_route`", context),
-                )
-            }),
+            format_args!("{0}: handler `options_route`", context),
             &mut formats,
         );
         let mut codes = ::groom::runtime_checks::HTTPCodeSet::new();
         <OptionsResult>::__groom_check_response_codes(
-            &::alloc::__export::must_use({
-                ::alloc::fmt::format(
-                    format_args!("{0}: handler `connect_route`", context),
-                )
-            }),
+            format_args!("{0}: handler `connect_route`", context),
             &mut codes,
         );
         let mut formats = ::groom::runtime_checks::HTTPFormatsSet::new();
         <OptionsResult>::__groom_check_response_formats(
-            &::alloc::__export::must_use({
-                ::alloc::fmt::format(
-                    format_args!("{0}: handler `connect_route`", context),
-                )
-            }),
+            format_args!("{0}: handler `connect_route`", context),
             &mut formats,
         );
     }

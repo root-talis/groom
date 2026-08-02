@@ -1,4 +1,5 @@
 use std::collections::HashSet;
+use std::fmt::Display;
 
 pub struct HTTPCodeSet {
     seen: HashSet<u16>,
@@ -17,7 +18,9 @@ impl HTTPCodeSet {
         }
     }
 
-    pub fn ensure_distinct(&mut self, context: String, code: u16) {
+    /// Records `code` or panics if it was already seen.
+    /// `context` is formatted only on the panic path — no allocation when codes are distinct.
+    pub fn ensure_distinct(&mut self, context: impl Display, code: u16) {
         if !self.seen.insert(code) {
             panic!("{context}: HTTP response code \"{code}\" is also taken by another response variant of this handler.")
         }
@@ -44,11 +47,11 @@ impl HTTPFormatsSet {
         }
     }
 
-    pub fn record(&mut self, _context: &str, formats: &[::mime::Mime]) {
+    pub fn record(&mut self, _context: impl Display, formats: &[::mime::Mime]) {
         self.formats.extend(formats.iter().cloned());
     }
 
-    pub fn assert_same_as(&self, context: &str, other: &HTTPFormatsSet) {
+    pub fn assert_same_as(&self, context: impl Display, other: &HTTPFormatsSet) {
         if self.formats != other.formats {
             let this = self.formats.iter().map(|m| m.to_string()).collect::<Vec<_>>().join(", ");
             let that = other.formats.iter().map(|m| m.to_string()).collect::<Vec<_>>().join(", ");

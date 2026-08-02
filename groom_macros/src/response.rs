@@ -762,7 +762,7 @@ mod enum_impl {
 
             let new_context_format = format!("{{context}} / variant `{}`", &variant.ident);
             response_codes_checks.push(quote!{
-                codes.ensure_distinct(format!(#new_context_format), #response_code_u16);
+                codes.ensure_distinct(format_args!(#new_context_format), #response_code_u16);
             });
         }
 
@@ -778,15 +778,15 @@ mod enum_impl {
 
         let new_context_format = format!("{{context}} / enum `{}`", &ident);
         fragments.check_response_codes_fn = quote! {
-            fn __groom_check_response_codes(context: &str, codes: &mut ::groom::runtime_checks::HTTPCodeSet) {
-                let context = format!(#new_context_format);
+            fn __groom_check_response_codes(context: impl ::core::fmt::Display, codes: &mut ::groom::runtime_checks::HTTPCodeSet) {
+                let context = format_args!(#new_context_format);
                 #(#response_codes_checks)*
             }
         };
 
         let supported_mimes_ident = &fragments.supported_mimes_ident;
         fragments.check_response_formats_fn = quote! {
-            fn __groom_check_response_formats(context: &str, formats: &mut ::groom::runtime_checks::HTTPFormatsSet) {
+            fn __groom_check_response_formats(context: impl ::core::fmt::Display, formats: &mut ::groom::runtime_checks::HTTPFormatsSet) {
                 formats.record(context, &#supported_mimes_ident);
             }
         };
@@ -1225,8 +1225,8 @@ mod struct_impl {
     fn make_groom_check_response_codes_fn(struct_impl: &ItemStruct, code: u16, fragments: &mut NewAstFragments) {
         let new_context_format = format!("{{context}} / struct `{}`", &struct_impl.ident);
         fragments.check_response_codes_fn = quote! {
-            fn __groom_check_response_codes(context: &str, codes: &mut ::groom::runtime_checks::HTTPCodeSet) {
-                codes.ensure_distinct(format!(#new_context_format), #code)
+            fn __groom_check_response_codes(context: impl ::core::fmt::Display, codes: &mut ::groom::runtime_checks::HTTPCodeSet) {
+                codes.ensure_distinct(format_args!(#new_context_format), #code)
             }
         };
     }
@@ -1234,7 +1234,7 @@ mod struct_impl {
     fn make_groom_check_response_formats_fn(fragments: &mut NewAstFragments) {
         let supported_mimes_ident = &fragments.supported_mimes_ident;
         fragments.check_response_formats_fn = quote! {
-            fn __groom_check_response_formats(context: &str, formats: &mut ::groom::runtime_checks::HTTPFormatsSet) {
+            fn __groom_check_response_formats(context: impl ::core::fmt::Display, formats: &mut ::groom::runtime_checks::HTTPFormatsSet) {
                 formats.record(context, &#supported_mimes_ident);
             }
         };
