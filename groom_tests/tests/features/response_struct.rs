@@ -204,13 +204,13 @@ pub async fn named_struct_single_format_unsupported() {
 
     let res = Req::get("/named-struct-only-plaintext").accept("text/html").call(&r).await;
     res.assert_status(StatusCode::NOT_ACCEPTABLE.as_u16())
-        .assert_body("Supported content types: text/plain")
+        .assert_body("Supported content types: text/plain; charset=utf-8")
         .assert_content_type("text/plain; charset=utf-8");
     assert_eq!(res.headers.get("vary"), Some(&axum::http::HeaderValue::from_static("Accept")));
 
     let res = Req::get("/named-struct-only-plaintext").accept("application/json").call(&r).await;
     res.assert_status(StatusCode::NOT_ACCEPTABLE.as_u16())
-        .assert_body("Supported content types: text/plain")
+        .assert_body("Supported content types: text/plain; charset=utf-8")
         .assert_content_type("text/plain; charset=utf-8");
     assert_eq!(res.headers.get("vary"), Some(&axum::http::HeaderValue::from_static("Accept")));
 }
@@ -295,13 +295,13 @@ pub async fn unnamed_struct_single_format_unsupported() {
 
     let res = Req::get("/unnamed-struct-only-plaintext").accept("text/html").call(&r).await;
     res.assert_status(StatusCode::NOT_ACCEPTABLE.as_u16())
-        .assert_body("Supported content types: text/plain")
+        .assert_body("Supported content types: text/plain; charset=utf-8")
         .assert_content_type("text/plain; charset=utf-8");
     assert_eq!(res.headers.get("vary"), Some(&axum::http::HeaderValue::from_static("Accept")));
 
     let res = Req::get("/unnamed-struct-only-plaintext").accept("application/json").call(&r).await;
     res.assert_status(StatusCode::NOT_ACCEPTABLE.as_u16())
-        .assert_body("Supported content types: text/plain")
+        .assert_body("Supported content types: text/plain; charset=utf-8")
         .assert_content_type("text/plain; charset=utf-8");
     assert_eq!(res.headers.get("vary"), Some(&axum::http::HeaderValue::from_static("Accept")));
 }
@@ -434,7 +434,7 @@ pub fn test_openapi() {
                             "406": {
                                 "description": ("The requested content type is not supported"),
                                 "content": {
-                                    "text/plain": {
+                                    "text/plain; charset=utf-8": {
                                         "schema": {
                                             "type": ("string"),
                                         },
@@ -471,7 +471,7 @@ pub fn test_openapi() {
                             "406": {
                                 "description": ("The requested content type is not supported"),
                                 "content": {
-                                    "text/plain": {
+                                    "text/plain; charset=utf-8": {
                                         "schema": {
                                             "type": ("string"),
                                         },
@@ -508,7 +508,7 @@ pub fn test_openapi() {
                             "406": {
                                 "description": ("The requested content type is not supported"),
                                 "content": {
-                                    "text/plain": {
+                                    "text/plain; charset=utf-8": {
                                         "schema": {
                                             "type": ("string"),
                                         },
@@ -545,7 +545,7 @@ pub fn test_openapi() {
                             "406": {
                                 "description": ("The requested content type is not supported"),
                                 "content": {
-                                    "text/plain": {
+                                    "text/plain; charset=utf-8": {
                                         "schema": {
                                             "type": ("string"),
                                         },
@@ -572,7 +572,7 @@ pub fn test_openapi() {
                             "406": {
                                 "description": ("The requested content type is not supported"),
                                 "content": {
-                                    "text/plain": {
+                                    "text/plain; charset=utf-8": {
                                         "schema": {
                                             "type": ("string"),
                                         },

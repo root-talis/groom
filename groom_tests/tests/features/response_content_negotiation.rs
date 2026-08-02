@@ -248,7 +248,7 @@ pub fn test_openapi() {
                             "406": {
                                 "description": ("The requested content type is not supported"),
                                 "content": {
-                                    "text/plain": {
+                                    "text/plain; charset=utf-8": {
                                         "schema": {
                                             "type": ("string"),
                                         },
@@ -280,7 +280,7 @@ pub fn test_openapi() {
                             "406": {
                                 "description": ("The requested content type is not supported"),
                                 "content": {
-                                    "text/plain": {
+                                    "text/plain; charset=utf-8": {
                                         "schema": {
                                             "type": ("string"),
                                         },
@@ -471,7 +471,7 @@ pub async fn test_html_or_text_weights_openapi() {
                             "406": {
                                 "description": ("The requested content type is not supported"),
                                 "content": {
-                                    "text/plain": {
+                                    "text/plain; charset=utf-8": {
                                         "schema": {
                                             "type": ("string"),
                                         },
@@ -550,9 +550,111 @@ pub async fn test_406_vary_and_body_lists_all_supported_mimes() {
 
     let res = Req::get("/html-or-text").accept("application/xml").call(&r).await;
     res.assert_status(406)
-        .assert_body("Supported content types: text/plain, text/html")
+        .assert_body("Supported content types: text/plain; charset=utf-8, text/html; charset=utf-8")
         .assert_content_type("text/plain; charset=utf-8");
     assert_eq!(res.headers.get("vary"), Some(&axum::http::HeaderValue::from_static("Accept")));
     assert!(res.body.contains("text/plain") && res.body.contains("text/html"));
+}
+
+/// Charset-bearing and bare Accept values both negotiate successfully against
+/// groom's UTF-8 wire formats (P008 / D-21).
+#[tokio::test]
+pub async fn test_charset_bearing_and_bare_accept_values() {
+    let r = weights_controller::into_router().validate().unwrap().to_axum_router();
+
+    Req::get("/html-or-text").accept("text/plain; charset=utf-8").call(&r).await
+        .assert_status(200)
+        .assert_content_type("text/plain; charset=utf-8");
+    Req::get("/html-or-text").accept("text/plain").call(&r).await
+        .assert_status(200)
+        .assert_content_type("text/plain; charset=utf-8");
+
+    Req::get("/html-or-text").accept("text/html; charset=utf-8").call(&r).await
+        .assert_status(200)
+        .assert_content_type("text/html; charset=utf-8");
+    Req::get("/html-or-text").accept("text/html").call(&r).await
+        .assert_status(200)
+        .assert_content_type("text/html; charset=utf-8");
+
+    let r = controller::into_router().validate().unwrap().to_axum_router();
+    Req::get("/status").accept("application/json").call(&r).await
+        .assert_status(200)
+        .assert_content_type("application/json");
+
+    let r = weights_controller::into_router().validate().unwrap().to_axum_router();
+    Req::get("/html-or-text").accept("application/xml").call(&r).await
+        .assert_status(406)
+        .assert_content_type("text/plain; charset=utf-8");
+}
+
+/// D-22 identity gate: the negotiation supported-mime list (surfaced in the 406
+/// body) must be identical to the OpenAPI 200 content keys per format.
+#[tokio::test]
+pub async fn test_d22_supported_mimes_match_openapi_content_keys() {
+    use std::collections::BTreeSet;
+    use utoipa::OpenApi;
+
+    #[derive(OpenApi)]
+    #[openapi(
+        info(
+            title = "t",
+            description = "d",
+            license(name = "n"),
+            version = "0.0.0",
+            contact(name = "name", email = "mail@example.com")
+        )
+    )]
+    struct ApiDoc;
+
+    fn content_keys(api: &utoipa::openapi::OpenApi, path: &str) -> BTreeSet<String> {
+        let json: serde_json::Value =
+            serde_json::from_str(&api.to_json().expect("valid openapi json")).unwrap();
+        json["paths"][path]["get"]["responses"]["200"]["content"]
+            .as_object()
+            .expect("200 content map")
+            .keys()
+            .cloned()
+            .collect()
+    }
+
+    fn supported_from_406_body(body: &str) -> BTreeSet<String> {
+        let prefix = "Supported content types: ";
+        assert!(body.starts_with(prefix), "unexpected 406 body: {body}");
+        body[prefix.len()..]
+            .split(", ")
+            .map(str::to_string)
+            .collect()
+    }
+
+    // Multi-format (plain + html): OpenAPI 200 keys == 406 supported list.
+    let api = weights_controller::into_router()
+        .validate()
+        .unwrap()
+        .to_openapi(ApiDoc::openapi());
+    let openapi_keys = content_keys(&api, "/html-or-text");
+    let expected_html_or_text = BTreeSet::from([
+        "text/plain; charset=utf-8".to_string(),
+        "text/html; charset=utf-8".to_string(),
+    ]);
+    assert_eq!(openapi_keys, expected_html_or_text);
+
+    let r = weights_controller::into_router().validate().unwrap().to_axum_router();
+    let res = Req::get("/html-or-text").accept("application/xml").call(&r).await;
+    res.assert_status(406);
+    assert_eq!(supported_from_406_body(&res.body), openapi_keys);
+
+    // JSON-only: OpenAPI 200 keys == 406 supported list.
+    let api = panic_controller::into_router()
+        .validate()
+        .unwrap()
+        .to_openapi(ApiDoc::openapi());
+    let openapi_keys = content_keys(&api, "/panic-negotiating");
+    let expected_json = BTreeSet::from(["application/json".to_string()]);
+    assert_eq!(openapi_keys, expected_json);
+
+    let r = panic_controller::into_router().validate().unwrap().to_axum_router();
+    let res = Req::get("/panic-negotiating").accept("application/xml").call(&r).await;
+    res.assert_status(406);
+    assert_eq!(supported_from_406_body(&res.body), openapi_keys);
 }
 

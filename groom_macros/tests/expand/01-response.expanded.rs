@@ -236,7 +236,7 @@ mod plaintext_only {
     }
     #[allow(non_upper_case_globals)]
     const __GROOM_RESPONSE_SUPPORTED_MIMES_RespPlaintextResponse: &[::mime::Mime] = &[
-        ::mime::TEXT_PLAIN,
+        ::mime::TEXT_PLAIN_UTF_8,
     ];
     impl RespPlaintextResponse {
         fn into_response_text_plain(self) -> ::axum::response::Response {
@@ -471,7 +471,7 @@ mod plaintext_only {
                     ::utoipa::openapi::ResponseBuilder::new()
                         .description("The requested content type is not supported")
                         .content(
-                            ::mime::TEXT_PLAIN.as_ref(),
+                            ::mime::TEXT_PLAIN_UTF_8.as_ref(),
                             ::utoipa::openapi::ContentBuilder::new()
                                 .schema(
                                     Some(
@@ -489,11 +489,12 @@ mod plaintext_only {
         fn __groom_negotiate_content_type(
             accept: &::accept_header::Accept,
         ) -> ::core::result::Result<Option<::mime::Mime>, ::axum::response::Response> {
-            match accept
-                .negotiate(&__GROOM_RESPONSE_SUPPORTED_MIMES_RespPlaintextResponse)
-            {
-                Ok(negotiated) => Ok(Some(negotiated)),
-                Err(_) => {
+            match ::groom::content_negotiation::negotiate_parameter_insensitive(
+                accept,
+                &__GROOM_RESPONSE_SUPPORTED_MIMES_RespPlaintextResponse,
+            ) {
+                Some(negotiated) => Ok(Some(negotiated.to_owned())),
+                None => {
                     Err(
                         ::groom::response::not_acceptable(
                             __GROOM_RESPONSE_SUPPORTED_MIMES_RespPlaintextResponse,
@@ -599,7 +600,7 @@ mod html_only {
     }
     #[allow(non_upper_case_globals)]
     const __GROOM_RESPONSE_SUPPORTED_MIMES_RespHtmlResponse: &[::mime::Mime] = &[
-        ::mime::TEXT_HTML,
+        ::mime::TEXT_HTML_UTF_8,
     ];
     impl RespHtmlResponse {
         fn into_response_text_html(self) -> ::axum::response::Response {
@@ -834,7 +835,7 @@ mod html_only {
                     ::utoipa::openapi::ResponseBuilder::new()
                         .description("The requested content type is not supported")
                         .content(
-                            ::mime::TEXT_PLAIN.as_ref(),
+                            ::mime::TEXT_PLAIN_UTF_8.as_ref(),
                             ::utoipa::openapi::ContentBuilder::new()
                                 .schema(
                                     Some(
@@ -852,9 +853,12 @@ mod html_only {
         fn __groom_negotiate_content_type(
             accept: &::accept_header::Accept,
         ) -> ::core::result::Result<Option<::mime::Mime>, ::axum::response::Response> {
-            match accept.negotiate(&__GROOM_RESPONSE_SUPPORTED_MIMES_RespHtmlResponse) {
-                Ok(negotiated) => Ok(Some(negotiated)),
-                Err(_) => {
+            match ::groom::content_negotiation::negotiate_parameter_insensitive(
+                accept,
+                &__GROOM_RESPONSE_SUPPORTED_MIMES_RespHtmlResponse,
+            ) {
+                Some(negotiated) => Ok(Some(negotiated.to_owned())),
+                None => {
                     Err(
                         ::groom::response::not_acceptable(
                             __GROOM_RESPONSE_SUPPORTED_MIMES_RespHtmlResponse,
@@ -1173,7 +1177,7 @@ mod json_only {
                     ::utoipa::openapi::ResponseBuilder::new()
                         .description("The requested content type is not supported")
                         .content(
-                            ::mime::TEXT_PLAIN.as_ref(),
+                            ::mime::TEXT_PLAIN_UTF_8.as_ref(),
                             ::utoipa::openapi::ContentBuilder::new()
                                 .schema(
                                     Some(
@@ -1191,9 +1195,12 @@ mod json_only {
         fn __groom_negotiate_content_type(
             accept: &::accept_header::Accept,
         ) -> ::core::result::Result<Option<::mime::Mime>, ::axum::response::Response> {
-            match accept.negotiate(&__GROOM_RESPONSE_SUPPORTED_MIMES_RespJsonResponse) {
-                Ok(negotiated) => Ok(Some(negotiated)),
-                Err(_) => {
+            match ::groom::content_negotiation::negotiate_parameter_insensitive(
+                accept,
+                &__GROOM_RESPONSE_SUPPORTED_MIMES_RespJsonResponse,
+            ) {
+                Some(negotiated) => Ok(Some(negotiated.to_owned())),
+                None => {
                     Err(
                         ::groom::response::not_acceptable(
                             __GROOM_RESPONSE_SUPPORTED_MIMES_RespJsonResponse,
@@ -1295,8 +1302,8 @@ mod multiple_content_types {
     }
     #[allow(non_upper_case_globals)]
     const __GROOM_RESPONSE_SUPPORTED_MIMES_RespMultipleTypesResponse: &[::mime::Mime] = &[
-        ::mime::TEXT_PLAIN,
-        ::mime::TEXT_HTML,
+        ::mime::TEXT_PLAIN_UTF_8,
+        ::mime::TEXT_HTML_UTF_8,
         ::mime::APPLICATION_JSON,
     ];
     impl RespMultipleTypesResponse {
@@ -1884,7 +1891,7 @@ mod multiple_content_types {
                     ::utoipa::openapi::ResponseBuilder::new()
                         .description("The requested content type is not supported")
                         .content(
-                            ::mime::TEXT_PLAIN.as_ref(),
+                            ::mime::TEXT_PLAIN_UTF_8.as_ref(),
                             ::utoipa::openapi::ContentBuilder::new()
                                 .schema(
                                     Some(
@@ -1902,11 +1909,12 @@ mod multiple_content_types {
         fn __groom_negotiate_content_type(
             accept: &::accept_header::Accept,
         ) -> ::core::result::Result<Option<::mime::Mime>, ::axum::response::Response> {
-            match accept
-                .negotiate(&__GROOM_RESPONSE_SUPPORTED_MIMES_RespMultipleTypesResponse)
-            {
-                Ok(negotiated) => Ok(Some(negotiated)),
-                Err(_) => {
+            match ::groom::content_negotiation::negotiate_parameter_insensitive(
+                accept,
+                &__GROOM_RESPONSE_SUPPORTED_MIMES_RespMultipleTypesResponse,
+            ) {
+                Some(negotiated) => Ok(Some(negotiated.to_owned())),
+                None => {
                     Err(
                         ::groom::response::not_acceptable(
                             __GROOM_RESPONSE_SUPPORTED_MIMES_RespMultipleTypesResponse,
@@ -1996,7 +2004,7 @@ mod named_struct_response {
     impl ::groom::DTO_Response for Named {}
     #[allow(non_upper_case_globals)]
     const __GROOM_RESPONSE_SUPPORTED_MIMES_Named: &[::mime::Mime] = &[
-        ::mime::TEXT_HTML,
+        ::mime::TEXT_HTML_UTF_8,
         ::mime::APPLICATION_JSON,
     ];
     impl Named {
@@ -2219,7 +2227,7 @@ mod named_struct_response {
                     ::utoipa::openapi::ResponseBuilder::new()
                         .description("The requested content type is not supported")
                         .content(
-                            ::mime::TEXT_PLAIN.as_ref(),
+                            ::mime::TEXT_PLAIN_UTF_8.as_ref(),
                             ::utoipa::openapi::ContentBuilder::new()
                                 .schema(
                                     Some(
@@ -2237,9 +2245,12 @@ mod named_struct_response {
         fn __groom_negotiate_content_type(
             accept: &::accept_header::Accept,
         ) -> ::core::result::Result<Option<::mime::Mime>, ::axum::response::Response> {
-            match accept.negotiate(&__GROOM_RESPONSE_SUPPORTED_MIMES_Named) {
-                Ok(negotiated) => Ok(Some(negotiated)),
-                Err(_) => {
+            match ::groom::content_negotiation::negotiate_parameter_insensitive(
+                accept,
+                &__GROOM_RESPONSE_SUPPORTED_MIMES_Named,
+            ) {
+                Some(negotiated) => Ok(Some(negotiated.to_owned())),
+                None => {
                     Err(
                         ::groom::response::not_acceptable(
                             __GROOM_RESPONSE_SUPPORTED_MIMES_Named,
@@ -2317,7 +2328,7 @@ mod unnamed_struct_response {
     impl ::groom::DTO_Response for Unnamed {}
     #[allow(non_upper_case_globals)]
     const __GROOM_RESPONSE_SUPPORTED_MIMES_Unnamed: &[::mime::Mime] = &[
-        ::mime::TEXT_HTML,
+        ::mime::TEXT_HTML_UTF_8,
         ::mime::APPLICATION_JSON,
     ];
     impl Unnamed {
@@ -2540,7 +2551,7 @@ mod unnamed_struct_response {
                     ::utoipa::openapi::ResponseBuilder::new()
                         .description("The requested content type is not supported")
                         .content(
-                            ::mime::TEXT_PLAIN.as_ref(),
+                            ::mime::TEXT_PLAIN_UTF_8.as_ref(),
                             ::utoipa::openapi::ContentBuilder::new()
                                 .schema(
                                     Some(
@@ -2558,9 +2569,12 @@ mod unnamed_struct_response {
         fn __groom_negotiate_content_type(
             accept: &::accept_header::Accept,
         ) -> ::core::result::Result<Option<::mime::Mime>, ::axum::response::Response> {
-            match accept.negotiate(&__GROOM_RESPONSE_SUPPORTED_MIMES_Unnamed) {
-                Ok(negotiated) => Ok(Some(negotiated)),
-                Err(_) => {
+            match ::groom::content_negotiation::negotiate_parameter_insensitive(
+                accept,
+                &__GROOM_RESPONSE_SUPPORTED_MIMES_Unnamed,
+            ) {
+                Some(negotiated) => Ok(Some(negotiated.to_owned())),
+                None => {
                     Err(
                         ::groom::response::not_acceptable(
                             __GROOM_RESPONSE_SUPPORTED_MIMES_Unnamed,
@@ -3208,7 +3222,7 @@ mod result_struct_enum {
     impl ::groom::DTO_Response for Success {}
     #[allow(non_upper_case_globals)]
     const __GROOM_RESPONSE_SUPPORTED_MIMES_Success: &[::mime::Mime] = &[
-        ::mime::TEXT_PLAIN,
+        ::mime::TEXT_PLAIN_UTF_8,
     ];
     impl Success {
         fn into_response_text_plain(self) -> ::axum::response::Response {
@@ -3347,7 +3361,7 @@ mod result_struct_enum {
                     ::utoipa::openapi::ResponseBuilder::new()
                         .description("The requested content type is not supported")
                         .content(
-                            ::mime::TEXT_PLAIN.as_ref(),
+                            ::mime::TEXT_PLAIN_UTF_8.as_ref(),
                             ::utoipa::openapi::ContentBuilder::new()
                                 .schema(
                                     Some(
@@ -3365,9 +3379,12 @@ mod result_struct_enum {
         fn __groom_negotiate_content_type(
             accept: &::accept_header::Accept,
         ) -> ::core::result::Result<Option<::mime::Mime>, ::axum::response::Response> {
-            match accept.negotiate(&__GROOM_RESPONSE_SUPPORTED_MIMES_Success) {
-                Ok(negotiated) => Ok(Some(negotiated)),
-                Err(_) => {
+            match ::groom::content_negotiation::negotiate_parameter_insensitive(
+                accept,
+                &__GROOM_RESPONSE_SUPPORTED_MIMES_Success,
+            ) {
+                Some(negotiated) => Ok(Some(negotiated.to_owned())),
+                None => {
                     Err(
                         ::groom::response::not_acceptable(
                             __GROOM_RESPONSE_SUPPORTED_MIMES_Success,
@@ -3444,7 +3461,7 @@ mod result_struct_enum {
     }
     #[allow(non_upper_case_globals)]
     const __GROOM_RESPONSE_SUPPORTED_MIMES_Error: &[::mime::Mime] = &[
-        ::mime::TEXT_PLAIN,
+        ::mime::TEXT_PLAIN_UTF_8,
     ];
     impl Error {
         fn into_response_text_plain(self) -> ::axum::response::Response {
@@ -3679,7 +3696,7 @@ mod result_struct_enum {
                     ::utoipa::openapi::ResponseBuilder::new()
                         .description("The requested content type is not supported")
                         .content(
-                            ::mime::TEXT_PLAIN.as_ref(),
+                            ::mime::TEXT_PLAIN_UTF_8.as_ref(),
                             ::utoipa::openapi::ContentBuilder::new()
                                 .schema(
                                     Some(
@@ -3697,9 +3714,12 @@ mod result_struct_enum {
         fn __groom_negotiate_content_type(
             accept: &::accept_header::Accept,
         ) -> ::core::result::Result<Option<::mime::Mime>, ::axum::response::Response> {
-            match accept.negotiate(&__GROOM_RESPONSE_SUPPORTED_MIMES_Error) {
-                Ok(negotiated) => Ok(Some(negotiated)),
-                Err(_) => {
+            match ::groom::content_negotiation::negotiate_parameter_insensitive(
+                accept,
+                &__GROOM_RESPONSE_SUPPORTED_MIMES_Error,
+            ) {
+                Some(negotiated) => Ok(Some(negotiated.to_owned())),
+                None => {
                     Err(
                         ::groom::response::not_acceptable(
                             __GROOM_RESPONSE_SUPPORTED_MIMES_Error,
@@ -4273,7 +4293,7 @@ mod wrapped_enum {
                     ::utoipa::openapi::ResponseBuilder::new()
                         .description("The requested content type is not supported")
                         .content(
-                            ::mime::TEXT_PLAIN.as_ref(),
+                            ::mime::TEXT_PLAIN_UTF_8.as_ref(),
                             ::utoipa::openapi::ContentBuilder::new()
                                 .schema(
                                     Some(
@@ -4291,9 +4311,12 @@ mod wrapped_enum {
         fn __groom_negotiate_content_type(
             accept: &::accept_header::Accept,
         ) -> ::core::result::Result<Option<::mime::Mime>, ::axum::response::Response> {
-            match accept.negotiate(&__GROOM_RESPONSE_SUPPORTED_MIMES_Resp) {
-                Ok(negotiated) => Ok(Some(negotiated)),
-                Err(_) => {
+            match ::groom::content_negotiation::negotiate_parameter_insensitive(
+                accept,
+                &__GROOM_RESPONSE_SUPPORTED_MIMES_Resp,
+            ) {
+                Some(negotiated) => Ok(Some(negotiated.to_owned())),
+                None => {
                     Err(
                         ::groom::response::not_acceptable(
                             __GROOM_RESPONSE_SUPPORTED_MIMES_Resp,
@@ -4592,7 +4615,7 @@ mod wrapped_enum {
                     ::utoipa::openapi::ResponseBuilder::new()
                         .description("The requested content type is not supported")
                         .content(
-                            ::mime::TEXT_PLAIN.as_ref(),
+                            ::mime::TEXT_PLAIN_UTF_8.as_ref(),
                             ::utoipa::openapi::ContentBuilder::new()
                                 .schema(
                                     Some(
@@ -4610,9 +4633,12 @@ mod wrapped_enum {
         fn __groom_negotiate_content_type(
             accept: &::accept_header::Accept,
         ) -> ::core::result::Result<Option<::mime::Mime>, ::axum::response::Response> {
-            match accept.negotiate(&__GROOM_RESPONSE_SUPPORTED_MIMES_Error) {
-                Ok(negotiated) => Ok(Some(negotiated)),
-                Err(_) => {
+            match ::groom::content_negotiation::negotiate_parameter_insensitive(
+                accept,
+                &__GROOM_RESPONSE_SUPPORTED_MIMES_Error,
+            ) {
+                Some(negotiated) => Ok(Some(negotiated.to_owned())),
+                None => {
                     Err(
                         ::groom::response::not_acceptable(
                             __GROOM_RESPONSE_SUPPORTED_MIMES_Error,

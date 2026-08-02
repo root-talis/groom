@@ -245,13 +245,13 @@ fn populate_supported_mimes(
 {
     if content_types.plain_text {
         supported_mimes.0.push(quote! {
-            ::mime::TEXT_PLAIN,
+            ::mime::TEXT_PLAIN_UTF_8,
         });
     }
 
     if content_types.html {
         supported_mimes.0.push(quote! {
-            ::mime::TEXT_HTML,
+            ::mime::TEXT_HTML_UTF_8,
         });
     }
 
@@ -460,7 +460,7 @@ fn make_new_ast(fragments: NewAstFragments)
                 ::utoipa::openapi::ResponseBuilder::new()
                     .description("The requested content type is not supported")
                     .content(
-                        ::mime::TEXT_PLAIN.as_ref(),
+                        ::mime::TEXT_PLAIN_UTF_8.as_ref(),
                         ::utoipa::openapi::ContentBuilder::new()
                             .schema(Some(::groom::extract::ComponentsRegistry::schema_or_ref::<String>(components)))
                             .build()
@@ -618,9 +618,12 @@ fn make_groom_negotiate_content_type_function(
             fn __groom_negotiate_content_type(accept: &::accept_header::Accept)
                 -> ::core::result::Result<Option<::mime::Mime>, ::axum::response::Response>
             {
-                match accept.negotiate(&#supported_mimes_ident) {
-                    Ok(negotiated) => Ok(Some(negotiated)),
-                    Err(_) => Err(::groom::response::not_acceptable(#supported_mimes_ident)),
+                match ::groom::content_negotiation::negotiate_parameter_insensitive(
+                    accept,
+                    &#supported_mimes_ident,
+                ) {
+                    Some(negotiated) => Ok(Some(negotiated.to_owned())),
+                    None => Err(::groom::response::not_acceptable(#supported_mimes_ident)),
                 }
             }
         }

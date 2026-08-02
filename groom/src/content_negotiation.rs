@@ -64,6 +64,33 @@ fn get_header_as_string(headers: &HeaderMap, header_name: HeaderName, error_name
         .transpose()
 }
 
+/// Negotiates `Accept` against supported Mimes, ignoring Mime parameters (charset and
+/// others). `accept-header`'s `negotiate()` compares full `Mime`s including
+/// parameters, so a `text/plain; charset=utf-8` supported list would otherwise 406 a
+/// plain `Accept: text/plain`. The parser pre-sorts `accept.types` by q-weight, so
+/// iterating in order preserves priority; `*/*` (stored in `accept.wildcard`) falls
+/// back to the html mime, else the first supported.
+pub fn negotiate_parameter_insensitive<'a>(
+    accept: &Accept,
+    supported: &'a [Mime],
+) -> Option<&'a Mime> {
+    for media_type in &accept.types {
+        if let Some(supported) = supported.iter().find(|mime| {
+            mime.type_() == media_type.mime.type_()
+                && mime.subtype() == media_type.mime.subtype()
+        }) {
+            return Some(supported);
+        }
+    }
+    if accept.wildcard.is_some() {
+        return supported
+            .iter()
+            .find(|mime| mime.type_() == mime::TEXT && mime.subtype() == mime::HTML)
+            .or_else(|| supported.first());
+    }
+    None
+}
+
 fn is_form_url_encoded(mime: &Mime) -> bool {
     *mime == mime::APPLICATION_WWW_FORM_URLENCODED
 }

@@ -158,7 +158,7 @@ pub mod api_root {
     }
     #[allow(non_upper_case_globals)]
     const __GROOM_RESPONSE_SUPPORTED_MIMES_GetRootResponse: &[::mime::Mime] = &[
-        ::mime::TEXT_PLAIN,
+        ::mime::TEXT_PLAIN_UTF_8,
     ];
     impl GetRootResponse {
         fn into_response_text_plain(self) -> ::axum::response::Response {
@@ -500,7 +500,7 @@ pub mod api_root {
                     ::utoipa::openapi::ResponseBuilder::new()
                         .description("The requested content type is not supported")
                         .content(
-                            ::mime::TEXT_PLAIN.as_ref(),
+                            ::mime::TEXT_PLAIN_UTF_8.as_ref(),
                             ::utoipa::openapi::ContentBuilder::new()
                                 .schema(
                                     Some(
@@ -518,9 +518,12 @@ pub mod api_root {
         fn __groom_negotiate_content_type(
             accept: &::accept_header::Accept,
         ) -> ::core::result::Result<Option<::mime::Mime>, ::axum::response::Response> {
-            match accept.negotiate(&__GROOM_RESPONSE_SUPPORTED_MIMES_GetRootResponse) {
-                Ok(negotiated) => Ok(Some(negotiated)),
-                Err(_) => {
+            match ::groom::content_negotiation::negotiate_parameter_insensitive(
+                accept,
+                &__GROOM_RESPONSE_SUPPORTED_MIMES_GetRootResponse,
+            ) {
+                Some(negotiated) => Ok(Some(negotiated.to_owned())),
+                None => {
                     Err(
                         ::groom::response::not_acceptable(
                             __GROOM_RESPONSE_SUPPORTED_MIMES_GetRootResponse,
@@ -851,7 +854,7 @@ pub mod api_root {
     }
     #[allow(non_upper_case_globals)]
     const __GROOM_RESPONSE_SUPPORTED_MIMES_RqConsQueryResponse: &[::mime::Mime] = &[
-        ::mime::TEXT_PLAIN,
+        ::mime::TEXT_PLAIN_UTF_8,
     ];
     impl RqConsQueryResponse {
         fn into_response_text_plain(self) -> ::axum::response::Response {
@@ -1111,7 +1114,7 @@ pub mod api_root {
                     ::utoipa::openapi::ResponseBuilder::new()
                         .description("The requested content type is not supported")
                         .content(
-                            ::mime::TEXT_PLAIN.as_ref(),
+                            ::mime::TEXT_PLAIN_UTF_8.as_ref(),
                             ::utoipa::openapi::ContentBuilder::new()
                                 .schema(
                                     Some(
@@ -1129,10 +1132,12 @@ pub mod api_root {
         fn __groom_negotiate_content_type(
             accept: &::accept_header::Accept,
         ) -> ::core::result::Result<Option<::mime::Mime>, ::axum::response::Response> {
-            match accept.negotiate(&__GROOM_RESPONSE_SUPPORTED_MIMES_RqConsQueryResponse)
-            {
-                Ok(negotiated) => Ok(Some(negotiated)),
-                Err(_) => {
+            match ::groom::content_negotiation::negotiate_parameter_insensitive(
+                accept,
+                &__GROOM_RESPONSE_SUPPORTED_MIMES_RqConsQueryResponse,
+            ) {
+                Some(negotiated) => Ok(Some(negotiated.to_owned())),
+                None => {
                     Err(
                         ::groom::response::not_acceptable(
                             __GROOM_RESPONSE_SUPPORTED_MIMES_RqConsQueryResponse,
@@ -1495,7 +1500,7 @@ pub mod api_root {
     }
     #[allow(non_upper_case_globals)]
     const __GROOM_RESPONSE_SUPPORTED_MIMES_RqConsPathResponse: &[::mime::Mime] = &[
-        ::mime::TEXT_PLAIN,
+        ::mime::TEXT_PLAIN_UTF_8,
     ];
     impl RqConsPathResponse {
         fn into_response_text_plain(self) -> ::axum::response::Response {
@@ -1650,7 +1655,7 @@ pub mod api_root {
                     ::utoipa::openapi::ResponseBuilder::new()
                         .description("The requested content type is not supported")
                         .content(
-                            ::mime::TEXT_PLAIN.as_ref(),
+                            ::mime::TEXT_PLAIN_UTF_8.as_ref(),
                             ::utoipa::openapi::ContentBuilder::new()
                                 .schema(
                                     Some(
@@ -1668,10 +1673,12 @@ pub mod api_root {
         fn __groom_negotiate_content_type(
             accept: &::accept_header::Accept,
         ) -> ::core::result::Result<Option<::mime::Mime>, ::axum::response::Response> {
-            match accept.negotiate(&__GROOM_RESPONSE_SUPPORTED_MIMES_RqConsPathResponse)
-            {
-                Ok(negotiated) => Ok(Some(negotiated)),
-                Err(_) => {
+            match ::groom::content_negotiation::negotiate_parameter_insensitive(
+                accept,
+                &__GROOM_RESPONSE_SUPPORTED_MIMES_RqConsPathResponse,
+            ) {
+                Some(negotiated) => Ok(Some(negotiated.to_owned())),
+                None => {
                     Err(
                         ::groom::response::not_acceptable(
                             __GROOM_RESPONSE_SUPPORTED_MIMES_RqConsPathResponse,
@@ -1940,7 +1947,7 @@ pub mod api_root {
                     ::utoipa::openapi::ResponseBuilder::new()
                         .description("The requested content type is not supported")
                         .content(
-                            ::mime::TEXT_PLAIN.as_ref(),
+                            ::mime::TEXT_PLAIN_UTF_8.as_ref(),
                             ::utoipa::openapi::ContentBuilder::new()
                                 .schema(
                                     Some(
@@ -1958,9 +1965,12 @@ pub mod api_root {
         fn __groom_negotiate_content_type(
             accept: &::accept_header::Accept,
         ) -> ::core::result::Result<Option<::mime::Mime>, ::axum::response::Response> {
-            match accept.negotiate(&__GROOM_RESPONSE_SUPPORTED_MIMES_RespJsonResponse) {
-                Ok(negotiated) => Ok(Some(negotiated)),
-                Err(_) => {
+            match ::groom::content_negotiation::negotiate_parameter_insensitive(
+                accept,
+                &__GROOM_RESPONSE_SUPPORTED_MIMES_RespJsonResponse,
+            ) {
+                Some(negotiated) => Ok(Some(negotiated.to_owned())),
+                None => {
                     Err(
                         ::groom::response::not_acceptable(
                             __GROOM_RESPONSE_SUPPORTED_MIMES_RespJsonResponse,
