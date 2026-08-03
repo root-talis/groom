@@ -4,6 +4,7 @@
 
 ### groom
 
+- `Result<T, E>` content negotiation now uses only the `Ok` type (`T`). When Accept cannot be satisfied, groom no longer builds a 406 via `T` and then retries `E`. Hand-written `Response` impls used in a `Result` must still declare identical format lists on both arms (enforced at router build); there is no dual-negotiate fallback for mismatched lists.
 - **Breaking:** `ComponentsRegistry::merge` now returns `Result<Self, SchemaMergeError>` instead of `(String, Schema, Schema)`. The error boxes both schemas so the success `Result` stays small. `GroomRouter::merge` / `nest` still map conflicts to name-only `MergeError::SchemaConflict`.
 - Form body `Content-Type` values with a charset (or other Mime parameters) are now accepted; detection matches type and subtype only, like JSON.
 - Major architecture change: `GroomRouter` introduced as the central composition type.

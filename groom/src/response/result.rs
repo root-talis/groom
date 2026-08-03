@@ -4,6 +4,11 @@ use crate::extract::ComponentsRegistry;
 use crate::response::Response;
 use crate::runtime_checks::{HTTPCodeSet, HTTPFormatsSet};
 
+/// `Result<T, E>` as a [`Response`] when both arms implement [`Response`].
+///
+/// Hand-written `Response` impls used in `Result<T, E>` must declare the same
+/// format list on `T` and `E`. Startup format checks enforce this. Negotiation
+/// uses only `T`; there is no fallback to `E` after a 406.
 impl<T, E> Response for Result<T, E>
 where T: Response, E: Response
 {
@@ -16,10 +21,9 @@ where T: Response, E: Response
     fn __groom_negotiate_content_type(accept: &Accept)
         -> ::core::result::Result<Option<::mime::Mime>, ::axum::response::Response>
     {
-        match T::__groom_negotiate_content_type(accept) {
-            Ok(mime) => Ok(mime),
-            Err(_) => E::__groom_negotiate_content_type(accept),
-        }
+        // Format equality (below) proves Ok/Err share the same list, so E cannot
+        // accept what T rejected. Negotiate once with T (P009 / D-26).
+        T::__groom_negotiate_content_type(accept)
     }
 
     fn __groom_into_response(self, negotiated: Option<&::mime::Mime>) -> axum::response::Response {
@@ -41,5 +45,27 @@ where T: Response, E: Response
         E::__groom_check_response_formats(format_args!("{context} / Result<_, Err>"), &mut err_formats);
         ok_formats.assert_same_as(format_args!("{context} / Result<Ok, _>"), &err_formats);
         formats.merge(&ok_formats);
+    }
+}
+
+#[cfg(test)]
+mod p009_negotiate_gate {
+    /// Structural gate (D-29): Result negotiate must not retry E after T 406.
+    #[test]
+    fn result_negotiate_must_not_retry_e_after_t_406() {
+        let src = include_str!("result.rs");
+        let impl_src = src.split("#[cfg(test)]").next().expect("impl precedes tests");
+        let needle = ["E::", "__groom_negotiate_content_type"].concat();
+        let e_retry_lines = impl_src
+            .lines()
+            .filter(|line| {
+                let trimmed = line.trim_start();
+                !trimmed.starts_with("//") && line.contains(&needle)
+            })
+            .count();
+        assert_eq!(
+            e_retry_lines, 0,
+            "Result negotiate must call T only (P009/D-29); no E retry after T 406"
+        );
     }
 }
