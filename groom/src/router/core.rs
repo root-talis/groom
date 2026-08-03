@@ -3,11 +3,16 @@ use std::marker::PhantomData;
 
 use utoipa::openapi::path::{HttpMethod, PathItem};
 
-use crate::extract::ComponentsRegistry;
+use crate::extract::{ComponentsRegistry, SchemaMergeError};
 
 use super::error::MergeError;
 use super::traits::{OpenApiSpecLayer, SpecLayerModifier};
 use super::{MergeResult, NotValidated};
+
+/// Map registry merge conflicts to router [`MergeError`] (name only; Display frozen).
+fn schema_conflict(SchemaMergeError { name, .. }: SchemaMergeError) -> MergeError {
+    MergeError::SchemaConflict { name }
+}
 
 /// Bit mask of HTTP methods a per-path spec layer is tagged for (D-13 / D-14).
 ///
@@ -30,32 +35,21 @@ impl MethodFlags {
     }
 
     pub(crate) fn from_path_item(item: &PathItem) -> Self {
-        let mut flags = Self::empty();
-        if item.get.is_some() {
-            flags = flags.union_method(HttpMethod::Get);
-        }
-        if item.put.is_some() {
-            flags = flags.union_method(HttpMethod::Put);
-        }
-        if item.post.is_some() {
-            flags = flags.union_method(HttpMethod::Post);
-        }
-        if item.delete.is_some() {
-            flags = flags.union_method(HttpMethod::Delete);
-        }
-        if item.options.is_some() {
-            flags = flags.union_method(HttpMethod::Options);
-        }
-        if item.head.is_some() {
-            flags = flags.union_method(HttpMethod::Head);
-        }
-        if item.patch.is_some() {
-            flags = flags.union_method(HttpMethod::Patch);
-        }
-        if item.trace.is_some() {
-            flags = flags.union_method(HttpMethod::Trace);
-        }
-        flags
+        // Local table (dup-avoid-over-abstraction vs validate::OPENAPI_METHODS):
+        // eight OpenAPI PathItem ops → HttpMethod bits; no CONNECT.
+        [
+            (&item.get, HttpMethod::Get),
+            (&item.put, HttpMethod::Put),
+            (&item.post, HttpMethod::Post),
+            (&item.delete, HttpMethod::Delete),
+            (&item.options, HttpMethod::Options),
+            (&item.head, HttpMethod::Head),
+            (&item.patch, HttpMethod::Patch),
+            (&item.trace, HttpMethod::Trace),
+        ]
+        .into_iter()
+        .filter(|(op, _)| op.is_some())
+        .fold(Self::empty(), |flags, (_, method)| flags.union_method(method))
     }
 
     pub(crate) fn union(self, other: Self) -> Self {
@@ -179,11 +173,10 @@ impl<S: Clone + Send + Sync + 'static> GroomRouter<S, NotValidated> {
         let mut whole_spec_layers = self.whole_spec_layers;
         whole_spec_layers.extend(other.whole_spec_layers);
 
-        let registry = self.registry
+        let registry = self
+            .registry
             .merge(other.registry)
-            .map_err(|crate::extract::SchemaMergeError { name, .. }| MergeError::SchemaConflict {
-                name,
-            })?;
+            .map_err(schema_conflict)?;
 
         Ok(Self {
             router,
@@ -197,30 +190,31 @@ impl<S: Clone + Send + Sync + 'static> GroomRouter<S, NotValidated> {
 
     pub fn nest(self, path: &str, other: GroomRouter<S, NotValidated>) -> MergeResult<Self> {
         let router = self.router.nest(path, other.router);
+
         let mut openapi_paths = self.openapi_paths;
         let mut path_spec_layers = self.path_spec_layers;
 
         // Once per path key (align with merge) — controllers may emit multiple
         // PathItems for the same path (one per method).
-        for (p, layers) in other.path_spec_layers {
-            let prefixed = super::prepend_path(path, &p);
+        for (nested_path, layers) in other.path_spec_layers {
+            let prefixed = super::prepend_path(path, &nested_path);
             path_spec_layers
                 .entry(prefixed)
                 .or_default()
                 .extend(layers);
         }
-        for (p, item) in other.openapi_paths {
-            openapi_paths.push((super::prepend_path(path, &p), item));
+        for (nested_path, item) in other.openapi_paths {
+            openapi_paths.push((super::prepend_path(path, &nested_path), item));
         }
 
         let mut whole_spec_layers = self.whole_spec_layers;
         whole_spec_layers.extend(other.whole_spec_layers);
 
-        let registry = self.registry
+        let registry = self
+            .registry
             .merge(other.registry)
-            .map_err(|crate::extract::SchemaMergeError { name, .. }| MergeError::SchemaConflict {
-                name,
-            })?;
+            .map_err(schema_conflict)?;
+
         Ok(Self {
             router,
             registry,
@@ -282,23 +276,23 @@ impl<S: Clone + Send + Sync + 'static> GroomRouter<S, NotValidated> {
     /// ```
     pub fn layer_with_spec<SL>(self, spec_layer: SL) -> Self
     where
-        SL: OpenApiSpecLayer + Clone
+        SL: OpenApiSpecLayer + Clone,
     {
         let boxed = spec_layer.clone_box();
 
         // Methods present on each path at attach time (union across duplicate path keys).
-        let mut methods_by_path: HashMap<&str, MethodFlags> = HashMap::new();
+        let mut methods_at_attach: HashMap<&str, MethodFlags> = HashMap::new();
         for (path, item) in &self.openapi_paths {
-            let entry = methods_by_path.entry(path.as_str()).or_default();
-            *entry = entry.union(MethodFlags::from_path_item(item));
+            let flags = methods_at_attach.entry(path.as_str()).or_default();
+            *flags = flags.union(MethodFlags::from_path_item(item));
         }
 
         let mut path_spec_layers = self.path_spec_layers;
-        for (path, layers) in path_spec_layers.iter_mut() {
-            let methods = methods_by_path
+        for (path, layers) in &mut path_spec_layers {
+            let methods = methods_at_attach
                 .get(path.as_str())
                 .copied()
-                .unwrap_or_else(MethodFlags::empty);
+                .unwrap_or_default();
             layers.push(SpecLayerBinding {
                 methods,
                 layer: boxed.clone_box(),

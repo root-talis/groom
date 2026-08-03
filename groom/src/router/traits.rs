@@ -7,9 +7,7 @@ pub trait OpenApiSpecLayer: Send + Sync + Clone + 'static {
     /// Called once per spec layer during [`GroomRouter::to_openapi`].
     /// The method receives a mutable reference to the OpenAPI spec
     /// so it can add security schemes, response codes, or other metadata.
-    fn modify_openapi(&self, _api: &mut utoipa::openapi::OpenApi) {
-        // Default: do nothing
-    }
+    fn modify_openapi(&self, _api: &mut utoipa::openapi::OpenApi) {}
 
     /// Modify individual OpenAPI operations for this middleware's behavior.
     ///
@@ -26,7 +24,6 @@ pub trait OpenApiSpecLayer: Send + Sync + Clone + 'static {
         _method: &utoipa::openapi::path::HttpMethod,
         _operation: &mut utoipa::openapi::path::Operation,
     ) {
-        // Default: do nothing
     }
 
     /// Clone this spec layer into a type-erased box for storage.
@@ -38,13 +35,15 @@ pub trait OpenApiSpecLayer: Send + Sync + Clone + 'static {
         Box::new(self.clone())
     }
 
-    /// Mount this spec layer into axum::Router through layer
-    fn mount<S>(&self, r: axum::Router<S>) -> axum::Router<S> where S: Clone + Send + Sync + 'static;
+    /// Mount this spec layer onto an `axum::Router` (tower `Layer` apply site).
+    fn mount<S>(&self, r: axum::Router<S>) -> axum::Router<S>
+    where
+        S: Clone + Send + Sync + 'static;
 }
 
 /// Internal trait for type-erased storage of spec layers.
 ///
-/// This trait mirrors [`OpenApiSpecLayer`] but without the generic `mount<S>`` method,
+/// This trait mirrors [`OpenApiSpecLayer`] but without the generic `mount<S>` method,
 /// so that the generic type does not need to be specified in the
 /// trait object. A blanket impl delegates to [`OpenApiSpecLayer`].
 pub trait SpecLayerModifier: Send + Sync + 'static {
@@ -87,8 +86,18 @@ mod tests {
     use super::*;
     use crate::extract::ComponentsRegistry;
     use crate::router::core::GroomRouter;
+    use utoipa::openapi::path::{HttpMethod, OperationBuilder, PathItemBuilder};
 
-    /// Simple spec layer that sets the info title
+    fn get_only_path_item(operation_id: &str) -> utoipa::openapi::path::PathItem {
+        let op = OperationBuilder::new()
+            .operation_id(Some(operation_id))
+            .build();
+        PathItemBuilder::new()
+            .operation(HttpMethod::Get, op)
+            .build()
+    }
+
+    /// Spec layer that sets `info.title` via `modify_openapi`.
     #[derive(Clone)]
     struct TitleSpecLayer {
         title: String,
@@ -106,9 +115,7 @@ mod tests {
 
     #[test]
     fn test_layer_with_spec_stores_spec_layer() {
-        use utoipa::openapi::path::{PathItemBuilder, HttpMethod, OperationBuilder};
-        let op = OperationBuilder::new().operation_id(Some("a")).build();
-        let pi = PathItemBuilder::new().operation(HttpMethod::Get, op).build();
+        let pi = get_only_path_item("a");
         let r: GroomRouter<()> = GroomRouter::from_controller_parts(
             axum::Router::new(),
             ComponentsRegistry::new(),
@@ -117,7 +124,6 @@ mod tests {
         .layer_with_spec(TitleSpecLayer {
             title: "Custom Title".into(),
         });
-        // Spec layer stored per-path in HashMap
         assert_eq!(r.path_spec_layers.len(), 1);
         assert_eq!(r.path_spec_layers["/a"].len(), 1);
     }
@@ -125,13 +131,12 @@ mod tests {
     #[test]
     fn test_to_openapi_invokes_spec_layers() {
         use utoipa::OpenApi;
-        use utoipa::openapi::path::{PathItemBuilder, HttpMethod, OperationBuilder};
+
         #[derive(OpenApi)]
         #[openapi(info(title = "original", version = "0.1.0"))]
         struct ApiDoc;
 
-        let op = OperationBuilder::new().operation_id(Some("a")).build();
-        let pi = PathItemBuilder::new().operation(HttpMethod::Get, op).build();
+        let pi = get_only_path_item("a");
         let r: GroomRouter<()> = GroomRouter::from_controller_parts(
             axum::Router::new(),
             ComponentsRegistry::new(),
@@ -147,13 +152,12 @@ mod tests {
     #[test]
     fn test_multiple_spec_layers_compose() {
         use utoipa::OpenApi;
-        use utoipa::openapi::path::{PathItemBuilder, HttpMethod, OperationBuilder};
+
         #[derive(OpenApi)]
         #[openapi(info(title = "original", version = "0.1.0"))]
         struct ApiDoc;
 
-        let op = OperationBuilder::new().operation_id(Some("a")).build();
-        let pi = PathItemBuilder::new().operation(HttpMethod::Get, op).build();
+        let pi = get_only_path_item("a");
         let r: GroomRouter<()> = GroomRouter::from_controller_parts(
             axum::Router::new(),
             ComponentsRegistry::new(),
@@ -172,19 +176,24 @@ mod tests {
 
     #[test]
     fn test_merge_combines_spec_layers() {
-        use utoipa::openapi::path::{PathItemBuilder, HttpMethod, OperationBuilder};
-        let op = OperationBuilder::new().operation_id(Some("a")).build();
-        let pi = PathItemBuilder::new().operation(HttpMethod::Get, op).build();
+        let pi = get_only_path_item("a");
         let r1: GroomRouter<()> = GroomRouter::from_controller_parts(
-            axum::Router::new(), ComponentsRegistry::new(),
+            axum::Router::new(),
+            ComponentsRegistry::new(),
             vec![("/a".to_string(), pi.clone())],
-        ).layer_with_spec(TitleSpecLayer { title: "A".into() });
+        )
+        .layer_with_spec(TitleSpecLayer {
+            title: "A".into(),
+        });
         let r2: GroomRouter<()> = GroomRouter::from_controller_parts(
-            axum::Router::new(), ComponentsRegistry::new(),
+            axum::Router::new(),
+            ComponentsRegistry::new(),
             vec![("/b".to_string(), pi)],
-        ).layer_with_spec(TitleSpecLayer { title: "B".into() });
+        )
+        .layer_with_spec(TitleSpecLayer {
+            title: "B".into(),
+        });
         let merged = r1.merge(r2).unwrap();
-        // Each path carries its own spec layers in HashMap
         assert_eq!(merged.path_spec_layers.len(), 2);
         assert_eq!(merged.path_spec_layers["/a"].len(), 1);
         assert_eq!(merged.path_spec_layers["/b"].len(), 1);
@@ -192,16 +201,17 @@ mod tests {
 
     #[test]
     fn test_nest_combines_spec_layers() {
-        use utoipa::openapi::path::{PathItemBuilder, HttpMethod, OperationBuilder};
-        let op = OperationBuilder::new().operation_id(Some("a")).build();
-        let pi = PathItemBuilder::new().operation(HttpMethod::Get, op).build();
+        let pi = get_only_path_item("a");
         let inner: GroomRouter<()> = GroomRouter::from_controller_parts(
-            axum::Router::new(), ComponentsRegistry::new(),
+            axum::Router::new(),
+            ComponentsRegistry::new(),
             vec![("/inner".to_string(), pi)],
-        ).layer_with_spec(TitleSpecLayer { title: "inner".into() });
+        )
+        .layer_with_spec(TitleSpecLayer {
+            title: "inner".into(),
+        });
         let outer: GroomRouter<()> = GroomRouter::new();
-        let result = outer.nest("/api", inner);
-        let nested = result.unwrap();
+        let nested = outer.nest("/api", inner).unwrap();
         // Inner spec layers propagate with prefixed path key
         assert_eq!(nested.path_spec_layers.len(), 1);
         assert_eq!(nested.path_spec_layers["/api/inner"].len(), 1);
@@ -211,11 +221,9 @@ mod tests {
     /// Nest must rewrite path_spec_layers once per path key (not once per PathItem).
     #[test]
     fn test_nest_multi_pathitem_same_path_keeps_one_spec_binding() {
-        use utoipa::openapi::path::{PathItemBuilder, HttpMethod, OperationBuilder};
-        let get_op = OperationBuilder::new().operation_id(Some("get_inner")).build();
-        let post_op = OperationBuilder::new().operation_id(Some("post_inner")).build();
-        let get_only = PathItemBuilder::new()
-            .operation(HttpMethod::Get, get_op)
+        let get_only = get_only_path_item("get_inner");
+        let post_op = OperationBuilder::new()
+            .operation_id(Some("post_inner"))
             .build();
         let post_only = PathItemBuilder::new()
             .operation(HttpMethod::Post, post_op)
@@ -243,19 +251,17 @@ mod tests {
 
     #[test]
     fn test_existing_layer_behavior_unchanged() {
-        // Existing .layer() should still work without spec_layers changes breaking it
-        let r: GroomRouter<()> = GroomRouter::new()
-            .layer(tower::layer::util::Identity::new());
+        let r: GroomRouter<()> = GroomRouter::new().layer(tower::layer::util::Identity::new());
         let _ = r.validate().unwrap().to_axum_router();
     }
 
-    /// Spec layer that adds a description to every operation via modify_operation
+    /// Spec layer that sets each operation's description via `modify_operation`.
     #[derive(Clone)]
-    struct OperationTagSpecLayer {
-        tag: String,
+    struct OperationDescriptionSpecLayer {
+        description: String,
     }
 
-    impl OpenApiSpecLayer for OperationTagSpecLayer {
+    impl OpenApiSpecLayer for OperationDescriptionSpecLayer {
         fn modify_openapi(&self, _api: &mut OpenApi) {}
 
         fn modify_operation(
@@ -264,7 +270,7 @@ mod tests {
             _method: &utoipa::openapi::path::HttpMethod,
             operation: &mut utoipa::openapi::path::Operation,
         ) {
-            operation.description = Some(self.tag.clone());
+            operation.description = Some(self.description.clone());
         }
 
         fn mount<S>(&self, r: axum::Router<S>) -> axum::Router<S> {
@@ -272,7 +278,7 @@ mod tests {
         }
     }
 
-    impl tower::Layer<axum::routing::Route> for OperationTagSpecLayer {
+    impl tower::Layer<axum::routing::Route> for OperationDescriptionSpecLayer {
         type Service = axum::routing::Route;
         fn layer(&self, inner: axum::routing::Route) -> Self::Service {
             inner
@@ -282,14 +288,17 @@ mod tests {
     #[test]
     fn test_modify_operation_called_per_operation() {
         use utoipa::OpenApi;
-        use utoipa::openapi::path::{PathItemBuilder, HttpMethod, OperationBuilder};
 
         #[derive(OpenApi)]
         #[openapi(info(title = "test", version = "0.1.0"))]
         struct ApiDoc;
 
-        let get_op = OperationBuilder::new().operation_id(Some("get_hello")).build();
-        let post_op = OperationBuilder::new().operation_id(Some("post_hello")).build();
+        let get_op = OperationBuilder::new()
+            .operation_id(Some("get_hello"))
+            .build();
+        let post_op = OperationBuilder::new()
+            .operation_id(Some("post_hello"))
+            .build();
         let path_item = PathItemBuilder::new()
             .operation(HttpMethod::Get, get_op)
             .operation(HttpMethod::Post, post_op)
@@ -299,14 +308,14 @@ mod tests {
             axum::Router::new(),
             ComponentsRegistry::new(),
             vec![("/hello".to_string(), path_item)],
-        ).layer_with_spec(OperationTagSpecLayer {
-            tag: "secured".into(),
+        )
+        .layer_with_spec(OperationDescriptionSpecLayer {
+            description: "secured".into(),
         });
 
         let api = r.validate().unwrap().to_openapi(ApiDoc::openapi());
         let hello_path = api.paths.paths.get("/hello").expect("/hello should exist");
 
-        // Both operations should have been modified
         assert_eq!(
             hello_path.get.as_ref().unwrap().description.as_deref(),
             Some("secured"),
@@ -328,7 +337,9 @@ mod tests {
         fn modify_openapi(&self, api: &mut OpenApi) {
             // This runs AFTER modify_operation, so description should already be set
             let has_desc = api.paths.paths.values().any(|pi| {
-                pi.get.as_ref().is_some_and(|op| op.description.is_some())
+                pi.get
+                    .as_ref()
+                    .is_some_and(|op| op.description.is_some())
             });
             if has_desc {
                 api.info.title = "ORDERED".into();
@@ -346,37 +357,40 @@ mod tests {
             operation.description = Some("set-first".into());
         }
 
-        fn mount<S>(&self, r: axum::Router<S>) -> axum::Router<S> { r }
+        fn mount<S>(&self, r: axum::Router<S>) -> axum::Router<S> {
+            r
+        }
     }
 
     impl tower::Layer<axum::routing::Route> for OrderingSpecLayer {
         type Service = axum::routing::Route;
-        fn layer(&self, inner: axum::routing::Route) -> Self::Service { inner }
+        fn layer(&self, inner: axum::routing::Route) -> Self::Service {
+            inner
+        }
     }
 
     #[test]
     fn test_modify_operation_runs_before_modify_openapi() {
         use utoipa::OpenApi;
-        use utoipa::openapi::path::{PathItemBuilder, HttpMethod, OperationBuilder};
 
         #[derive(OpenApi)]
         #[openapi(info(title = "test", version = "0.1.0"))]
         struct ApiDoc;
 
-        let op = OperationBuilder::new().operation_id(Some("hello")).build();
-        let path_item = PathItemBuilder::new()
-            .operation(HttpMethod::Get, op)
-            .build();
-
+        let path_item = get_only_path_item("hello");
         let r: GroomRouter<()> = GroomRouter::from_controller_parts(
             axum::Router::new(),
             ComponentsRegistry::new(),
             vec![("/hello".to_string(), path_item)],
-        ).layer_with_spec(OrderingSpecLayer);
+        )
+        .layer_with_spec(OrderingSpecLayer);
 
         let api = r.validate().unwrap().to_openapi(ApiDoc::openapi());
-        assert_eq!(api.info.title, "ORDERED",
-            "modify_operation must run before modify_openapi");
+        assert_eq!(
+            api.info.title,
+            "ORDERED",
+            "modify_operation must run before modify_openapi"
+        );
     }
 
     /// Same-path merge must append per-path layers and apply modify_operation
@@ -384,17 +398,15 @@ mod tests {
     #[test]
     fn test_same_path_merge_keeps_method_affinity_for_spec_layers() {
         use utoipa::OpenApi;
-        use utoipa::openapi::path::{PathItemBuilder, HttpMethod, OperationBuilder};
 
         #[derive(OpenApi)]
         #[openapi(info(title = "test", version = "0.1.0"))]
         struct ApiDoc;
 
-        let get_op = OperationBuilder::new().operation_id(Some("get_foo")).build();
-        let get_item = PathItemBuilder::new()
-            .operation(HttpMethod::Get, get_op)
+        let get_item = get_only_path_item("get_foo");
+        let post_op = OperationBuilder::new()
+            .operation_id(Some("post_foo"))
             .build();
-        let post_op = OperationBuilder::new().operation_id(Some("post_foo")).build();
         let post_item = PathItemBuilder::new()
             .operation(HttpMethod::Post, post_op)
             .build();
@@ -404,16 +416,16 @@ mod tests {
             ComponentsRegistry::new(),
             vec![("/foo".to_string(), get_item)],
         )
-        .layer_with_spec(OperationTagSpecLayer {
-            tag: "get-only".into(),
+        .layer_with_spec(OperationDescriptionSpecLayer {
+            description: "get-only".into(),
         });
         let r2: GroomRouter<()> = GroomRouter::from_controller_parts(
             axum::Router::new(),
             ComponentsRegistry::new(),
             vec![("/foo".to_string(), post_item)],
         )
-        .layer_with_spec(OperationTagSpecLayer {
-            tag: "post-only".into(),
+        .layer_with_spec(OperationDescriptionSpecLayer {
+            description: "post-only".into(),
         });
 
         let merged = r1.merge(r2).unwrap();
@@ -460,17 +472,13 @@ mod tests {
         use std::sync::atomic::AtomicUsize;
         use std::sync::Arc;
         use utoipa::OpenApi;
-        use utoipa::openapi::path::{HttpMethod, OperationBuilder, PathItemBuilder};
 
         #[derive(OpenApi)]
         #[openapi(info(title = "original", version = "0.1.0"))]
         struct ApiDoc;
 
         let calls = Arc::new(AtomicUsize::new(0));
-        let op = OperationBuilder::new().operation_id(Some("op")).build();
-        let pi = PathItemBuilder::new()
-            .operation(HttpMethod::Get, op)
-            .build();
+        let pi = get_only_path_item("op");
 
         let r: GroomRouter<()> = GroomRouter::from_controller_parts(
             axum::Router::new(),
