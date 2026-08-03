@@ -183,8 +183,6 @@ impl<S: Clone + Send + Sync + 'static> GroomRouter<S, NotValidated> {
             .merge(other.registry)
             .map_err(|crate::extract::SchemaMergeError { name, .. }| MergeError::SchemaConflict {
                 name,
-                source_a: "self".into(),
-                source_b: "other".into(),
             })?;
 
         Ok(Self {
@@ -222,8 +220,6 @@ impl<S: Clone + Send + Sync + 'static> GroomRouter<S, NotValidated> {
             .merge(other.registry)
             .map_err(|crate::extract::SchemaMergeError { name, .. }| MergeError::SchemaConflict {
                 name,
-                source_a: "self".into(),  // todo: replace "self" with reference to GroomRouter or remove it
-                source_b: "other".into(), // todo: replace "self" with reference to GroomRouter or remove it
             })?;
         Ok(Self {
             router,

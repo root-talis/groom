@@ -126,7 +126,7 @@ This catch matters because axum allows overlapping routes (the last registration
 
 ```rust
 pub enum MergeError {
-    SchemaConflict { name: String, source_a: String, source_b: String },
+    SchemaConflict { name: String },
     SchemaNotFound { path: String, registry: String },
 }
 

@@ -4,6 +4,7 @@
 
 ### groom
 
+- **Breaking:** `MergeError::SchemaConflict` is now name-only (`{ name: String }`). The unused `source_a` / `source_b` side-label fields are removed; update pattern matches and struct literals accordingly.
 - Accept `*/*` now follows the response `default_format`. Concrete Accept types still win first when they match a declared format.
 - Accept media types with `q=0` (or any weight `<= 0`) are refused: concrete types are skipped, and a refused-only `*/*` yields HTTP 406 instead of falling back to `default_format`.
 - **Breaking:** `Response::__groom_negotiate_content_type` now returns `Option<&'static Mime>` instead of owned `Mime`. Success paths borrow the type's supported-mime const; there is no success-path Mime clone. Update hand-written `Response` impls to match.

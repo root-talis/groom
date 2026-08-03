@@ -113,8 +113,6 @@ Both error types are `thiserror`-based and implement `Debug`, `Clone`, and `std:
 pub enum MergeError {
     SchemaConflict {
         name: String,
-        source_a: String,
-        source_b: String,
     },
     SchemaNotFound {
         path: String,
@@ -123,7 +121,7 @@ pub enum MergeError {
 }
 ```
 
-- `SchemaConflict` — the same schema name was registered with different types on the two sides being merged (`source_a` / `source_b` identify the sides). Identical schemas are accepted.
+- `SchemaConflict` — the same schema name was registered with different types on the two sides being merged. The variant carries only the schema `name`. Identical schemas are accepted.
 - `SchemaNotFound` — a schema reference could not be resolved inside the given `registry`.
 
 **`RouterValidationError`** — returned by `validate()`:

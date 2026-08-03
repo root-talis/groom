@@ -2,11 +2,9 @@ use thiserror::Error;
 
 #[derive(Debug, Clone, Error)]
 pub enum MergeError {
-    #[error("schema `{name}` conflicts: defined with different types (source a: `{source_a}`, source b: `{source_b}`)")]
+    #[error("schema `{name}` conflicts: defined with different types")]
     SchemaConflict {
         name: String,
-        source_a: String,
-        source_b: String,
     },
 
     #[error("schema reference `{path}` not found in registry `{registry}`")]

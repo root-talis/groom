@@ -110,14 +110,14 @@ mod tests {
 
     #[test]
     fn test_merge_error_display() {
-        let err = MergeError::SchemaConflict {
-            name: "Foo".into(),
-            source_a: "controller_a".into(),
-            source_b: "controller_b".into(),
-        };
+        let err = MergeError::SchemaConflict { name: "Foo".into() };
         let msg = err.to_string();
-        assert!(msg.contains("Foo"), "Display should include schema name: got {}", msg);
-        assert!(msg.contains("controller_a"), "Display should include source_a: got {}", msg);
+        assert_eq!(msg, "schema `Foo` conflicts: defined with different types");
+        assert!(
+            !msg.contains("source"),
+            "Display should not mention source labels: got {}",
+            msg
+        );
     }
 
     #[test]
