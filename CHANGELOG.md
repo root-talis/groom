@@ -4,6 +4,7 @@
 
 ### groom
 
+- Accept `*/*` now follows the response `default_format`. Concrete Accept types still win first when they match a declared format.
 - Accept media types with `q=0` (or any weight `<= 0`) are refused: concrete types are skipped, and a refused-only `*/*` yields HTTP 406 instead of falling back to `default_format`.
 - **Breaking:** `Response::__groom_negotiate_content_type` now returns `Option<&'static Mime>` instead of owned `Mime`. Success paths borrow the type's supported-mime const; there is no success-path Mime clone. Update hand-written `Response` impls to match.
 - `Result<T, E>` content negotiation now uses only the `Ok` type (`T`). When Accept cannot be satisfied, groom no longer builds a 406 via `T` and then retries `E`. Hand-written `Response` impls used in a `Result` must still declare identical format lists on both arms (enforced at router build); there is no dual-negotiate fallback for mismatched lists.
