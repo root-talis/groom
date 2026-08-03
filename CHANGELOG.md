@@ -4,33 +4,31 @@
 
 ### groom
 
-- **Breaking:** `MergeError::SchemaConflict` is now name-only (`{ name: String }`). The unused `source_a` / `source_b` side-label fields are removed; update pattern matches and struct literals accordingly.
-- Accept `*/*` now follows the response `default_format`. Concrete Accept types still win first when they match a declared format.
-- Accept media types with `q=0` (or any weight `<= 0`) are refused: concrete types are skipped, and a refused-only `*/*` yields HTTP 406 instead of falling back to `default_format`.
-- **Breaking:** `Response::__groom_negotiate_content_type` now returns `Option<&'static Mime>` instead of owned `Mime`. Success paths borrow the type's supported-mime const; there is no success-path Mime clone. Update hand-written `Response` impls to match.
-- `Result<T, E>` content negotiation now uses only the `Ok` type (`T`). When Accept cannot be satisfied, groom no longer builds a 406 via `T` and then retries `E`. Hand-written `Response` impls used in a `Result` must still declare identical format lists on both arms (enforced at router build); there is no dual-negotiate fallback for mismatched lists.
-- **Breaking:** `ComponentsRegistry::merge` now returns `Result<Self, SchemaMergeError>` instead of `(String, Schema, Schema)`. The error boxes both schemas so the success `Result` stays small. `GroomRouter::merge` / `nest` still map conflicts to name-only `MergeError::SchemaConflict`.
-- Form body `Content-Type` values with a charset (or other Mime parameters) are now accepted; detection matches type and subtype only, like JSON.
-- Major architecture change: `GroomRouter` introduced as the central composition type.
-- Added typestate pattern: `GroomRouter<S, NotValidated>` → `.validate()` → `GroomRouter<S, Validated>`.
-- `GroomRouter::new()` — creates an empty router with empty registry and no OpenAPI paths.
-- `GroomRouter::merge()` / `GroomRouter::nest()` — compose controllers; return `MergeResult<Self>` with `MergeError::SchemaConflict` on schema name collisions.
-- `GroomRouter::validate()` — detects route shadowing (`RouterValidationError::RouteShadow`) across merged controllers.
-- `GroomRouter::to_axum_router(self)` — terminal: extracts the inner `axum::Router<S>`.
-- `GroomRouter::to_openapi(&self, api: OpenApi)` — terminal: merges accumulated paths and components into an `OpenApi` document.
-- `GroomRouter::layer()` / `.fallback()` / `.route_layer()` — delegate transparently to the inner axum router.
-- Added `prepend_path()` helper for OpenAPI path prefixing under `.nest()`.
-- `RouterValidationError` extracted from `MergeError` as a separate error type with `RouteShadow { path, method }` variant.
-- `MergeError` now carries only `SchemaConflict` and `SchemaNotFound` variants.
-- `GroomRouter::from_router()` removed — controller composition goes through `into_router()` / `.merge()`.
-- **Breaking:** `Result` response types now require both variants to declare the same list of formats. The router rejects a mismatch at build time with `"both variants must support the same list of formats"` instead of failing per-request.
-- Added `Response::__groom_check_response_formats` and `HTTPFormatsSet`: `into_router()` now validates content-type format lists alongside HTTP status codes.
+- **Breaking:** Controller composition uses `GroomRouter`. Callers start from `into_router()`, then `merge` / `nest`, `validate`, and `to_axum_router` / `to_openapi`. Do not merge into a raw `axum::Router` or OpenAPI builder.
+- **Breaking:** `MergeError::SchemaConflict` keeps only `{ name: String }`. Drop `source_a` / `source_b` from pattern matches and struct literals.
+- **Breaking:** `ComponentsRegistry::merge` returns `Result<Self, SchemaMergeError>` instead of `(String, Schema, Schema)`. `SchemaMergeError` boxes both schemas. `GroomRouter::merge` / `nest` still map conflicts to name-only `MergeError::SchemaConflict`.
+- **Breaking:** `Response::__groom_negotiate_content_type` returns `Option<&'static Mime>` instead of owned `Mime`. Update hand-written `Response` impls.
+- **Breaking:** `Result<T, E>` response arms must declare the same format set. A mismatch panics at `into_router()` with `"both variants must support the same list of formats"`.
+- Added `GroomRouter` with typestate (`NotValidated` → `validate()` → `Validated`). Compose with `merge` / `nest`; finish with `to_axum_router` / `to_openapi`. `validate()` reports route shadows as `RouterValidationError::RouteShadow`. `layer`, `route_layer`, and `fallback` forward to the inner axum router.
+- Added `layer_with_spec` plus `OpenApiSpecLayer` / `SpecLayerModifier` so one type can mount middleware and contribute to the OpenAPI document.
+- Added `HTTPFormatsSet` and `Response::__groom_check_response_formats`. `into_router()` checks format lists together with HTTP status codes.
+- Content negotiation runs in the generated wrapper before the handler. Unsatisfiable `Accept` returns 406 without calling the handler; malformed `Accept` returns 400.
+- Accept `*/*` uses the response `default_format` when that format is supported. Concrete Accept types still win first when they match a declared format.
+- Accept weights `<= 0` (`q=0`) are skipped. A refused-only `*/*` returns 406 and does not fall back to `default_format`.
+- `Result<T, E>` negotiates content type from `T` only. There is no second pass on `E`.
+- Form body `Content-Type` matches type and subtype only; charset and other Mime parameters are allowed.
+- Accept may use bare `text/plain` without a charset.
+- OpenAPI no longer registers unused DTOs for plain-text and HTML responses under `#/components/schemas`.
+- An unexpected negotiated mime in response conversion returns HTTP 500 in release (was 400). This path should not run in a correct build.
+- Added user docs: `docs/quickstart.md`, `docs/user-guide.md`, `docs/api-reference.md`, and `docs/architecture.md`.
 
 ### groom_macros
 
-- `#[Controller]` modules now generate `into_router() -> GroomRouter<S, NotValidated>` as the primary generated function, replacing the separate `merge_into_router()` / `merge_into_openapi_builder()` pattern.
-- `merge_into_router()` retained as a soft-deprecated backward-compat function.
-- **Breaking:** Generated `merge_into_router` now returns `Result<GroomRouter<S>, MergeError>` instead of panicking on schema conflict; callers must handle the result. Prefer `into_router()` for the non-fallible single-controller path.
+- **Breaking:** `#[Controller]` modules generate `into_router() -> GroomRouter<S, NotValidated>` as the primary entry point. `merge_into_openapi_builder` is removed; build the OpenAPI document with `GroomRouter::to_openapi`.
+- **Breaking:** Generated `merge_into_router` returns `Result<GroomRouter<S>, MergeError>` instead of panicking on schema conflict. Prefer `into_router()` for the single-controller path.
+- Soft-deprecated `merge_into_router` remains for compatibility.
+- `#[Route]` supports OPTIONS with the correct OpenAPI method (`HttpMethod::Options`; previously emitted the wrong utoipa variant).
+- `#[Route]` supports CONNECT for axum routing; CONNECT is omitted from OpenAPI (utoipa has no Connect method).
 
 ## v0.2.2
 
