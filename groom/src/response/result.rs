@@ -19,7 +19,7 @@ where T: Response, E: Response
     }
 
     fn __groom_negotiate_content_type(accept: &Accept)
-        -> ::core::result::Result<Option<::mime::Mime>, ::axum::response::Response>
+        -> ::core::result::Result<Option<&'static ::mime::Mime>, ::axum::response::Response>
     {
         // Format equality (below) proves Ok/Err share the same list, so E cannot
         // accept what T rejected. Negotiate once with T (P009 / D-26).
@@ -66,6 +66,21 @@ mod p009_negotiate_gate {
         assert_eq!(
             e_retry_lines, 0,
             "Result negotiate must call T only (P009/D-29); no E retry after T 406"
+        );
+    }
+}
+
+#[cfg(test)]
+mod p006_negotiate_static_ref_gate {
+    /// Structural gate (P006): Result blanket matches Option<&'static Mime> signature.
+    #[test]
+    fn result_negotiate_signature_is_static_mime_ref() {
+        let src = include_str!("result.rs");
+        let impl_src = src.split("#[cfg(test)]").next().expect("impl precedes tests");
+        assert!(
+            impl_src.contains("Option<&'static ::mime::Mime>")
+                || impl_src.contains("Option<&'static Mime>"),
+            "Result Response negotiate must return Option<&'static Mime> (P006)"
         );
     }
 }

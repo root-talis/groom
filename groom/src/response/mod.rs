@@ -16,8 +16,10 @@ pub trait Response {
     /// Negotiates the `Accept` header against this type's supported content types.
     /// Returns the negotiated mime on success (the single negotiation site per request),
     /// or a ready-to-return response (406) when the request cannot be satisfied.
+    ///
+    /// Success returns a `&'static Mime` into this type's supported-mime const — no clone.
     fn __groom_negotiate_content_type(accept: &Accept)
-        -> ::core::result::Result<Option<::mime::Mime>, ::axum::response::Response>;
+        -> ::core::result::Result<Option<&'static ::mime::Mime>, ::axum::response::Response>;
 
     /// Performs runtime checks of response codes of this Response.
     /// Used to detect duplicated codes in composite types like Result<T, E>
@@ -58,3 +60,25 @@ pub use html_response::{HtmlFormat, html_format};
 use crate::{extract::ComponentsRegistry, runtime_checks::{HTTPCodeSet, HTTPFormatsSet}};
 
 pub mod result;
+
+#[cfg(test)]
+mod p006_negotiate_static_ref_gate {
+    /// Structural gate (P006): negotiate must return Option<&'static Mime>, not owned Mime.
+    #[test]
+    fn negotiate_trait_returns_static_mime_ref() {
+        let src = include_str!("mod.rs");
+        let trait_src = src
+            .split("pub fn not_acceptable")
+            .next()
+            .expect("trait precedes not_acceptable");
+        assert!(
+            trait_src.contains("Option<&'static ::mime::Mime>")
+                || trait_src.contains("Option<&'static Mime>"),
+            "Response::__groom_negotiate_content_type must return Option<&'static Mime> (P006)"
+        );
+        assert!(
+            !trait_src.contains("Result<Option<::mime::Mime>,"),
+            "owned Mime negotiate return must be gone (P006)"
+        );
+    }
+}

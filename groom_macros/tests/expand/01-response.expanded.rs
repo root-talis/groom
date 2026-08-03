@@ -190,7 +190,10 @@ mod no_content_type {
         }
         fn __groom_negotiate_content_type(
             _accept: &::accept_header::Accept,
-        ) -> ::core::result::Result<Option<::mime::Mime>, ::axum::response::Response> {
+        ) -> ::core::result::Result<
+            Option<&'static ::mime::Mime>,
+            ::axum::response::Response,
+        > {
             Ok(None)
         }
         fn __groom_check_response_codes(
@@ -476,13 +479,16 @@ mod plaintext_only {
         }
         fn __groom_negotiate_content_type(
             accept: &::accept_header::Accept,
-        ) -> ::core::result::Result<Option<::mime::Mime>, ::axum::response::Response> {
+        ) -> ::core::result::Result<
+            Option<&'static ::mime::Mime>,
+            ::axum::response::Response,
+        > {
             match ::groom::content_negotiation::negotiate_parameter_insensitive(
                 accept,
                 &__GROOM_RESPONSE_SUPPORTED_MIMES_RespPlaintextResponse,
                 Some(&__GROOM_RESPONSE_SUPPORTED_MIMES_RespPlaintextResponse[0usize]),
             ) {
-                Some(negotiated) => Ok(Some(negotiated.to_owned())),
+                Some(negotiated) => Ok(Some(negotiated)),
                 None => {
                     Err(
                         ::groom::response::not_acceptable(
@@ -827,13 +833,16 @@ mod html_only {
         }
         fn __groom_negotiate_content_type(
             accept: &::accept_header::Accept,
-        ) -> ::core::result::Result<Option<::mime::Mime>, ::axum::response::Response> {
+        ) -> ::core::result::Result<
+            Option<&'static ::mime::Mime>,
+            ::axum::response::Response,
+        > {
             match ::groom::content_negotiation::negotiate_parameter_insensitive(
                 accept,
                 &__GROOM_RESPONSE_SUPPORTED_MIMES_RespHtmlResponse,
                 Some(&__GROOM_RESPONSE_SUPPORTED_MIMES_RespHtmlResponse[0usize]),
             ) {
-                Some(negotiated) => Ok(Some(negotiated.to_owned())),
+                Some(negotiated) => Ok(Some(negotiated)),
                 None => {
                     Err(
                         ::groom::response::not_acceptable(
@@ -1156,13 +1165,16 @@ mod json_only {
         }
         fn __groom_negotiate_content_type(
             accept: &::accept_header::Accept,
-        ) -> ::core::result::Result<Option<::mime::Mime>, ::axum::response::Response> {
+        ) -> ::core::result::Result<
+            Option<&'static ::mime::Mime>,
+            ::axum::response::Response,
+        > {
             match ::groom::content_negotiation::negotiate_parameter_insensitive(
                 accept,
                 &__GROOM_RESPONSE_SUPPORTED_MIMES_RespJsonResponse,
                 Some(&__GROOM_RESPONSE_SUPPORTED_MIMES_RespJsonResponse[0usize]),
             ) {
-                Some(negotiated) => Ok(Some(negotiated.to_owned())),
+                Some(negotiated) => Ok(Some(negotiated)),
                 None => {
                     Err(
                         ::groom::response::not_acceptable(
@@ -1857,13 +1869,16 @@ mod multiple_content_types {
         }
         fn __groom_negotiate_content_type(
             accept: &::accept_header::Accept,
-        ) -> ::core::result::Result<Option<::mime::Mime>, ::axum::response::Response> {
+        ) -> ::core::result::Result<
+            Option<&'static ::mime::Mime>,
+            ::axum::response::Response,
+        > {
             match ::groom::content_negotiation::negotiate_parameter_insensitive(
                 accept,
                 &__GROOM_RESPONSE_SUPPORTED_MIMES_RespMultipleTypesResponse,
                 Some(&__GROOM_RESPONSE_SUPPORTED_MIMES_RespMultipleTypesResponse[2usize]),
             ) {
-                Some(negotiated) => Ok(Some(negotiated.to_owned())),
+                Some(negotiated) => Ok(Some(negotiated)),
                 None => {
                     Err(
                         ::groom::response::not_acceptable(
@@ -2182,13 +2197,16 @@ mod named_struct_response {
         }
         fn __groom_negotiate_content_type(
             accept: &::accept_header::Accept,
-        ) -> ::core::result::Result<Option<::mime::Mime>, ::axum::response::Response> {
+        ) -> ::core::result::Result<
+            Option<&'static ::mime::Mime>,
+            ::axum::response::Response,
+        > {
             match ::groom::content_negotiation::negotiate_parameter_insensitive(
                 accept,
                 &__GROOM_RESPONSE_SUPPORTED_MIMES_Named,
                 Some(&__GROOM_RESPONSE_SUPPORTED_MIMES_Named[1usize]),
             ) {
-                Some(negotiated) => Ok(Some(negotiated.to_owned())),
+                Some(negotiated) => Ok(Some(negotiated)),
                 None => {
                     Err(
                         ::groom::response::not_acceptable(
@@ -2499,13 +2517,16 @@ mod unnamed_struct_response {
         }
         fn __groom_negotiate_content_type(
             accept: &::accept_header::Accept,
-        ) -> ::core::result::Result<Option<::mime::Mime>, ::axum::response::Response> {
+        ) -> ::core::result::Result<
+            Option<&'static ::mime::Mime>,
+            ::axum::response::Response,
+        > {
             match ::groom::content_negotiation::negotiate_parameter_insensitive(
                 accept,
                 &__GROOM_RESPONSE_SUPPORTED_MIMES_Unnamed,
                 Some(&__GROOM_RESPONSE_SUPPORTED_MIMES_Unnamed[1usize]),
             ) {
-                Some(negotiated) => Ok(Some(negotiated.to_owned())),
+                Some(negotiated) => Ok(Some(negotiated)),
                 None => {
                     Err(
                         ::groom::response::not_acceptable(
@@ -2666,7 +2687,10 @@ mod unit_struct_response {
         }
         fn __groom_negotiate_content_type(
             _accept: &::accept_header::Accept,
-        ) -> ::core::result::Result<Option<::mime::Mime>, ::axum::response::Response> {
+        ) -> ::core::result::Result<
+            Option<&'static ::mime::Mime>,
+            ::axum::response::Response,
+        > {
             Ok(None)
         }
         fn __groom_check_response_codes(
@@ -2806,7 +2830,10 @@ mod result_struct_struct {
         }
         fn __groom_negotiate_content_type(
             _accept: &::accept_header::Accept,
-        ) -> ::core::result::Result<Option<::mime::Mime>, ::axum::response::Response> {
+        ) -> ::core::result::Result<
+            Option<&'static ::mime::Mime>,
+            ::axum::response::Response,
+        > {
             Ok(None)
         }
         fn __groom_check_response_codes(
@@ -2944,7 +2971,10 @@ mod result_struct_struct {
         }
         fn __groom_negotiate_content_type(
             _accept: &::accept_header::Accept,
-        ) -> ::core::result::Result<Option<::mime::Mime>, ::axum::response::Response> {
+        ) -> ::core::result::Result<
+            Option<&'static ::mime::Mime>,
+            ::axum::response::Response,
+        > {
             Ok(None)
         }
         fn __groom_check_response_codes(
@@ -2981,7 +3011,7 @@ mod result_struct_struct {
             }
         };
         let result = foo().await;
-        result.__groom_into_response(negotiated.as_ref())
+        result.__groom_into_response(negotiated)
     }
     fn __groom_runtime_checks() {
         let context = "Groom runtime check of mod `result_struct_struct`";
@@ -3272,13 +3302,16 @@ mod result_struct_enum {
         }
         fn __groom_negotiate_content_type(
             accept: &::accept_header::Accept,
-        ) -> ::core::result::Result<Option<::mime::Mime>, ::axum::response::Response> {
+        ) -> ::core::result::Result<
+            Option<&'static ::mime::Mime>,
+            ::axum::response::Response,
+        > {
             match ::groom::content_negotiation::negotiate_parameter_insensitive(
                 accept,
                 &__GROOM_RESPONSE_SUPPORTED_MIMES_Success,
                 Some(&__GROOM_RESPONSE_SUPPORTED_MIMES_Success[0usize]),
             ) {
-                Some(negotiated) => Ok(Some(negotiated.to_owned())),
+                Some(negotiated) => Ok(Some(negotiated)),
                 None => {
                     Err(
                         ::groom::response::not_acceptable(
@@ -3601,13 +3634,16 @@ mod result_struct_enum {
         }
         fn __groom_negotiate_content_type(
             accept: &::accept_header::Accept,
-        ) -> ::core::result::Result<Option<::mime::Mime>, ::axum::response::Response> {
+        ) -> ::core::result::Result<
+            Option<&'static ::mime::Mime>,
+            ::axum::response::Response,
+        > {
             match ::groom::content_negotiation::negotiate_parameter_insensitive(
                 accept,
                 &__GROOM_RESPONSE_SUPPORTED_MIMES_Error,
                 Some(&__GROOM_RESPONSE_SUPPORTED_MIMES_Error[0usize]),
             ) {
-                Some(negotiated) => Ok(Some(negotiated.to_owned())),
+                Some(negotiated) => Ok(Some(negotiated)),
                 None => {
                     Err(
                         ::groom::response::not_acceptable(
@@ -3702,7 +3738,7 @@ mod result_struct_enum {
             }
         };
         let result = foo().await;
-        result.__groom_into_response(negotiated.as_ref())
+        result.__groom_into_response(negotiated)
     }
     fn __groom_runtime_checks() {
         let context = "Groom runtime check of mod `result_struct_enum`";
@@ -4181,13 +4217,16 @@ mod wrapped_enum {
         }
         fn __groom_negotiate_content_type(
             accept: &::accept_header::Accept,
-        ) -> ::core::result::Result<Option<::mime::Mime>, ::axum::response::Response> {
+        ) -> ::core::result::Result<
+            Option<&'static ::mime::Mime>,
+            ::axum::response::Response,
+        > {
             match ::groom::content_negotiation::negotiate_parameter_insensitive(
                 accept,
                 &__GROOM_RESPONSE_SUPPORTED_MIMES_Resp,
                 Some(&__GROOM_RESPONSE_SUPPORTED_MIMES_Resp[0usize]),
             ) {
-                Some(negotiated) => Ok(Some(negotiated.to_owned())),
+                Some(negotiated) => Ok(Some(negotiated)),
                 None => {
                     Err(
                         ::groom::response::not_acceptable(
@@ -4490,13 +4529,16 @@ mod wrapped_enum {
         }
         fn __groom_negotiate_content_type(
             accept: &::accept_header::Accept,
-        ) -> ::core::result::Result<Option<::mime::Mime>, ::axum::response::Response> {
+        ) -> ::core::result::Result<
+            Option<&'static ::mime::Mime>,
+            ::axum::response::Response,
+        > {
             match ::groom::content_negotiation::negotiate_parameter_insensitive(
                 accept,
                 &__GROOM_RESPONSE_SUPPORTED_MIMES_Error,
                 Some(&__GROOM_RESPONSE_SUPPORTED_MIMES_Error[0usize]),
             ) {
-                Some(negotiated) => Ok(Some(negotiated.to_owned())),
+                Some(negotiated) => Ok(Some(negotiated)),
                 None => {
                     Err(
                         ::groom::response::not_acceptable(
@@ -4587,7 +4629,7 @@ mod wrapped_enum {
             }
         };
         let result = foo().await;
-        result.__groom_into_response(negotiated.as_ref())
+        result.__groom_into_response(negotiated)
     }
     fn __groom_runtime_checks() {
         let context = "Groom runtime check of mod `wrapped_enum`";

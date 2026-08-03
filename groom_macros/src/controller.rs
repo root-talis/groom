@@ -443,7 +443,7 @@ fn generate_new_handler_ast(
 
             let result = #fn_name(#(#delegated_inputs)*).await;
 
-            result.__groom_into_response(negotiated.as_ref())
+            result.__groom_into_response(negotiated)
         }
     });
 }

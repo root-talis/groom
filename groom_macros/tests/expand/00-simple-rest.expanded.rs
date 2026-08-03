@@ -30,7 +30,7 @@ pub mod api_root {
             }
         };
         let result = get_root().await;
-        result.__groom_into_response(negotiated.as_ref())
+        result.__groom_into_response(negotiated)
     }
     /// HTTP handler: POST /
     pub async fn post_root() -> GetRootResponse {
@@ -53,7 +53,7 @@ pub mod api_root {
             }
         };
         let result = post_root().await;
-        result.__groom_into_response(negotiated.as_ref())
+        result.__groom_into_response(negotiated)
     }
     fn sync_util_fn(s: String) -> String {
         s
@@ -90,7 +90,7 @@ pub mod api_root {
             }
         };
         let result = rq_cons_query_struct(input0).await;
-        result.__groom_into_response(negotiated.as_ref())
+        result.__groom_into_response(negotiated)
     }
     /// Path<struct>
     ///
@@ -118,7 +118,7 @@ pub mod api_root {
             }
         };
         let result = rq_cons_path_struct(input0).await;
-        result.__groom_into_response(negotiated.as_ref())
+        result.__groom_into_response(negotiated)
     }
     /// HTTP handler: GET /json
     pub async fn resp_json() -> RespJsonResponse {
@@ -141,7 +141,7 @@ pub mod api_root {
             }
         };
         let result = resp_json().await;
-        result.__groom_into_response(negotiated.as_ref())
+        result.__groom_into_response(negotiated)
     }
     async fn not_a_handler() {
         let a = 1;
@@ -517,13 +517,16 @@ pub mod api_root {
         }
         fn __groom_negotiate_content_type(
             accept: &::accept_header::Accept,
-        ) -> ::core::result::Result<Option<::mime::Mime>, ::axum::response::Response> {
+        ) -> ::core::result::Result<
+            Option<&'static ::mime::Mime>,
+            ::axum::response::Response,
+        > {
             match ::groom::content_negotiation::negotiate_parameter_insensitive(
                 accept,
                 &__GROOM_RESPONSE_SUPPORTED_MIMES_GetRootResponse,
                 Some(&__GROOM_RESPONSE_SUPPORTED_MIMES_GetRootResponse[0usize]),
             ) {
-                Some(negotiated) => Ok(Some(negotiated.to_owned())),
+                Some(negotiated) => Ok(Some(negotiated)),
                 None => {
                     Err(
                         ::groom::response::not_acceptable(
@@ -1114,13 +1117,16 @@ pub mod api_root {
         }
         fn __groom_negotiate_content_type(
             accept: &::accept_header::Accept,
-        ) -> ::core::result::Result<Option<::mime::Mime>, ::axum::response::Response> {
+        ) -> ::core::result::Result<
+            Option<&'static ::mime::Mime>,
+            ::axum::response::Response,
+        > {
             match ::groom::content_negotiation::negotiate_parameter_insensitive(
                 accept,
                 &__GROOM_RESPONSE_SUPPORTED_MIMES_RqConsQueryResponse,
                 Some(&__GROOM_RESPONSE_SUPPORTED_MIMES_RqConsQueryResponse[0usize]),
             ) {
-                Some(negotiated) => Ok(Some(negotiated.to_owned())),
+                Some(negotiated) => Ok(Some(negotiated)),
                 None => {
                     Err(
                         ::groom::response::not_acceptable(
@@ -1642,13 +1648,16 @@ pub mod api_root {
         }
         fn __groom_negotiate_content_type(
             accept: &::accept_header::Accept,
-        ) -> ::core::result::Result<Option<::mime::Mime>, ::axum::response::Response> {
+        ) -> ::core::result::Result<
+            Option<&'static ::mime::Mime>,
+            ::axum::response::Response,
+        > {
             match ::groom::content_negotiation::negotiate_parameter_insensitive(
                 accept,
                 &__GROOM_RESPONSE_SUPPORTED_MIMES_RqConsPathResponse,
                 Some(&__GROOM_RESPONSE_SUPPORTED_MIMES_RqConsPathResponse[0usize]),
             ) {
-                Some(negotiated) => Ok(Some(negotiated.to_owned())),
+                Some(negotiated) => Ok(Some(negotiated)),
                 None => {
                     Err(
                         ::groom::response::not_acceptable(
@@ -1925,13 +1934,16 @@ pub mod api_root {
         }
         fn __groom_negotiate_content_type(
             accept: &::accept_header::Accept,
-        ) -> ::core::result::Result<Option<::mime::Mime>, ::axum::response::Response> {
+        ) -> ::core::result::Result<
+            Option<&'static ::mime::Mime>,
+            ::axum::response::Response,
+        > {
             match ::groom::content_negotiation::negotiate_parameter_insensitive(
                 accept,
                 &__GROOM_RESPONSE_SUPPORTED_MIMES_RespJsonResponse,
                 Some(&__GROOM_RESPONSE_SUPPORTED_MIMES_RespJsonResponse[0usize]),
             ) {
-                Some(negotiated) => Ok(Some(negotiated.to_owned())),
+                Some(negotiated) => Ok(Some(negotiated)),
                 None => {
                     Err(
                         ::groom::response::not_acceptable(
@@ -2447,7 +2459,10 @@ mod options_connect {
         }
         fn __groom_negotiate_content_type(
             _accept: &::accept_header::Accept,
-        ) -> ::core::result::Result<Option<::mime::Mime>, ::axum::response::Response> {
+        ) -> ::core::result::Result<
+            Option<&'static ::mime::Mime>,
+            ::axum::response::Response,
+        > {
             Ok(None)
         }
         fn __groom_check_response_codes(
@@ -2485,7 +2500,7 @@ mod options_connect {
             }
         };
         let result = options_route().await;
-        result.__groom_into_response(negotiated.as_ref())
+        result.__groom_into_response(negotiated)
     }
     /// HTTP handler: CONNECT /tunnel
     pub async fn connect_route() -> OptionsResult {
@@ -2508,7 +2523,7 @@ mod options_connect {
             }
         };
         let result = connect_route().await;
-        result.__groom_into_response(negotiated.as_ref())
+        result.__groom_into_response(negotiated)
     }
     fn __groom_runtime_checks() {
         let context = "Groom runtime check of mod `options_connect`";

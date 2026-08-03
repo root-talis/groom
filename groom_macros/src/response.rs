@@ -610,7 +610,7 @@ fn make_groom_negotiate_content_type_function(
         // any-content type: accepts every content type by design, no negotiation
         Ok(quote! {
             fn __groom_negotiate_content_type(_accept: &::accept_header::Accept)
-                -> ::core::result::Result<Option<::mime::Mime>, ::axum::response::Response>
+                -> ::core::result::Result<Option<&'static ::mime::Mime>, ::axum::response::Response>
             {
                 Ok(None)
             }
@@ -628,14 +628,14 @@ fn make_groom_negotiate_content_type_function(
 
         Ok(quote! {
             fn __groom_negotiate_content_type(accept: &::accept_header::Accept)
-                -> ::core::result::Result<Option<::mime::Mime>, ::axum::response::Response>
+                -> ::core::result::Result<Option<&'static ::mime::Mime>, ::axum::response::Response>
             {
                 match ::groom::content_negotiation::negotiate_parameter_insensitive(
                     accept,
                     &#supported_mimes_ident,
                     #default_mime_ref,
                 ) {
-                    Some(negotiated) => Ok(Some(negotiated.to_owned())),
+                    Some(negotiated) => Ok(Some(negotiated)),
                     None => Err(::groom::response::not_acceptable(#supported_mimes_ident)),
                 }
             }
@@ -1280,6 +1280,31 @@ mod struct_impl {
                 formats.record(context, &#supported_mimes_ident);
             }
         };
+    }
+}
+
+#[cfg(test)]
+mod p006_negotiate_static_ref_gate {
+    /// Structural gate (P006): generated Ok arm must not clone the negotiated mime.
+    #[test]
+    fn negotiate_ok_arm_does_not_to_owned() {
+        let src = include_str!("response.rs");
+        let fn_src = src
+            .split("fn make_groom_negotiate_content_type_function")
+            .nth(1)
+            .expect("negotiate codegen fn present")
+            .split("fn default_format_index_in_supported")
+            .next()
+            .expect("fn ends before default_format_index");
+        assert!(
+            !fn_src.contains("negotiated.to_owned()"),
+            "negotiate Ok arm must return Some(negotiated) without to_owned (P006)"
+        );
+        assert!(
+            fn_src.contains("Option<&'static ::mime::Mime>")
+                || fn_src.contains("Option<&'static Mime>"),
+            "macro negotiate signature must return Option<&'static Mime> (P006)"
+        );
     }
 }
 
