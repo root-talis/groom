@@ -1,12 +1,24 @@
 use std::{any::TypeId, collections::{HashMap, HashSet, hash_map}, sync::OnceLock};
 
 use ::utoipa::openapi::{Ref, RefOr, schema::RefBuilder};
+use thiserror::Error;
 use utoipa::{PartialSchema, ToSchema, openapi::{Components, ComponentsBuilder, Schema}};
 
 #[derive(Clone, PartialEq)]
 pub struct ComponentEntry {
     pub schema:    Schema,
     pub reference: Option<Ref>,
+}
+
+/// Schema name collision when merging two [`ComponentsRegistry`] values.
+///
+/// Both schemas are boxed so the `Err` side of `merge`'s `Result` stays small (P007).
+#[derive(Debug, Error)]
+#[error("schema `{name}` conflicts between component registries")]
+pub struct SchemaMergeError {
+    pub name: String,
+    pub existing: Box<Schema>,
+    pub incoming: Box<Schema>,
 }
 
 impl From<ComponentEntry> for RefOr<Schema> {
@@ -143,12 +155,16 @@ impl ComponentsRegistry {
         !std_types_schemas.contains(schema)
     }
 
-    pub fn merge(mut self, other: ComponentsRegistry) -> Result<Self, (String, Schema, Schema)> {
+    pub fn merge(mut self, other: ComponentsRegistry) -> Result<Self, SchemaMergeError> {
         for (name, entry) in other.components {
             match self.components.entry(name.clone()) {
                 hash_map::Entry::Occupied(e) => {
                     if e.get().schema != entry.schema {
-                        return Err((name, e.get().schema.clone(), entry.schema));
+                        return Err(SchemaMergeError {
+                            name,
+                            existing: Box::new(e.get().schema.clone()),
+                            incoming: Box::new(entry.schema),
+                        });
                     }
                 }
                 hash_map::Entry::Vacant(e) => {
@@ -335,6 +351,44 @@ mod tests {
                 let c = ComponentsBuilder::new().build();
                 let c = reg.into_components(c);
             }
+        }
+    }
+
+    mod merge {
+        use crate::extract::{ComponentsRegistry, SchemaMergeError};
+
+        mod sub1 {
+            #[derive(utoipa::ToSchema)]
+            pub struct ConflictStruct {
+                pub v: i32,
+            }
+        }
+
+        mod sub2 {
+            #[derive(utoipa::ToSchema)]
+            pub struct ConflictStruct {
+                pub v: String,
+            }
+        }
+
+        #[test]
+        fn merge_returns_schema_merge_error_on_name_conflict() {
+            let mut a = ComponentsRegistry::new();
+            a.add_components::<sub1::ConflictStruct>();
+
+            let mut b = ComponentsRegistry::new();
+            b.add_components::<sub2::ConflictStruct>();
+
+            let Err(err) = a.merge(b) else {
+                panic!("expected schema name conflict");
+            };
+            let SchemaMergeError {
+                name,
+                existing,
+                incoming,
+            } = err;
+            assert_eq!(name, "ConflictStruct");
+            assert_ne!(*existing, *incoming);
         }
     }
 }

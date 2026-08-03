@@ -4,7 +4,7 @@ mod parameters;
 mod std_types;
 mod components_registry;
 
-pub use components_registry::ComponentsRegistry;
+pub use components_registry::{ComponentsRegistry, SchemaMergeError};
 
 /// GroomExtractor is the trait that enables types to describe themselves into openapi spec.
 pub trait GroomExtractor {

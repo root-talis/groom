@@ -4,6 +4,7 @@
 
 ### groom
 
+- **Breaking:** `ComponentsRegistry::merge` now returns `Result<Self, SchemaMergeError>` instead of `(String, Schema, Schema)`. The error boxes both schemas so the success `Result` stays small. `GroomRouter::merge` / `nest` still map conflicts to name-only `MergeError::SchemaConflict`.
 - Form body `Content-Type` values with a charset (or other Mime parameters) are now accepted; detection matches type and subtype only, like JSON.
 - Major architecture change: `GroomRouter` introduced as the central composition type.
 - Added typestate pattern: `GroomRouter<S, NotValidated>` → `.validate()` → `GroomRouter<S, Validated>`.
