@@ -71,8 +71,10 @@ The `#[Route]` attribute marks a handler as an HTTP endpoint.
 
 | Attribute | Description |
 |-----------|-------------|
-| `method` | HTTP method: `get`, `post`, `put`, `delete`, `patch`. |
+| `method` | HTTP method: `get`, `post`, `put`, `delete`, `patch`, `head`, `options`, `trace`, `connect`. |
 | `path` | Route template with `{param}` placeholders (OpenAPI/axum style). |
+
+`connect` is registered on the axum router but omitted from OpenAPI (utoipa has no Connect method). `options` and the other methods appear in OpenAPI.
 
 Doc comments on the handler become OpenAPI `summary` and `description`.
 
@@ -175,8 +177,8 @@ The `#[RequestBody]` attribute marks a struct as a request body extractor. It su
 
 | Option | Description |
 |--------|-------------|
-| `format(json)` | Accept `application/json`. |
-| `format(url_encoded)` | Accept `application/x-www-form-urlencoded`. |
+| `format(json)` | Accept `application/json` (and `application/*+json` suffixes). |
+| `format(url_encoded)` | Accept `application/x-www-form-urlencoded` (type and subtype only; charset and other Mime parameters are allowed). |
 | `format(json, url_encoded)` | Content negotiation on input (both formats). |
 
 A named struct defines the body shape directly. A tuple struct wrapping a `#[DTO(request)]` type reuses the DTO schema:
@@ -247,11 +249,11 @@ pub enum TaskResponse {
 
 | Enum-level option | Description |
 |-------------------|-------------|
-| `format(json)` | JSON responses. |
-| `format(plain_text)` | `text/plain; charset=utf-8`. |
-| `format(html)` | `text/html; charset=utf-8`. |
+| `format(json)` | JSON responses. OpenAPI registers the payload DTO under `#/components/schemas`. |
+| `format(plain_text)` | `text/plain; charset=utf-8`. OpenAPI uses an inline string schema. |
+| `format(html)` | `text/html; charset=utf-8`. OpenAPI uses an inline string schema. |
 | `format(json, html, plain_text)` | Multiple formats; client selects via `Accept`. |
-| `default_format = "json"` | Format used when `Accept` is absent. Required when multiple formats are declared. |
+| `default_format = "json"` | Format used when `Accept` is absent, or when an acceptable `*/*` is selected. Required when multiple formats are declared. |
 
 | Variant-level option | Description |
 |----------------------|-------------|
@@ -308,7 +310,9 @@ pub async fn greet(Query(p): Query<GreetParams>) -> Result<GreetOk, GreetFailure
 }
 ```
 
-**Formats must match.** The `Ok` and `Err` arms of a `Result` response must declare identical `format(...)` lists — both `format(json)`, or both `format(json, html)`. Mixing `format(json)` and `format(html)`, or pairing a formatted arm with an any-content arm, is a build-time error. The router panics at `into_router()` with `"Result<...>: both variants must support the same list of formats"` instead of failing per-request at runtime. Any-content arms (no `format(...)`) are legal only when both arms are any-content.
+**Formats must match.** The `Ok` and `Err` arms of a `Result` response must declare the same set of formats — both `format(json)`, or both `format(json, html)`. Order does not matter (`format(json, html)` matches `format(html, json)`). Mixing `format(json)` and `format(html)`, or pairing a formatted arm with an any-content arm, is a build-time error. The router panics at `into_router()` with `"Result<...>: both variants must support the same list of formats"` instead of failing per-request at runtime. Any-content arms (no `format(...)`) are legal only when both arms are any-content.
+
+Content negotiation for `Result<T, E>` uses only the `Ok` type (`T`). There is no second negotiate pass on `E`.
 
 See `groom_tests/tests/features/response_type_result.rs` for a full example with multiple error status codes and OpenAPI assertions.
 
@@ -319,7 +323,7 @@ HTML is a first-class response format alongside JSON and plain text. Typical use
 - **HTMX applications** — well-typed controllers that are easy to set up.
 - **Human-readable status or health pages** — operators hit `/status` in a browser while monitoring tools call the same route with `Accept: application/json`.
 - **Lightweight admin or debug UIs** — expose a read-only view of internal state without a separate frontend build.
-- **Mixed clients on one contract** — declare `format(json, html)` on a response type so API consumers and browsers share handlers and OpenAPI paths.
+- **Mixed clients on one contract** — declare `format(json, html)` on a response type so API consumers and browsers share handlers and OpenAPI paths. OpenAPI documents `text/html` as a string schema; the JSON media type still references the DTO.
 
 **HTML-only endpoint** — return a `String` or a `#[DTO(response)]` struct with `format(html)`:
 
@@ -350,7 +354,7 @@ groom::html_format!(StatusView, self {
 
 When building HTML manually, escape any user-controlled values to avoid XSS (see `groom_tests/tests/features/response_type_html.rs`).
 
-**Content negotiation with HTML** — combine formats and set a default for when `Accept` is missing:
+**Content negotiation with HTML** — combine formats and set a default for when `Accept` is absent or when the client sends an acceptable `*/*`:
 
 ```rust
 #[Response(format(json, html), default_format = "json")]
@@ -364,7 +368,18 @@ See `groom_tests/tests/features/response_content_negotiation.rs` for full `Accep
 
 ## Content negotiation
 
-When a response type declares multiple formats, groom negotiates the client's `Accept` header **once in the generated wrapper, before the handler runs**, and passes the negotiated mime to response conversion. `default_format` is used **only when `Accept` is absent** (required when multiple formats are declared). JSON detection accepts both `application/json` and `application/*+json` vendor suffixes (for example `application/vnd.api+json`). When the client's `Accept` header satisfies none of the declared formats, the server responds `406 Not Acceptable` with a `Vary: Accept` header and a body listing the supported content types; a malformed `Accept` yields `400` with `Invalid Accept header.`. Request bodies negotiate on input the same way. A `#[RequestBody(format(json))]` type accepts `application/json`; `format(url_encoded)` accepts `application/x-www-form-urlencoded`; `format(json, url_encoded)` accepts both via `Content-Type`. Unsupported **request** content types get a `400` plain-text response. The parsing functions (`parse_accept_header`, `parse_content_type_header`, `get_body_content_type`) are documented in [api-reference.md](api-reference.md).
+When a response type declares multiple formats, groom negotiates the client's `Accept` header **once in the generated wrapper, before the handler runs**, and passes the negotiated mime to response conversion. Rules:
+
+- `Accept` absent → use `default_format` (required when multiple formats are declared).
+- Concrete Accept types win first. Matching compares type and subtype only; Mime parameters are ignored (so `Accept: text/plain` matches `text/plain; charset=utf-8`).
+- Acceptable `*/*` selects `default_format` when that mime is among the declared formats; otherwise the first declared format.
+- Media types with weight `<= 0` (`q=0`) are skipped. A refused-only `*/*` yields `406` and does not fall back to `default_format`.
+- No match → `406 Not Acceptable` with `Vary: Accept` and a body listing supported content types.
+- Malformed `Accept` → `400` with `Invalid Accept header.`.
+
+JSON Accept detection also accepts `application/*+json` vendor suffixes (for example `application/vnd.api+json`). For `Result<T, E>` handlers, negotiation uses only `T`.
+
+Request bodies negotiate on input the same way. A `#[RequestBody(format(json))]` type accepts `application/json`; `format(url_encoded)` accepts `application/x-www-form-urlencoded` by type and subtype (charset allowed); `format(json, url_encoded)` accepts both via `Content-Type`. Unsupported **request** content types get a `400` plain-text response. The parsing helpers (`parse_accept_header`, `parse_content_type_header`, `get_body_content_type`, `negotiate_parameter_insensitive`) are documented in [api-reference.md](api-reference.md).
 
 ## Supporting traits and macros
 
@@ -384,6 +399,7 @@ These items complete the picture when you combine groom with axum and utoipa:
 |---------|------|---------|
 | Quick example | [quick-example](../examples/quick-example) | JSON greet endpoint from the [quickstart](quickstart.md); snippet kept in sync with `quickstart_snippet.rs`. |
 | Hello world | [hello-world](../examples/hello-world) | Single controller, plain-text responses, inline spec route. |
+| Composition | [composition](../examples/composition) | Merge and nest multiple controllers into one `GroomRouter`. |
 | HTMX app | [htmx](../examples/htmx) | Simple backend with HTMX, rendered with minijinja templating engine. |
 | Auth middleware | [auth-middleware](../examples/auth-middleware) | Complete working example of an `OpenApiSpecLayer`-based middleware. |
 | Todo app | [todo](../examples/todo) | Layered backend, multiple endpoints, spec binary, Vue frontend with generated client. |

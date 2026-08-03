@@ -134,4 +134,4 @@ curl 'http://127.0.0.1:8889/hello'
 - [user-guide.md](user-guide.md) — all five annotations in depth: `#[Controller]`, `#[Route]`, `#[DTO]`, `#[RequestBody]`, `#[Response]`, plus content negotiation and examples.
 - [api-reference.md](api-reference.md) — `GroomRouter` composition and typestate, `OpenApiSpecLayer`, errors.
 - [architecture.md](architecture.md) — how groom, axum, and utoipa fit together.
-- [examples](../examples/) — bigger applications: hello-world, htmx, auth-middleware, and the full-stack todo app.
+- [examples](../examples/) — bigger applications: hello-world, composition, htmx, auth-middleware, and the full-stack todo app.

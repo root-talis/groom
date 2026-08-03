@@ -51,7 +51,7 @@ groom/groom/src/
 │   ├── html_response.rs    # HtmlFormat trait, html_format!
 │   └── result.rs           # Result<T, E> as Response
 └── router/
-    ├── mod.rs              # Module exports, prepend_path, with_state, NotValidated/Validated
+    ├── mod.rs              # Module exports, with_state, NotValidated/Validated
     ├── core.rs             # GroomRouter struct: new, merge, nest, layer, layer_with_spec
     ├── traits.rs           # OpenApiSpecLayer, SpecLayerModifier
     ├── openapi.rs          # to_openapi, to_axum_router
@@ -80,12 +80,14 @@ let api = GroomRouter::new()
 
 - Axum router trees are merged via `axum::Router::merge()`.
 - OpenAPI path entries are concatenated (no prefix transformation).
+- Per-path spec-layer bindings and `whole_spec_layers` are concatenated.
 - `ComponentsRegistry` entries are merged. If the same schema name maps to different types across the two controllers, `MergeError::SchemaConflict` is returned. Identical schemas with the same name are accepted and deduplicated.
 
 **`nest(self, path, other) -> MergeResult<Self>`.** Mounts `other` under a path prefix:
 
 - Axum router is nested via `axum::Router::nest()`.
-- OpenAPI path entries from `other` are prefixed using `prepend_path(prefix, path)`.
+- OpenAPI path entries and per-path spec-layer bindings from `other` are re-keyed under the nest prefix (crate-private `prepend_path`).
+- Whole-spec layers from both routers are concatenated.
 - The same schema-conflict detection applies as in `merge()`.
 
 Both return `MergeResult<Self>`, a `Result` alias with `MergeError` as the error type. This is the primary mechanism for detecting schema name collisions between independently developed controllers.
@@ -139,7 +141,7 @@ pub enum RouterValidationError {
 - `MergeError::SchemaNotFound` — a `$ref` points to a schema that was not registered.
 - `RouterValidationError::RouteShadow` — the same `(path, method)` pair appears in more than one controller after composition.
 
-**Path prefix helper.** `prepend_path(prefix: &str, path: &str) -> String` prepends a path prefix for OpenAPI path entries under `.nest()`. It mirrors axum's internal `path_for_nested_route` logic. Both `prefix` and `path` must start with `/`.
+**Path prefixing.** Nesting prefixes OpenAPI paths with a crate-private `prepend_path` helper. It mirrors axum's `path_for_nested_route` rules. Both the prefix and the path must start with `/`. It is not public API.
 
 ### OpenApiSpecLayer
 
@@ -157,20 +159,23 @@ pub trait OpenApiSpecLayer: Send + Sync + Clone + 'static {
 
 The four methods:
 
-- `modify_openapi(&self, api: &mut OpenApi)` — whole-spec modification (security schemes, response codes, info metadata). Default no-op; called once per unique spec layer during `to_openapi()`.
-- `modify_operation(&self, path: &str, method: &HttpMethod, operation: &mut Operation)` — per-`(path, method)` modification (e.g. adding `security` requirements to each operation). Default no-op; called before `modify_openapi`.
+- `modify_openapi(&self, api: &mut OpenApi)` — whole-spec modification (security schemes, response codes, info metadata). Default no-op; called once per `layer_with_spec` attach during `to_openapi()`.
+- `modify_operation(&self, path: &str, method: &HttpMethod, operation: &mut Operation)` — per-`(path, method)` modification (e.g. adding `security` requirements to each operation). Default no-op; called before `modify_openapi`, and only for methods tagged on that binding at attach time.
 - `clone_box(&self) -> Box<dyn SpecLayerModifier>` — type-erased cloning so `GroomRouter` can store spec layers and remain `Clone`. Default delegates to the type's `Clone` impl.
 - `mount<S>(&self, r: axum::Router<S>) -> axum::Router<S>` — **REQUIRED**. This hook mounts the layer into the axum request pipeline. `layer_with_spec()` calls it on the router side.
 
 **Internal storage trait.** `SpecLayerModifier: Send + Sync + 'static` mirrors `OpenApiSpecLayer`'s `modify_openapi`, `modify_operation`, and `clone_box`, but omits the generic `mount<S>` method. A blanket impl delegates from `OpenApiSpecLayer` to `SpecLayerModifier`. The trait exists because `mount<S>` is generic over `S`. A trait object `Box<dyn OpenApiSpecLayer>` would need the state type spelled out. The storage trait avoids that by leaving `mount` out entirely.
 
-**Per-path storage.** `GroomRouter` holds `path_spec_layers: HashMap<String, Vec<Box<dyn SpecLayerModifier>>>`, keyed by path string. `layer_with_spec()` pushes a clone of the layer into **every existing path's** layer list. On an empty router, no paths exist yet, so it records nothing until `from_controller_parts` seeds the map.
+**Storage.** `GroomRouter` keeps two collections:
 
-**Merge vs nest semantics.** `merge()` concatenates the `path_spec_layers` maps. Each router's layers stay keyed under its own paths. `nest(path, other)` re-keys `other`'s layers under `prepend_path(path, p)`. A spec layer attached to `/inner` inside a router nested at `/api` ends up keyed at `/api/inner`. Layers are therefore **isolated per path**: composing routers never spreads one controller's spec layers onto another controller's paths.
+- `path_spec_layers: HashMap<String, Vec<SpecLayerBinding>>` — each binding holds a `MethodFlags` set (methods present on that path when `layer_with_spec` ran) and a type-erased layer. `layer_with_spec` pushes one binding onto every path that already exists.
+- `whole_spec_layers: Vec<Box<dyn SpecLayerModifier>>` — one entry per `layer_with_spec` call, including on an empty router. Used only for `modify_openapi`.
 
-**Invocation order in `to_openapi()`.** For each `(path, method)` pair with an `Operation`, the stored layers for that path call `modify_operation` first. Then `modify_openapi` is called once per **unique** spec layer across all paths. A `HashSet<*const dyn SpecLayerModifier>` deduplicates by pointer identity, so a layer stored on several paths still gets one whole-spec pass.
+**Merge vs nest.** `merge()` concatenates per-path bindings (same path keys append) and extends `whole_spec_layers`. `nest(path, other)` re-keys `other`'s bindings under the nest prefix and extends `whole_spec_layers` the same way. A binding attached to `/inner` inside a router nested at `/api` ends up keyed at `/api/inner`. Per-path bindings therefore stay scoped to the routes they wrapped; whole-spec entries travel with the router they were attached to.
 
-**Design intent.** A spec layer only affects the paths it was attached to. `modify_operation` runs only for paths in that layer's key list. The whole-spec `modify_openapi` is deduplicated, so identical layers do not run twice. This keeps middleware-driven spec contributions (auth, rate limiting) scoped to the routes they actually wrap.
+**Invocation order in `to_openapi()`.** For each `(path, method)` with an `Operation`, groom walks that path's bindings and calls `modify_operation` only when the binding's method flags include that method. Then it calls `modify_openapi` once for each entry in `whole_spec_layers` — once per `layer_with_spec` attach.
+
+**Design intent.** `modify_operation` affects only the paths and methods that existed when the layer was attached. `modify_openapi` runs once per attach so middleware can add security schemes or other document-level metadata without a second registration API.
 
 ### Core traits
 
@@ -226,11 +231,12 @@ When building OpenAPI, nested DTO schemas must be registered under `#/components
 
 1. Calls `ToSchema::schemas` to collect nested schema names.
 2. Registers each named schema once, building a `Ref` with a JSON-Pointer-safe path via `json_ptr::escape_json_pointer`.
-3. Skips inline registration for primitive-like schemas (currently `String`).
+3. Skips inline registration for primitive-like schemas (currently `String`); `schema_or_ref::<T>` returns an inline schema for those types.
 4. Panics on name collisions between different Rust types that share the same schema name within a single controller.
-5. Merges into an existing `utoipa::openapi::Components` via `into_components`, detecting duplicate definitions across controllers.
+5. Merges with another registry via `merge(self, other) -> Result<Self, SchemaMergeError>`. On conflict, `SchemaMergeError` boxes both schemas so the success path stays small. `GroomRouter::merge` / `nest` map that error to name-only `MergeError::SchemaConflict`.
+6. Merges into an existing `utoipa::openapi::Components` via `into_components`.
 
-At the `GroomRouter` level, `ComponentsRegistry::merge()` catches schema conflicts between controllers and surfaces them as `MergeError::SchemaConflict` from `.merge()` and `.nest()`.
+For `#[Response]` OpenAPI content, only `json` registers the payload DTO through `add_components`. `plain_text` and `html` content use `schema_or_ref::<String>` (inline string schema); the payload type is not added to `#/components/schemas` for those formats.
 
 `parameters.rs` uses the registry when wiring `Path<T>` and `Query<T>`. Parameter schemas are matched to registered components, so operations reference `$ref` instead of duplicating inline schemas.
 
@@ -243,10 +249,11 @@ Axum's `Query` cannot deserialize repeated query keys into `Vec` fields. The opt
 ```rust
 pub trait Response {
     fn __openapi_modify_operation(op: OperationBuilder, c: &mut ComponentsRegistry) -> OperationBuilder;
-    fn __groom_negotiate_content_type(accept: &Accept) -> Result<Option<Mime>, axum::response::Response>;
+    fn __groom_negotiate_content_type(accept: &Accept)
+        -> Result<Option<&'static Mime>, axum::response::Response>;
     fn __groom_into_response(self, negotiated: Option<&mime::Mime>) -> axum::response::Response;
-    fn __groom_check_response_codes(context: &str, codes: &mut HTTPCodeSet);
-    fn __groom_check_response_formats(context: &str, formats: &mut HTTPFormatsSet);
+    fn __groom_check_response_codes(context: impl Display, codes: &mut HTTPCodeSet);
+    fn __groom_check_response_formats(context: impl Display, formats: &mut HTTPFormatsSet);
 }
 ```
 
@@ -255,7 +262,7 @@ Implemented by `#[Response]` enums and structs in `groom_macros`. Responsibiliti
 | Method | When | Role |
 |--------|------|------|
 | `__openapi_modify_operation` | Spec generation | Adds response entries (status, content types, schemas) |
-| `__groom_negotiate_content_type` | Each request, before the handler runs | Negotiation (once, in the generated wrapper) |
+| `__groom_negotiate_content_type` | Each request, before the handler runs | Negotiation (once, in the generated wrapper); success borrows a `&'static Mime` from the type's supported-mime const |
 | `__groom_into_response` | Each request | Serialization using the pre-negotiated mime |
 | `__groom_check_response_codes` | `into_router()` (once) | Ensures distinct status codes across variants |
 | `__groom_check_response_formats` | `into_router()` (once) | Validates the declared content-type formats; the generated per-type impl records them into an `HTTPFormatsSet` |
@@ -265,10 +272,11 @@ Implemented by `#[Response]` enums and structs in `groom_macros`. Responsibiliti
 `response/result.rs` provides a blanket impl when both `T` and `E` implement `Response`:
 
 - OpenAPI merges success and error response definitions.
-- `Ok(v)` and `Err(e)` delegate to the respective `__groom_into_response`.
+- Content negotiation uses **only `T`** (`Ok`). There is no second negotiate pass on `E`.
+- `Ok(v)` and `Err(e)` still delegate to the respective `__groom_into_response`.
 - Status-code checks run on both sides with distinct context strings.
 
-The two variants must declare the **same list of formats**. A mismatch — `Ok` with `format(json)` and `Err` with `format(html)`, or an any-content arm alongside a formatted one — panics at router build inside `__groom_runtime_checks` with `"Result<...>: both variants must support the same list of formats"`. The panic fails the misconfiguration at startup instead of producing a runtime `400` when the negotiated content type cannot render the arm actually returned. Any-content arms (empty format list) are legal only when both arms are any-content.
+The two variants must declare the **same set of formats** (order does not matter; comparison uses Mime essence strings). A mismatch — `Ok` with `format(json)` and `Err` with `format(html)`, or an any-content arm alongside a formatted one — panics at router build inside `__groom_runtime_checks` with `"Result<...>: both variants must support the same list of formats"`. The panic fails the misconfiguration at startup instead of producing a runtime error when the negotiated content type cannot render the arm actually returned. Any-content arms (empty format list) are legal only when both arms are any-content.
 
 This allows handlers to return `Result<GreetOk, GreetFailure>` instead of a single response enum.
 
@@ -290,10 +298,12 @@ Generated code (`groom_macros`) handles JSON and plain-text serialization. HTML 
 
 #### Outgoing responses (`Accept`)
 
-`parse_accept_header` reads `HeaderMap` and parses `Accept` into `accept_header::Accept`. Negotiation runs **once per request, in the generated wrapper before the handler executes** — never inside response conversion. `__groom_negotiate_content_type` compares the client's preferences against the return type's `const` list of supported MIME types, from `#[Response(format(...))]`:
+`parse_accept_header` reads `HeaderMap` and parses `Accept` into `accept_header::Accept`. Negotiation runs **once per request, in the generated wrapper before the handler executes** — never inside response conversion. When `Accept` is present, the wrapper calls `__groom_negotiate_content_type`, which uses `negotiate_parameter_insensitive` against the return type's `const` list of supported MIME types from `#[Response(format(...))]`:
 
-- `Accept` absent → negotiation returns `Ok(None)` and `default_format` from the `#[Response]` attribute is used (required when multiple formats are enabled).
-- `Accept` present and matching a supported format → the negotiated mime is passed to `__groom_into_response`, which serializes to that type.
+- `Accept` absent → the wrapper skips negotiation and passes `None` to `__groom_into_response`, which applies `default_format` (required when multiple formats are enabled).
+- Concrete Accept types win first. Matching compares type and subtype only; Mime parameters (for example `charset`) are ignored. A match returns `Ok(Some(&'static Mime))` into the type's supported-mime const.
+- Acceptable `*/*` (weight greater than 0) selects `default_format` when that mime is among the supported list; otherwise it selects the first supported mime.
+- Media types with weight `<= 0` (`q=0`) are skipped as refusals. A refused-only `*/*` yields `None` from negotiation — HTTP 406 — and does **not** fall back to `default_format`.
 - `Accept` present but matching none of the supported types → the wrapper returns `406 Not Acceptable` with a `Vary: Accept` header and a `text/plain` body listing the supported types (`Supported content types: <list>`).
 - `Accept` malformed (unparseable or non-UTF8) → the wrapper returns `400 Bad Request` with `Invalid Accept header.`.
 
@@ -304,7 +314,7 @@ Generated code (`groom_macros`) handles JSON and plain-text serialization. HTML 
 - `parse_content_type_header` — parse `Content-Type` as `mime::Mime`
 - `get_body_content_type` — map to `BodyContentType::Json` or `FormUrlEncoded`
 
-JSON detection follows the same rules as axum's JSON extractor (`application/json` and `+json` suffixes). Unsupported or missing content types produce a typed rejection enum (`BadContentType`, etc.) generated in `groom_macros`.
+JSON detection follows the same rules as axum's JSON extractor (`application/json` and `+json` suffixes). Form detection matches `application` / `x-www-form-urlencoded` by type and subtype only; a charset or other Mime parameter is accepted. Unsupported or missing content types produce a typed rejection enum (`BadContentType`, etc.) generated in `groom_macros`.
 
 ### JSON Pointer helpers
 
@@ -316,7 +326,7 @@ OpenAPI `$ref` locations use JSON Pointer syntax (RFC 6901). Schema names and pa
 
 `HTTPCodeSet` tracks HTTP status codes seen while walking a handler's return type. `ensure_distinct` panics with a context string if a code is reused. For example, two variants of a `#[Response]` enum share the same `code`, or `Result<Ok, Err>` maps overlapping codes from both sides.
 
-`HTTPFormatsSet` tracks declared content-type formats the same way. Each generated impl records its supported MIME list via `__groom_check_response_formats`. The `Result<T, E>` impl delegates to both arms, panics when their lists differ, and merges the equal list upward so nested `Result`s compose.
+`HTTPFormatsSet` tracks declared content-type formats the same way. Each generated impl records its supported MIME list via `__groom_check_response_formats`. Equality is an unordered set of Mime essence strings. The `Result<T, E>` impl records both arms, panics when the sets differ, and merges the equal set upward so nested `Result`s compose.
 
 `__groom_runtime_checks` therefore validates both HTTP codes and content-type format lists.
 
@@ -478,7 +488,7 @@ Implements `groom::response::Response` for **enums** (typical multi-status API) 
 ```
 
 - `format(...)` — which representations the type can serialize to (`plain_text`, `html`, `json`).
-- `default_format` — required when more than one format is enabled; used when the client sends no `Accept` header.
+- `default_format` — required when more than one format is enabled; used when `Accept` is absent or when an acceptable `*/*` is selected (see [Content negotiation](#content-negotiation)).
 - `code` — HTTP status (struct default; enum variants use `#[Response(code = ...)]` on each variant).
 
 **Enum responses.** Each variant **must** have `#[Response(code = ...)]`. Variants may be:
@@ -489,11 +499,11 @@ Implements `groom::response::Response` for **enums** (typical multi-status API) 
 The macro generates:
 
 - `into_response_*` methods per enabled format (plain text, HTML, JSON).
-- `__groom_negotiate_content_type` — negotiates `Accept` against the type's `const` MIME list (the single negotiation site); returns `Err(not_acceptable(...))` (406) when nothing matches, `Ok(None)` for types with no format list.
+- `__groom_negotiate_content_type` — negotiates `Accept` against the type's `const` MIME list (the single negotiation site); returns `Err(not_acceptable(...))` (406) when nothing matches, `Ok(None)` for types with no format list. Success returns `Ok(Some(&'static Mime))`.
 - `__groom_into_response` — consumes the pre-negotiated mime and serializes; negotiation happened earlier in `__groom_negotiate_content_type` (see Content negotiation).
-- `__openapi_modify_operation` — one OpenAPI response entry per variant/status.
+- `__openapi_modify_operation` — one OpenAPI response entry per variant/status. `json` content registers the payload DTO in components; `plain_text` and `html` content use an inline string schema.
 - `__groom_check_response_codes` — ensures distinct codes across variants.
-- `__groom_check_response_formats` — validates that both `Result` arms declare the same list of formats; panics at router build on mismatch.
+- `__groom_check_response_formats` — validates that both `Result` arms declare the same set of formats; panics at router build on mismatch.
 
 `#[derive(utoipa::ToSchema)]` is added to the enum.
 
