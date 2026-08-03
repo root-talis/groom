@@ -15,10 +15,10 @@ pub enum HeaderParseError {
 }
 
 pub fn parse_accept_header(headers: &HeaderMap) -> Result<Option<Accept>, HeaderParseError> {
-    get_header_as_string(headers, ACCEPT, "Accept")?
+    get_header_str(headers, ACCEPT, "Accept")?
         .map(|val| {
             val.parse::<Accept>()
-                .map_err(|_| HeaderParseError::UnparseableValue("Accept", val))
+                .map_err(|_| HeaderParseError::UnparseableValue("Accept", val.to_owned()))
         })
         .transpose()
 }
@@ -30,10 +30,12 @@ pub enum BodyContentType {
 }
 
 pub fn parse_content_type_header(headers: &HeaderMap) -> Result<Option<Mime>, HeaderParseError> {
-    get_header_as_string(headers, CONTENT_TYPE, "Content-Type")?
+    get_header_str(headers, CONTENT_TYPE, "Content-Type")?
         .map(|val| {
             val.parse::<Mime>()
-                .map_err(|_| HeaderParseError::UnparseableValue("Content-Type", val))
+                .map_err(|_| {
+                    HeaderParseError::UnparseableValue("Content-Type", val.to_owned())
+                })
         })
         .transpose()
 }
@@ -52,13 +54,19 @@ pub fn get_body_content_type(mime: Option<Mime>) -> Option<BodyContentType> {
     }
 }
 
-fn get_header_as_string(headers: &HeaderMap, header_name: HeaderName, error_name: &'static str)
-    -> Result<Option<String>, HeaderParseError>
-{
-    headers.get(&header_name)
+/// Reads a header as borrowed text via `HeaderValue::to_str`.
+/// Allocates nothing on the success path; `to_str` failure maps to
+/// [`HeaderParseError::NonUtf8HeaderBytes`] (same 400 path as before).
+fn get_header_str<'a>(
+    headers: &'a HeaderMap,
+    header_name: HeaderName,
+    error_name: &'static str,
+) -> Result<Option<&'a str>, HeaderParseError> {
+    headers
+        .get(&header_name)
         .map(|value| {
-            std::str::from_utf8(value.as_bytes())
-                .map(|s| s.to_owned())
+            value
+                .to_str()
                 .map_err(|_| HeaderParseError::NonUtf8HeaderBytes(error_name))
         })
         .transpose()
@@ -112,6 +120,7 @@ fn is_json(mime: &Mime) -> bool {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use axum::http::HeaderValue;
 
     #[test]
     fn get_body_content_type_accepts_bare_form_urlencoded() {
@@ -129,6 +138,51 @@ mod tests {
         assert!(
             matches!(result, Some(BodyContentType::FormUrlEncoded)),
             "form Content-Type with charset must classify as FormUrlEncoded"
+        );
+    }
+
+    #[test]
+    fn parse_accept_header_returns_some_for_valid_accept() {
+        let mut headers = HeaderMap::new();
+        headers.insert(ACCEPT, HeaderValue::from_static("application/json"));
+        let result = parse_accept_header(&headers).expect("valid Accept must parse");
+        assert!(result.is_some(), "valid Accept must yield Some(Accept)");
+    }
+
+    #[test]
+    fn parse_content_type_header_returns_some_for_valid_content_type() {
+        let mut headers = HeaderMap::new();
+        headers.insert(CONTENT_TYPE, HeaderValue::from_static("application/json"));
+        let result =
+            parse_content_type_header(&headers).expect("valid Content-Type must parse");
+        assert!(result.is_some(), "valid Content-Type must yield Some(Mime)");
+    }
+
+    #[test]
+    fn parse_accept_header_maps_non_utf8_to_non_utf8_header_bytes() {
+        let mut headers = HeaderMap::new();
+        headers.insert(
+            ACCEPT,
+            HeaderValue::from_bytes(&[0xff, 0xfe]).expect("raw header bytes"),
+        );
+        let err = parse_accept_header(&headers).expect_err("non-UTF8 Accept must err");
+        assert!(
+            matches!(err, HeaderParseError::NonUtf8HeaderBytes("Accept")),
+            "non-UTF8 Accept must map to NonUtf8HeaderBytes (same 400 path)"
+        );
+    }
+
+    #[test]
+    fn parse_accept_header_maps_unparseable_to_unparseable_value() {
+        let mut headers = HeaderMap::new();
+        headers.insert(ACCEPT, HeaderValue::from_static("%%%not-a-media-type%%%"));
+        let err = parse_accept_header(&headers).expect_err("bad Accept must err");
+        assert!(
+            matches!(
+                err,
+                HeaderParseError::UnparseableValue("Accept", ref s) if s == "%%%not-a-media-type%%%"
+            ),
+            "unparseable Accept must map to UnparseableValue with owned text"
         );
     }
 }
