@@ -31,11 +31,20 @@ pub trait Response {
 
 /// Builds the 406 Not Acceptable response: `Vary: Accept`, text/plain body listing supported mimes.
 pub fn not_acceptable(supported_mimes: &[::mime::Mime]) -> ::axum::response::Response {
-    let mimes = supported_mimes.iter().map(|m| m.as_ref()).collect::<Vec<_>>().join(", ");
+    // One String build — no intermediate Vec of mime refs (P012 / review option 3).
+    let mut body = String::from("Supported content types: ");
+    let mut first = true;
+    for mime in supported_mimes {
+        if !first {
+            body.push_str(", ");
+        }
+        body.push_str(mime.as_ref());
+        first = false;
+    }
     (
         ::axum::http::StatusCode::NOT_ACCEPTABLE,
         [(::axum::http::header::VARY, "Accept")],
-        format!("Supported content types: {mimes}"),
+        body,
     ).into_response()
 }
 
