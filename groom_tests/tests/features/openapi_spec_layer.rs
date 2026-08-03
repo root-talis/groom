@@ -107,6 +107,30 @@ mod controllers {
             HelloResponse::Ok("Hello, private!".into())
         }
     }
+
+    /// Multi-method same path — controllers emit one PathItem per method.
+    #[Controller()]
+    pub mod multi_method_controller {
+        use axum::response::IntoResponse;
+        use groom::response::Response;
+        use groom_macros::Response;
+
+        #[Response(format(plain_text))]
+        pub enum ItemResponse {
+            #[Response()]
+            Ok(String),
+        }
+
+        #[Route(method = "get", path = "/items")]
+        async fn list_items() -> ItemResponse {
+            ItemResponse::Ok("list".into())
+        }
+
+        #[Route(method = "post", path = "/items")]
+        async fn create_item() -> ItemResponse {
+            ItemResponse::Ok("created".into())
+        }
+    }
 }
 
 fn build_merged_controller() -> GroomRouterValid {
@@ -270,6 +294,126 @@ async fn test_nest_controllers() {
         .assert_status(401)
         .assert_content_type("text/plain; charset=utf-8")
         .assert_body("Unauthorized");
+}
+
+/// Append-style layer: pushes a tag (not assign-overwrite). Doubled nest bindings
+/// would produce `["nested", "nested"]` — WR-01 regression proof.
+#[derive(Clone)]
+struct AppendTagSpecLayer {
+    tag: &'static str,
+}
+
+impl groom::router::OpenApiSpecLayer for AppendTagSpecLayer {
+    fn modify_openapi(&self, _api: &mut utoipa::openapi::OpenApi) {}
+
+    fn modify_operation(
+        &self,
+        _path: &str,
+        _method: &utoipa::openapi::path::HttpMethod,
+        operation: &mut utoipa::openapi::path::Operation,
+    ) {
+        operation
+            .tags
+            .get_or_insert_with(Vec::new)
+            .push(self.tag.to_string());
+    }
+
+    fn mount<S>(&self, r: axum::Router<S>) -> Router<S>
+    where
+        S: Clone + Send + Sync + 'static,
+    {
+        r
+    }
+}
+
+fn build_nested_multi_method_append_tagged() -> GroomRouterValid {
+    let inner = controllers::multi_method_controller::into_router()
+        .layer_with_spec(AppendTagSpecLayer { tag: "nested" });
+    groom::router::GroomRouter::new()
+        .nest("/api", inner)
+        .expect("nesting failed")
+        .validate()
+        .expect("validation failed")
+}
+
+/// Nest of multi-method path + append-style layer must tag each operation once (WR-01 / D-06).
+#[test]
+fn test_nest_multi_method_append_tag_not_doubled() {
+    assert_openapi_doc(
+        |api| build_nested_multi_method_append_tagged().to_openapi(api),
+        json!({
+            "components": {},
+            "info": {
+                "contact": {
+                    "email": "mail@example.com",
+                    "name": "name"
+                },
+                "description": "d",
+                "license": {
+                    "name": "n"
+                },
+                "title": "t",
+                "version": "0.0.0"
+            },
+            "openapi": "3.1.0",
+            "paths": {
+                "/api/items": {
+                    "get": {
+                        "operationId": "listItems",
+                        "tags": ["nested"],
+                        "responses": {
+                            "200": {
+                                "content": {
+                                    "text/plain; charset=utf-8": {
+                                        "schema": {
+                                            "type": "string"
+                                        }
+                                    }
+                                },
+                                "description": ""
+                            },
+                            "406": {
+                                "description": "The requested content type is not supported",
+                                "content": {
+                                    "text/plain; charset=utf-8": {
+                                        "schema": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "post": {
+                        "operationId": "createItem",
+                        "tags": ["nested"],
+                        "responses": {
+                            "200": {
+                                "content": {
+                                    "text/plain; charset=utf-8": {
+                                        "schema": {
+                                            "type": "string"
+                                        }
+                                    }
+                                },
+                                "description": ""
+                            },
+                            "406": {
+                                "description": "The requested content type is not supported",
+                                "content": {
+                                    "text/plain; charset=utf-8": {
+                                        "schema": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }),
+    );
 }
 
 /// Verify OpenAPI spec includes nested controller with /api prefix plus BearerAuth security scheme.

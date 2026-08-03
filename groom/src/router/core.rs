@@ -202,20 +202,17 @@ impl<S: Clone + Send + Sync + 'static> GroomRouter<S, NotValidated> {
         let mut openapi_paths = self.openapi_paths;
         let mut path_spec_layers = self.path_spec_layers;
 
-        for (p, item) in other.openapi_paths {
-            let prefixed_path = super::prepend_path(path, &p);
-
-            let spec_layers: Vec<SpecLayerBinding> = other
-                .path_spec_layers
-                .get(&p)
-                .map(|layers| layers.iter().map(SpecLayerBinding::clone_binding).collect())
-                .unwrap_or_default();
-
-            openapi_paths.push((prefixed_path.clone(), item));
+        // Once per path key (align with merge) — controllers may emit multiple
+        // PathItems for the same path (one per method).
+        for (p, layers) in other.path_spec_layers {
+            let prefixed = super::prepend_path(path, &p);
             path_spec_layers
-                .entry(prefixed_path)
+                .entry(prefixed)
                 .or_default()
-                .extend(spec_layers);
+                .extend(layers);
+        }
+        for (p, item) in other.openapi_paths {
+            openapi_paths.push((super::prepend_path(path, &p), item));
         }
 
         let mut whole_spec_layers = self.whole_spec_layers;

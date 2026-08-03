@@ -207,6 +207,40 @@ mod tests {
         assert_eq!(nested.path_spec_layers["/api/inner"].len(), 1);
     }
 
+    /// Controllers emit one PathItem per method with the same path string.
+    /// Nest must rewrite path_spec_layers once per path key (not once per PathItem).
+    #[test]
+    fn test_nest_multi_pathitem_same_path_keeps_one_spec_binding() {
+        use utoipa::openapi::path::{PathItemBuilder, HttpMethod, OperationBuilder};
+        let get_op = OperationBuilder::new().operation_id(Some("get_inner")).build();
+        let post_op = OperationBuilder::new().operation_id(Some("post_inner")).build();
+        let get_only = PathItemBuilder::new()
+            .operation(HttpMethod::Get, get_op)
+            .build();
+        let post_only = PathItemBuilder::new()
+            .operation(HttpMethod::Post, post_op)
+            .build();
+        let inner: GroomRouter<()> = GroomRouter::from_controller_parts(
+            axum::Router::new(),
+            ComponentsRegistry::new(),
+            vec![
+                ("/inner".to_string(), get_only),
+                ("/inner".to_string(), post_only),
+            ],
+        )
+        .layer_with_spec(TitleSpecLayer {
+            title: "inner".into(),
+        });
+        let outer: GroomRouter<()> = GroomRouter::new();
+        let nested = outer.nest("/api", inner).unwrap();
+        assert_eq!(nested.path_spec_layers.len(), 1);
+        assert_eq!(
+            nested.path_spec_layers["/api/inner"].len(),
+            1,
+            "nest must keep one SpecLayerBinding per path key for multi-PathItem controllers"
+        );
+    }
+
     #[test]
     fn test_existing_layer_behavior_unchanged() {
         // Existing .layer() should still work without spec_layers changes breaking it
