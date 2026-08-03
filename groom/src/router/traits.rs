@@ -403,4 +403,59 @@ mod tests {
             "POST must receive only the post-only layer"
         );
     }
+
+    /// Counts `modify_openapi` invocations (P003: must run once per attach, not once per path).
+    #[derive(Clone)]
+    struct CountingSpecLayer {
+        calls: std::sync::Arc<std::sync::atomic::AtomicUsize>,
+    }
+
+    impl OpenApiSpecLayer for CountingSpecLayer {
+        fn modify_openapi(&self, _api: &mut OpenApi) {
+            self.calls
+                .fetch_add(1, std::sync::atomic::Ordering::SeqCst);
+        }
+
+        fn mount<S>(&self, r: axum::Router<S>) -> axum::Router<S> {
+            r
+        }
+    }
+
+    #[test]
+    fn test_modify_openapi_runs_once_for_multi_path_layer() {
+        use std::sync::atomic::AtomicUsize;
+        use std::sync::Arc;
+        use utoipa::OpenApi;
+        use utoipa::openapi::path::{HttpMethod, OperationBuilder, PathItemBuilder};
+
+        #[derive(OpenApi)]
+        #[openapi(info(title = "original", version = "0.1.0"))]
+        struct ApiDoc;
+
+        let calls = Arc::new(AtomicUsize::new(0));
+        let op = OperationBuilder::new().operation_id(Some("op")).build();
+        let pi = PathItemBuilder::new()
+            .operation(HttpMethod::Get, op)
+            .build();
+
+        let r: GroomRouter<()> = GroomRouter::from_controller_parts(
+            axum::Router::new(),
+            ComponentsRegistry::new(),
+            vec![
+                ("/a".to_string(), pi.clone()),
+                ("/b".to_string(), pi.clone()),
+                ("/c".to_string(), pi),
+            ],
+        )
+        .layer_with_spec(CountingSpecLayer {
+            calls: Arc::clone(&calls),
+        });
+
+        let _api = r.validate().unwrap().to_openapi(ApiDoc::openapi());
+        assert_eq!(
+            calls.load(std::sync::atomic::Ordering::SeqCst),
+            1,
+            "modify_openapi must run once per layer attach, not once per path"
+        );
+    }
 }

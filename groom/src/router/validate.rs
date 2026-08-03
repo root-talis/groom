@@ -47,6 +47,7 @@ impl<S: Clone + Send + Sync + 'static> GroomRouter<S, NotValidated> {
             registry: self.registry,
             openapi_paths: self.openapi_paths,
             path_spec_layers: self.path_spec_layers,
+            whole_spec_layers: self.whole_spec_layers,
             _marker: std::marker::PhantomData,
         })
     }

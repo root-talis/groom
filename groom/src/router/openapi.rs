@@ -1,9 +1,6 @@
-use std::collections::HashSet;
-
 use utoipa::openapi::OpenApi;
 
 use super::core::GroomRouter;
-use super::traits::SpecLayerModifier;
 use super::Validated;
 
 impl<S: Clone + Send + Sync + 'static> GroomRouter<S, Validated> {
@@ -60,17 +57,9 @@ impl<S: Clone + Send + Sync + 'static> GroomRouter<S, Validated> {
             }
         }
 
-        // Whole-spec modification: invoke all unique spec layers across all paths
-        // (pointer dedup remains until P003 introduces whole_spec_layers).
-        let mut seen_ptrs: HashSet<*const dyn SpecLayerModifier> = HashSet::new();
-        for layers in self.path_spec_layers.values() {
-            for binding in layers {
-                let ptr = binding.layer.as_ref() as *const dyn SpecLayerModifier;
-                if !seen_ptrs.contains(&ptr) {
-                    seen_ptrs.insert(ptr);
-                    binding.layer.modify_openapi(&mut api);
-                }
-            }
+        // Whole-spec modification: once per intentional layer_with_spec attach (P003).
+        for spec_layer in &self.whole_spec_layers {
+            spec_layer.modify_openapi(&mut api);
         }
 
         api

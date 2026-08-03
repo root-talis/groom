@@ -106,6 +106,9 @@ pub struct GroomRouter<S = (), V = NotValidated> {
     /// Per-path spec layers, keyed by path string. Ensures that when controllers are
     /// merged, spec layers only apply to the operations they were attached to.
     pub(crate) path_spec_layers: HashMap<String, Vec<SpecLayerBinding>>,
+    /// Whole-spec layers filled once per `layer_with_spec` attach (P003 / D-11).
+    /// Used only for `modify_openapi` — not deduped by pointer identity.
+    pub(crate) whole_spec_layers: Vec<Box<dyn SpecLayerModifier>>,
     pub(crate) _marker: PhantomData<V>,
 }
 
@@ -121,7 +124,14 @@ impl<S: Clone + Send + Sync + 'static, V> GroomRouter<S, V> {
             .iter()
             .map(|(path, _)| (path.clone(), Vec::new()))
             .collect();
-        Self { router, registry, openapi_paths, path_spec_layers, _marker: PhantomData }
+        Self {
+            router,
+            registry,
+            openapi_paths,
+            path_spec_layers,
+            whole_spec_layers: Vec::new(),
+            _marker: PhantomData,
+        }
     }
 
     pub fn fallback<H, T>(self, handler: H) -> Self
@@ -134,6 +144,7 @@ impl<S: Clone + Send + Sync + 'static, V> GroomRouter<S, V> {
             registry: self.registry,
             openapi_paths: self.openapi_paths,
             path_spec_layers: self.path_spec_layers,
+            whole_spec_layers: self.whole_spec_layers,
             _marker: PhantomData,
         }
     }
@@ -146,6 +157,7 @@ impl<S: Clone + Send + Sync + 'static> GroomRouter<S, NotValidated> {
             registry: ComponentsRegistry::new(),
             openapi_paths: Vec::new(),
             path_spec_layers: HashMap::new(),
+            whole_spec_layers: Vec::new(),
             _marker: PhantomData,
         }
     }
@@ -164,6 +176,9 @@ impl<S: Clone + Send + Sync + 'static> GroomRouter<S, NotValidated> {
                 .extend(other_layers);
         }
 
+        let mut whole_spec_layers = self.whole_spec_layers;
+        whole_spec_layers.extend(other.whole_spec_layers);
+
         let registry = self.registry
             .merge(other.registry)
             .map_err(|(name, _existing, _incoming)| MergeError::SchemaConflict {
@@ -172,7 +187,14 @@ impl<S: Clone + Send + Sync + 'static> GroomRouter<S, NotValidated> {
                 source_b: "other".into(),
             })?;
 
-        Ok(Self { router, registry, openapi_paths, path_spec_layers, _marker: PhantomData })
+        Ok(Self {
+            router,
+            registry,
+            openapi_paths,
+            path_spec_layers,
+            whole_spec_layers,
+            _marker: PhantomData,
+        })
     }
 
     pub fn nest(self, path: &str, other: GroomRouter<S, NotValidated>) -> MergeResult<Self> {
@@ -196,6 +218,9 @@ impl<S: Clone + Send + Sync + 'static> GroomRouter<S, NotValidated> {
                 .extend(spec_layers);
         }
 
+        let mut whole_spec_layers = self.whole_spec_layers;
+        whole_spec_layers.extend(other.whole_spec_layers);
+
         let registry = self.registry
             .merge(other.registry)
             .map_err(|(name, _existing, _incoming)| MergeError::SchemaConflict {
@@ -203,7 +228,14 @@ impl<S: Clone + Send + Sync + 'static> GroomRouter<S, NotValidated> {
                 source_a: "self".into(),  // todo: replace "self" with reference to GroomRouter or remove it
                 source_b: "other".into(), // todo: replace "self" with reference to GroomRouter or remove it
             })?;
-        Ok(Self { router, registry, openapi_paths, path_spec_layers, _marker: PhantomData })
+        Ok(Self {
+            router,
+            registry,
+            openapi_paths,
+            path_spec_layers,
+            whole_spec_layers,
+            _marker: PhantomData,
+        })
     }
 
     pub fn layer<L>(self, layer: L) -> Self
@@ -219,6 +251,7 @@ impl<S: Clone + Send + Sync + 'static> GroomRouter<S, NotValidated> {
             registry: self.registry,
             openapi_paths: self.openapi_paths,
             path_spec_layers: self.path_spec_layers,
+            whole_spec_layers: self.whole_spec_layers,
             _marker: PhantomData,
         }
     }
@@ -236,6 +269,7 @@ impl<S: Clone + Send + Sync + 'static> GroomRouter<S, NotValidated> {
             registry: self.registry,
             openapi_paths: self.openapi_paths,
             path_spec_layers: self.path_spec_layers,
+            whole_spec_layers: self.whole_spec_layers,
             _marker: PhantomData,
         }
     }
@@ -278,11 +312,15 @@ impl<S: Clone + Send + Sync + 'static> GroomRouter<S, NotValidated> {
             });
         }
 
+        let mut whole_spec_layers = self.whole_spec_layers;
+        whole_spec_layers.push(boxed);
+
         Self {
             router: spec_layer.mount(self.router),
             registry: self.registry,
             openapi_paths: self.openapi_paths,
             path_spec_layers,
+            whole_spec_layers,
             _marker: PhantomData,
         }
     }
