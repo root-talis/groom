@@ -1,45 +1,48 @@
+use std::collections::HashMap;
+
+use utoipa::openapi::path::HttpMethod;
+
 use crate::router::error::RouterValidationError;
 
-use super::core::GroomRouter;
+use super::core::{GroomRouter, MethodFlags};
 use super::NotValidated;
 use super::Validated;
 
+/// OpenAPI PathItem methods (eight; no CONNECT) with matching `http::Method` for errors.
+const OPENAPI_METHODS: [(HttpMethod, ::http::Method); 8] = [
+    (HttpMethod::Get, ::http::Method::GET),
+    (HttpMethod::Post, ::http::Method::POST),
+    (HttpMethod::Put, ::http::Method::PUT),
+    (HttpMethod::Delete, ::http::Method::DELETE),
+    (HttpMethod::Options, ::http::Method::OPTIONS),
+    (HttpMethod::Head, ::http::Method::HEAD),
+    (HttpMethod::Patch, ::http::Method::PATCH),
+    (HttpMethod::Trace, ::http::Method::TRACE),
+];
+
+fn first_shadowed_method(existing: MethodFlags, incoming: MethodFlags) -> Option<::http::Method> {
+    for (utoipa_method, http_method) in &OPENAPI_METHODS {
+        if existing.contains(utoipa_method) && incoming.contains(utoipa_method) {
+            return Some(http_method.clone());
+        }
+    }
+    None
+}
+
 impl<S: Clone + Send + Sync + 'static> GroomRouter<S, NotValidated> {
     pub fn validate(self) -> Result<GroomRouter<S, Validated>, RouterValidationError> {
-        for i in 0..self.openapi_paths.len() {
-            for j in (i + 1)..self.openapi_paths.len() {
-                let (path_a, item_a) = &self.openapi_paths[i];
-                let (path_b, item_b) = &self.openapi_paths[j];
-
-                if path_a != path_b {
-                    continue;
-                }
-
-                if item_a.get.is_some() && item_b.get.is_some() {
-                    return Err(RouterValidationError::RouteShadow { path: path_a.clone(), method: ::http::Method::GET });
-                }
-                if item_a.post.is_some() && item_b.post.is_some() {
-                    return Err(RouterValidationError::RouteShadow { path: path_a.clone(), method: ::http::Method::POST });
-                }
-                if item_a.put.is_some() && item_b.put.is_some() {
-                    return Err(RouterValidationError::RouteShadow { path: path_a.clone(), method: ::http::Method::PUT });
-                }
-                if item_a.delete.is_some() && item_b.delete.is_some() {
-                    return Err(RouterValidationError::RouteShadow { path: path_a.clone(), method: ::http::Method::DELETE });
-                }
-                if item_a.options.is_some() && item_b.options.is_some() {
-                    return Err(RouterValidationError::RouteShadow { path: path_a.clone(), method: ::http::Method::OPTIONS });
-                }
-                if item_a.head.is_some() && item_b.head.is_some() {
-                    return Err(RouterValidationError::RouteShadow { path: path_a.clone(), method: ::http::Method::HEAD });
-                }
-                if item_a.patch.is_some() && item_b.patch.is_some() {
-                    return Err(RouterValidationError::RouteShadow { path: path_a.clone(), method: ::http::Method::PATCH });
-                }
-                if item_a.trace.is_some() && item_b.trace.is_some() {
-                    return Err(RouterValidationError::RouteShadow { path: path_a.clone(), method: ::http::Method::TRACE });
-                }
+        // One-pass path → method-flags insert; duplicate method bit → RouteShadow (P008).
+        let mut seen: HashMap<&str, MethodFlags> = HashMap::new();
+        for (path, item) in &self.openapi_paths {
+            let incoming = MethodFlags::from_path_item(item);
+            let entry = seen.entry(path.as_str()).or_insert_with(MethodFlags::empty);
+            if let Some(method) = first_shadowed_method(*entry, incoming) {
+                return Err(RouterValidationError::RouteShadow {
+                    path: path.clone(),
+                    method,
+                });
             }
+            *entry = entry.union(incoming);
         }
 
         Ok(GroomRouter {
@@ -137,5 +140,57 @@ mod tests {
         let merged = r1.merge(r2).unwrap();
         let result = merged.validate();
         assert!(result.is_err(), "same path+method after nesting should be detected");
+    }
+
+    /// Eight-method coverage checklist (OpenAPI PathItem; no CONNECT):
+    /// GET, POST, PUT, DELETE, OPTIONS, HEAD, PATCH, TRACE.
+    #[test]
+    fn test_validate_detects_shadow_for_all_openapi_methods() {
+        use utoipa::openapi::path::{PathItemBuilder, HttpMethod, OperationBuilder};
+
+        let cases: &[(HttpMethod, ::http::Method)] = &[
+            (HttpMethod::Get, ::http::Method::GET),
+            (HttpMethod::Post, ::http::Method::POST),
+            (HttpMethod::Put, ::http::Method::PUT),
+            (HttpMethod::Delete, ::http::Method::DELETE),
+            (HttpMethod::Options, ::http::Method::OPTIONS),
+            (HttpMethod::Head, ::http::Method::HEAD),
+            (HttpMethod::Patch, ::http::Method::PATCH),
+            (HttpMethod::Trace, ::http::Method::TRACE),
+        ];
+
+        for (utoipa_method, expected_http) in cases {
+            let op = OperationBuilder::new().operation_id(Some("op")).build();
+            let pi = PathItemBuilder::new()
+                .operation(utoipa_method.clone(), op)
+                .build();
+            let r1: GroomRouter<()> = GroomRouter::from_controller_parts(
+                axum::Router::new(),
+                ComponentsRegistry::new(),
+                vec![("/shadow".to_string(), pi.clone())],
+            );
+            let r2: GroomRouter<()> = GroomRouter::from_controller_parts(
+                axum::Router::new(),
+                ComponentsRegistry::new(),
+                vec![("/shadow".to_string(), pi)],
+            );
+            let merged = r1.merge(r2).unwrap();
+            let result = merged.validate();
+            assert!(
+                result.is_err(),
+                "same path+{:?} should fail validation",
+                expected_http
+            );
+            match result.err().unwrap() {
+                RouterValidationError::RouteShadow { path, method } => {
+                    assert_eq!(path, "/shadow");
+                    assert_eq!(method, *expected_http);
+                }
+                other => panic!(
+                    "expected RouteShadow for {:?}, got {:?}",
+                    expected_http, other
+                ),
+            }
+        }
     }
 }
