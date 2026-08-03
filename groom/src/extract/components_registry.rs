@@ -85,24 +85,12 @@ impl ComponentsRegistry {
 
     pub fn add_component(&mut self, name: String, schema: RefOr<Schema>, tid: Option<TypeId>) -> ComponentEntry {
         let schema = match schema {
-            RefOr::T(s)   => s,
-            RefOr::Ref(r) => 
-                // { 
-                //     return self.components
-                //         .values()
-                //         .find(|e| e.reference.is_some() && *e.reference.as_ref().unwrap() == r)
-                //         .expect(format!(
-                //             "ComponentsRegistry::add_component: schema for `{}` is a ref to `{}`, which hasn't been seen yet!",
-                //             name,
-                //             r.ref_location
-                //         ).as_str())
-                //         .clone();
-                // },
-                panic!(
-                    "ComponentsRegistry::add_component: schema for `{}` is a ref to `{}`, expected to be a schema!",
-                    name,
-                    r.ref_location
-                ),
+            RefOr::T(s) => s,
+            RefOr::Ref(r) => panic!(
+                "ComponentsRegistry::add_component: schema for `{}` is a ref to `{}`, expected to be a schema!",
+                name,
+                r.ref_location
+            ),
         };
 
         if !Self::is_component(&schema) {

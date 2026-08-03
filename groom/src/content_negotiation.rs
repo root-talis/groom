@@ -41,9 +41,7 @@ pub fn parse_content_type_header(headers: &HeaderMap) -> Result<Option<Mime>, He
 }
 
 pub fn get_body_content_type(mime: Option<Mime>) -> Option<BodyContentType> {
-    mime.as_ref()?;
-
-    let mime = mime.unwrap();
+    let mime = mime?;
 
     if is_form_url_encoded(&mime) {
         Some(BodyContentType::FormUrlEncoded)

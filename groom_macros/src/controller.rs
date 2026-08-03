@@ -56,22 +56,22 @@ pub(crate) fn generate(args_t: TokenStream, args: ControllerArgs, input: TokenSt
 }
 
 struct ModuleASTFragments {
-    /// for routes deduplication
+    /// Module items in original order (handlers replaced by wrapper AST).
     module_items: Vec<TokenStream>,
 
-    /// all module items in the original order
+    /// Seen (path, method) → handler name for route deduplication.
     seen_handlers: IndexMap<String, IndexMap<HTTPMethod, String>>,
 
-    /// code to set up routes in merge_into_router()
+    /// Route install fragments for `into_router` / `merge_into_router`.
     routes_setup: Vec<TokenStream>,
 
-    /// code to set up paths for GroomRouter
+    /// OpenAPI path-item setup fragments keyed by URL path.
     openapi_paths_setup: IndexMap<String, Vec<TokenStream>>,
 
-    /// compile-time checks of trait implementation (for better error messages)
+    /// Compile-time trait assertions (clearer expand errors).
     type_assertions: Vec<TokenStream>,
 
-    /// runtime checks of HTTP response codes
+    /// Runtime HTTP status/format check fragments.
     runtime_checks: Vec<TokenStream>,
 }
 
@@ -94,27 +94,17 @@ struct HandlerASTFragments {
 
 /// Generates implementation for mod annotated with `#[Controller()]`
 fn generate_controller_impl(_args_t: TokenStream, args: ControllerArgs, input: TokenStream) -> Result<TokenStream, TokenStream> {
-    let item_mod = match parse2::<ItemMod>(input) {
-        Ok(syntax_tree) => syntax_tree,
-        Err(error) => return Err(error.to_compile_error()),
-    };
+    let item_mod = parse2::<ItemMod>(input).map_err(|error| error.to_compile_error())?;
 
-    if item_mod.content.is_none() {
+    let Some((_, items)) = item_mod.content else {
         return Err(Error::new_spanned(&item_mod.ident, "module should have content").to_compile_error());
-    }
-
-    let items = item_mod.content.unwrap().1;
-
-    //
-    // Walk through all handlers and parse them
-    //
+    };
 
     let mut fragments = ModuleASTFragments {
         seen_handlers: IndexMap::new(),
         module_items: Vec::with_capacity(items.len()),
         routes_setup: Vec::new(),
         openapi_paths_setup: IndexMap::new(),
-        //openapi_components_setup: IndexMap::new(),
         type_assertions: Vec::new(),
         runtime_checks: Vec::new(),
     };
@@ -127,10 +117,6 @@ fn generate_controller_impl(_args_t: TokenStream, args: ControllerArgs, input: T
         }
     }
 
-    //
-    // Regenerate the entire module
-    //
-
     Ok(generate_new_mod_ast(args, &item_mod.vis, &item_mod.ident, fragments))
 }
 
@@ -139,9 +125,8 @@ fn parse_handler_function(
     function: &mut ItemFn,
     mod_fragments: &mut ModuleASTFragments,
 ) -> Result<(), TokenStream> {
-    let route = match extract_route_args(function, mod_fragments)? {
-        Some(r) => r,
-        None => return Ok(())
+    let Some(route) = extract_route_args(function, mod_fragments)? else {
+        return Ok(());
     };
 
     if function.sig.asyncness.is_none() {
@@ -155,18 +140,12 @@ fn parse_handler_function(
     generate_router_modifier_for_handler(&fn_fragments.wrapper_name, &route, mod_fragments);
     fn_fragments.openapi_modification_code = generate_openapi_modifier_for_handler(function, mod_fragments)?;
 
-    //
-    // new module item instead of current one:
-    //
-
-    // change comment:
     let docblock = crate::comments::get_docblock_parts(&function.attrs).unwrap_or_default();
     crate::comments::remove_docblock(&mut function.attrs);
 
     generate_new_handler_ast(function, &route, &docblock, &fn_fragments, mod_fragments);
     generate_openapi_paths_setup_ast(function, &fn_fragments, &route, &docblock, mod_fragments);
 
-    // if handlers returnes something
     if let ReturnType::Type(_, ty) = &function.sig.output {
         let ident = &function.sig.ident;
         let context_format = format!("{{context}}: handler `{ident}`");
@@ -192,12 +171,11 @@ fn extract_route_args(function: &mut ItemFn, mod_fragments: &mut ModuleASTFragme
         Err(error) => return Err(error.write_errors()),
     };
 
-    if args.is_none() {
+    let Some(route) = args else {
         mod_fragments.module_items.push(function.into_token_stream());
         return Ok(None);
-    }
+    };
 
-    let route = args.expect("args parse result is checked right above");
     Ok(Some(route))
 }
 
@@ -277,23 +255,20 @@ fn generate_handler_fragments(handler: &mut ItemFn, mod_fragments: &mut ModuleAS
 
 /// Generates an AST to add OpenAPI spec modifier for this particular handler
 fn generate_openapi_modifier_for_handler(handler: &ItemFn, mod_fragments: &mut ModuleASTFragments) -> Result<TokenStream, TokenStream> {
-    Ok(match &handler.sig.output {
-        syn::ReturnType::Default => {
-            return Err(
-                Error::new_spanned(
-                    &handler.sig,
-                    "handlers must return something"
-                ).to_compile_error()
-            );
-        },
-        syn::ReturnType::Type(_arrow, ty) => {
-            mod_fragments.type_assertions.push(quote! {
-                assert_impl_all!(#ty: ::groom::response::Response);
-            });
+    let syn::ReturnType::Type(_arrow, ty) = &handler.sig.output else {
+        return Err(
+            Error::new_spanned(
+                &handler.sig,
+                "handlers must return something"
+            ).to_compile_error()
+        );
+    };
 
-            quote! {op_builder = <#ty>::__openapi_modify_operation(op_builder, &mut components);}
-        },
-    })
+    mod_fragments.type_assertions.push(quote! {
+        assert_impl_all!(#ty: ::groom::response::Response);
+    });
+
+    Ok(quote! {op_builder = <#ty>::__openapi_modify_operation(op_builder, &mut components);})
 }
 
 /// Generates an AST to configure all paths of this mod for the OpenAPI spec

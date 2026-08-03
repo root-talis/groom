@@ -177,7 +177,6 @@ impl NewAstFragments {
 
             formatter_functions: Default::default(),
 
-            // todo: find a nicer way to do this?
             into_response_any_content_type_ident: format_ident!("into_response_any_content_type"),
             into_response_text_plain_ident: format_ident!("into_response_text_plain"),
             into_response_text_html_ident: format_ident!("into_response_text_html"),
@@ -219,19 +218,12 @@ pub(crate) fn generate(args_t: TokenStream, input: TokenStream) -> TokenStream {
 fn generate_implementation(args_t: TokenStream, input: TokenStream)
     -> Result<TokenStream, TokenStream>
 {
-    let item = parse2::<Item>(input).map_err(
-        |e| e.to_compile_error()
-    )?;
+    let item = parse2::<Item>(input).map_err(|e| e.to_compile_error())?;
 
     let fragments = match item {
-        Item::Enum(item_enum) =>
-            enum_impl::make_fragments_for_enum(item_enum, args_t),
-
-        Item::Struct(struct_enum) =>
-            struct_impl::make_fragments_for_struct(struct_enum, args_t),
-
-        _ =>
-            Err(Error::new_spanned(item, "Response should be an enum or a struct.").to_compile_error()),
+        Item::Enum(item_enum) => enum_impl::make_fragments_for_enum(item_enum, args_t),
+        Item::Struct(item_struct) => struct_impl::make_fragments_for_struct(item_struct, args_t),
+        _ => Err(Error::new_spanned(item, "Response should be an enum or a struct.").to_compile_error()),
     }?;
 
     make_new_ast(fragments)
@@ -330,41 +322,37 @@ const STATUS_CODE_CONSTANTS: &[(u16, &str)] = &[
 /// Extracts response HTTP code from `#[Response(code = ...)]` annotation.
 fn extract_response_code<T: ToTokens>(response_code: HTTPStatusCode, span: T) -> Result<(u16, TokenStream), TokenStream> {
     let response_code_u16 = response_code.0;
-    let response_code_ts = match StatusCode::from_u16(response_code_u16) {
-        Ok(_) => {
-            // The code is validated at expand time right above. Emit a match over named
-            // `StatusCode` constants whose subject is the literal itself — the compiler
-            // folds the whole match to the constant, so generated code has no `Result`
-            // branch, no `from_u16` and no `unwrap`.
-            let mut arms: Vec<TokenStream> = STATUS_CODE_CONSTANTS
-                .iter()
-                .map(|(code, const_name)| {
-                    let code_u16_literal = *code;
-                    let const_ident = Ident::new(const_name, proc_macro2::Span::call_site());
-                    quote! {
-                        #code_u16_literal => ::axum::http::StatusCode::#const_ident,
-                    }
-                })
-                .collect();
+    if let Err(e) = StatusCode::from_u16(response_code_u16) {
+        return Err(
+            syn::Error::new_spanned(
+                &span,
+                format!("error in `#[Response]` annotation: cannot parse response code `{}`: {e}", response_code_u16)
+            ).to_compile_error()
+        );
+    }
 
-            arms.push(quote! {
-                _ => unreachable!("groom: status code {} was validated at expand time", #response_code_u16),
-            });
-
+    // Validated at expand time. Emit a match over named `StatusCode` constants whose
+    // subject is the literal itself — the compiler folds the match to the constant, so
+    // generated code has no `Result` branch, no `from_u16`, and no `unwrap`.
+    let mut arms: Vec<TokenStream> = STATUS_CODE_CONSTANTS
+        .iter()
+        .map(|(code, const_name)| {
+            let code_u16_literal = *code;
+            let const_ident = Ident::new(const_name, proc_macro2::Span::call_site());
             quote! {
-                match #response_code_u16 {
-                    #(#arms)*
-                }
+                #code_u16_literal => ::axum::http::StatusCode::#const_ident,
             }
-        },
-        Err(e) => {
-            return Err(
-                syn::Error::new_spanned(
-                    &span,
-                    format!("error in `#[Response]` annotation: cannot parse response code `{}`: {e}", response_code_u16)
-                ).to_compile_error()
-            )
-        },
+        })
+        .collect();
+
+    arms.push(quote! {
+        _ => unreachable!("groom: status code {} was validated at expand time", #response_code_u16),
+    });
+
+    let response_code_ts = quote! {
+        match #response_code_u16 {
+            #(#arms)*
+        }
     };
 
     Ok((response_code_u16, response_code_ts))
@@ -534,26 +522,24 @@ fn make_groom_into_response_function(
     let fn_ident_for_text_html = &fragments.into_response_text_html_ident;
     let fn_ident_for_application_json = &fragments.into_response_application_json_ident;
 
-    let default_format =
-        detect_default_format(&fragments.item_ident, resp_args, resp_args_span)?;
-
     let content_type_negotiation = if !resp_args.format.is_any() {
         quote! {
             self.#fn_ident_for_any_content()
         }
     } else {
-        let default_content_response = if let Some(default_format) = default_format {
-            match default_format {
-                ResponseFormat::PlainText => quote! { self.#fn_ident_for_text_plain() },
-                ResponseFormat::Html => quote! { self.#fn_ident_for_text_html() },
-                ResponseFormat::Json => quote! { self.#fn_ident_for_application_json() },
-                // todo: option to force BadRequest response if client hasn't specified any format in Accept header
-            }
-        } else {
+        let Some(default_format) =
+            detect_default_format(&fragments.item_ident, resp_args, resp_args_span)?
+        else {
             return Err(syn::Error::new_spanned(
                 resp_args_span,
                 format!("cannot infer default_format for `{item_ident}` - this is a bug in groom, please report it; thank you~")
             ).into_compile_error());
+        };
+
+        let default_content_response = match default_format {
+            ResponseFormat::PlainText => quote! { self.#fn_ident_for_text_plain() },
+            ResponseFormat::Html => quote! { self.#fn_ident_for_text_html() },
+            ResponseFormat::Json => quote! { self.#fn_ident_for_application_json() },
         };
 
         let mime_type_matches = make_mime_types_matches_for_content_negotiation(
@@ -606,41 +592,41 @@ fn make_groom_negotiate_content_type_function(
 {
     let supported_mimes_ident = &fragments.supported_mimes_ident;
 
+    // any-content type: accepts every content type by design, no negotiation
     if !resp_args.format.is_any() {
-        // any-content type: accepts every content type by design, no negotiation
-        Ok(quote! {
+        return Ok(quote! {
             fn __groom_negotiate_content_type(_accept: &::accept_header::Accept)
                 -> ::core::result::Result<Option<&'static ::mime::Mime>, ::axum::response::Response>
             {
                 Ok(None)
             }
-        })
-    } else {
-        let default_format =
-            detect_default_format(&fragments.item_ident, resp_args, resp_args_span)?;
-        let default_mime_ref = match default_format {
-            Some(fmt) => {
-                let index = default_format_index_in_supported(resp_args, fmt);
-                quote! { Some(&#supported_mimes_ident[#index]) }
-            }
-            None => quote! { None },
-        };
-
-        Ok(quote! {
-            fn __groom_negotiate_content_type(accept: &::accept_header::Accept)
-                -> ::core::result::Result<Option<&'static ::mime::Mime>, ::axum::response::Response>
-            {
-                match ::groom::content_negotiation::negotiate_parameter_insensitive(
-                    accept,
-                    &#supported_mimes_ident,
-                    #default_mime_ref,
-                ) {
-                    Some(negotiated) => Ok(Some(negotiated)),
-                    None => Err(::groom::response::not_acceptable(#supported_mimes_ident)),
-                }
-            }
-        })
+        });
     }
+
+    let default_format =
+        detect_default_format(&fragments.item_ident, resp_args, resp_args_span)?;
+    let default_mime_ref = match default_format {
+        Some(fmt) => {
+            let index = default_format_index_in_supported(resp_args, fmt);
+            quote! { Some(&#supported_mimes_ident[#index]) }
+        }
+        None => quote! { None },
+    };
+
+    Ok(quote! {
+        fn __groom_negotiate_content_type(accept: &::accept_header::Accept)
+            -> ::core::result::Result<Option<&'static ::mime::Mime>, ::axum::response::Response>
+        {
+            match ::groom::content_negotiation::negotiate_parameter_insensitive(
+                accept,
+                &#supported_mimes_ident,
+                #default_mime_ref,
+            ) {
+                Some(negotiated) => Ok(Some(negotiated)),
+                None => Err(::groom::response::not_acceptable(#supported_mimes_ident)),
+            }
+        }
+    })
 }
 
 /// Index of `default` in the `__GROOM_RESPONSE_SUPPORTED_MIMES_*` const, matching
@@ -678,30 +664,30 @@ fn detect_default_format(
     resp_args: &ResponseArgsBase,
     resp_args_span: &TokenStream
 ) -> Result<Option<ResponseFormat>, TokenStream> {
-    Ok(
-        if !resp_args.format.is_any() {
-            None
-        } else {
-            let default_format = resp_args.default_format.map_or_else(
-                || resp_args.format.get_single_value(),
-                Some,
-            );
+    if !resp_args.format.is_any() {
+        return Ok(None);
+    }
 
-            if default_format.is_none() {
-                return Err(syn::Error::new_spanned(
-                    resp_args_span,
-                    format!("error in `#[Response]` annotation: specify default_format for `{ident}` (e.g. #[Response(default_format=\"json\")])")
-                ).into_compile_error());
-            } else if !resp_args.format.has(default_format.unwrap()) {
-                return Err(syn::Error::new_spanned(
-                    resp_args_span,
-                    format!("error in `#[Response]` annotation: default_format `{}` of `{ident}` is not mentioned in it's formats list", default_format.unwrap())
-                ).into_compile_error());
-            }
+    let default_format = resp_args.default_format.map_or_else(
+        || resp_args.format.get_single_value(),
+        Some,
+    );
 
-            default_format
-        }
-    )
+    let Some(default_format) = default_format else {
+        return Err(syn::Error::new_spanned(
+            resp_args_span,
+            format!("error in `#[Response]` annotation: specify default_format for `{ident}` (e.g. #[Response(default_format=\"json\")])")
+        ).into_compile_error());
+    };
+
+    if !resp_args.format.has(default_format) {
+        return Err(syn::Error::new_spanned(
+            resp_args_span,
+            format!("error in `#[Response]` annotation: default_format `{default_format}` of `{ident}` is not mentioned in it's formats list")
+        ).into_compile_error());
+    }
+
+    Ok(Some(default_format))
 }
 
 /// Makes fragments of MIME type matching for calling appropriate `into_response_*` functions.
@@ -876,6 +862,16 @@ mod enum_impl {
         }
     }
 
+    /// Unit-variant match arm shared by all format matchers (identical TokenStream).
+    fn unit_variant_into_response_arm(
+        variant_ident: &Ident,
+        response_code_ts: &TokenStream,
+    ) -> TokenStream {
+        quote! {
+            Self::#variant_ident => (#response_code_ts).into_response(),
+        }
+    }
+
     /// Makes matchers for content type negotiation.
     fn populate_content_type_matchers(
         variant_ident: &Ident,
@@ -891,10 +887,7 @@ mod enum_impl {
             //  - either have only variants without fields in this enum and respond only with HTTP codes,
             //  - or raise a compile error telling the dev that they need to specify some response format.
             matchers.match_enum_when_no_accept_header_found.push(match &response_body_field {
-                None =>
-                    quote! {
-                            Self::#variant_ident => (#response_code_ts).into_response(),
-                        },
+                None => unit_variant_into_response_arm(variant_ident, response_code_ts),
 
                 Some(single_field) => {
                     return Err(
@@ -909,10 +902,7 @@ mod enum_impl {
 
         if content_types.plain_text {
             matchers.match_enum_for_text_plain.push(match &response_body_field {
-                None =>
-                    quote! {
-                        Self::#variant_ident => (#response_code_ts).into_response(),
-                    },
+                None => unit_variant_into_response_arm(variant_ident, response_code_ts),
 
                 Some(_single_field) =>
                     quote! {
@@ -926,10 +916,7 @@ mod enum_impl {
 
         if content_types.html {
             matchers.match_enum_for_text_html.push(match &response_body_field {
-                None =>
-                    quote! {
-                        Self::#variant_ident => (#response_code_ts).into_response(),
-                    },
+                None => unit_variant_into_response_arm(variant_ident, response_code_ts),
 
                 Some(single_field) => {
                     let ty = &single_field.ty;
@@ -946,10 +933,7 @@ mod enum_impl {
 
         if content_types.json {
             matchers.match_enum_for_application_json.push(match &response_body_field {
-                None =>
-                    quote! {
-                        Self::#variant_ident => (#response_code_ts).into_response(),
-                    },
+                None => unit_variant_into_response_arm(variant_ident, response_code_ts),
 
                 Some(_single_field) =>
                     quote! {
@@ -1004,6 +988,17 @@ mod enum_impl {
     }
 
 
+    /// Shared `fn into_response_*(self) { match self { … } }` builder (identical across formats).
+    fn match_self_formatter(formatter: &Ident, matcher: &[TokenStream]) -> TokenStream {
+        quote! {
+            fn #formatter(self) -> ::axum::response::Response {
+                match self {
+                    #(#matcher)*
+                }
+            }
+        }
+    }
+
     /// Makes implementations of `into_response_*` formatters for all required content-types.
     fn make_formatter_functions(matchers: &EnumMatchers, fragments: &mut NewAstFragments) {
         let resp_args = &fragments.response_args;
@@ -1011,49 +1006,25 @@ mod enum_impl {
         if !resp_args.format.is_any() {
             let formatter = &fragments.into_response_any_content_type_ident;
             let matcher = &matchers.match_enum_when_no_accept_header_found;
-            fragments.formatter_functions.push(quote! {
-                fn #formatter(self) -> ::axum::response::Response {
-                    match self {
-                        #(#matcher)*
-                    }
-                }
-            });
-        };
+            fragments.formatter_functions.push(match_self_formatter(formatter, matcher));
+        }
 
         if resp_args.format.plain_text {
             let formatter = &fragments.into_response_text_plain_ident;
             let matcher = &matchers.match_enum_for_text_plain;
-            fragments.formatter_functions.push(quote! {
-                fn #formatter(self) -> ::axum::response::Response {
-                    match self {
-                        #(#matcher)*
-                    }
-                }
-            });
+            fragments.formatter_functions.push(match_self_formatter(formatter, matcher));
         }
 
         if resp_args.format.html {
             let formatter = &fragments.into_response_text_html_ident;
             let matcher = &matchers.match_enum_for_text_html;
-            fragments.formatter_functions.push(quote! {
-                fn #formatter(self) -> ::axum::response::Response {
-                    match self {
-                        #(#matcher)*
-                    }
-                }
-            });
+            fragments.formatter_functions.push(match_self_formatter(formatter, matcher));
         }
 
         if resp_args.format.json {
             let formatter = &fragments.into_response_application_json_ident;
             let matcher = &matchers.match_enum_for_application_json;
-            fragments.formatter_functions.push(quote! {
-                fn #formatter(self) -> ::axum::response::Response {
-                    match self {
-                        #(#matcher)*
-                    }
-                }
-            });
+            fragments.formatter_functions.push(match_self_formatter(formatter, matcher));
         }
     }
 }
