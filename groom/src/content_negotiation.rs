@@ -72,19 +72,30 @@ fn get_header_str<'a>(
         .transpose()
 }
 
+/// True when the client explicitly refuses this media type (`q=0` / `q<=0`).
+/// Missing weight is treated as acceptable (RFC 7231 default q=1.0).
+fn is_refused_weight(weight: Option<f32>) -> bool {
+    matches!(weight, Some(w) if w <= 0.0)
+}
+
 /// Negotiates `Accept` against supported Mimes, ignoring Mime parameters (charset and
 /// others). `accept-header`'s `negotiate()` compares full `Mime`s including
 /// parameters, so a `text/plain; charset=utf-8` supported list would otherwise 406 a
 /// plain `Accept: text/plain`. The parser pre-sorts `accept.types` by q-weight, so
-/// iterating in order preserves priority. When only `*/*` matches (stored in
-/// `accept.wildcard`), this uses `default` when that mime is in `supported`
-/// (type_/subtype_ match); otherwise it uses the first supported mime.
+/// iterating in order preserves priority. Media types (and `*/*`) with weight
+/// `Some(w)` where `w <= 0.0` are skipped as explicit refusals. When only an
+/// acceptable `*/*` remains (stored in `accept.wildcard`), this uses `default`
+/// when that mime is in `supported` (type_/subtype_ match); otherwise it uses
+/// the first supported mime. A refused-only wildcard returns `None` (HTTP 406).
 pub fn negotiate_parameter_insensitive<'a>(
     accept: &Accept,
     supported: &'a [Mime],
     default: Option<&'a Mime>,
 ) -> Option<&'a Mime> {
     for media_type in &accept.types {
+        if is_refused_weight(media_type.weight) {
+            continue;
+        }
         if let Some(supported) = supported.iter().find(|mime| {
             mime.type_() == media_type.mime.type_()
                 && mime.subtype() == media_type.mime.subtype()
@@ -92,7 +103,11 @@ pub fn negotiate_parameter_insensitive<'a>(
             return Some(supported);
         }
     }
-    if accept.wildcard.is_some() {
+    if accept
+        .wildcard
+        .as_ref()
+        .is_some_and(|w| !is_refused_weight(w.weight))
+    {
         return default
             .and_then(|d| {
                 supported.iter().find(|mime| {
@@ -183,6 +198,63 @@ mod tests {
                 HeaderParseError::UnparseableValue("Accept", ref s) if s == "%%%not-a-media-type%%%"
             ),
             "unparseable Accept must map to UnparseableValue with owned text"
+        );
+    }
+
+    fn supported_json_html() -> [Mime; 2] {
+        [
+            "application/json".parse().unwrap(),
+            "text/html".parse().unwrap(),
+        ]
+    }
+
+    /// D-10: concrete JSON with weight 0 must not be selected against [JSON, HTML].
+    #[test]
+    fn negotiate_skips_concrete_refused_weight() {
+        let accept: Accept = "application/json;q=0".parse().unwrap();
+        let supported = supported_json_html();
+        let chosen = negotiate_parameter_insensitive(&accept, &supported, Some(&supported[0]));
+        assert!(
+            chosen.is_none() || chosen.map(|m| m.subtype().as_str()) != Some("json"),
+            "refused application/json;q=0 must not select JSON; got {chosen:?}"
+        );
+    }
+
+    /// D-10 / D-08: wildcard-only with weight 0 → None (no default_format fallback).
+    #[test]
+    fn negotiate_refused_wildcard_only_returns_none() {
+        let accept: Accept = "*/*;q=0".parse().unwrap();
+        let supported = supported_json_html();
+        let chosen = negotiate_parameter_insensitive(&accept, &supported, Some(&supported[0]));
+        assert!(
+            chosen.is_none(),
+            "refused */*;q=0 must return None (406), not default; got {chosen:?}"
+        );
+    }
+
+    /// D-10: mixed HTML q=1 + JSON q=0 → HTML.
+    #[test]
+    fn negotiate_mixed_nonzero_type_wins_over_refused() {
+        let accept: Accept = "text/html;q=1, application/json;q=0".parse().unwrap();
+        let supported = supported_json_html();
+        let chosen = negotiate_parameter_insensitive(&accept, &supported, Some(&supported[0]));
+        assert_eq!(
+            chosen.map(|m| (m.type_().as_str(), m.subtype().as_str())),
+            Some(("text", "html")),
+            "acceptable HTML must win over refused JSON"
+        );
+    }
+
+    /// D-10 / D-09: refused JSON + acceptable wildcard → default_format (JSON).
+    #[test]
+    fn negotiate_refused_json_plus_acceptable_wildcard_uses_default() {
+        let accept: Accept = "application/json;q=0, */*".parse().unwrap();
+        let supported = supported_json_html();
+        let chosen = negotiate_parameter_insensitive(&accept, &supported, Some(&supported[0]));
+        assert_eq!(
+            chosen.map(|m| (m.type_().as_str(), m.subtype().as_str())),
+            Some(("application", "json")),
+            "refused JSON + acceptable */* must yield default_format JSON; got {chosen:?}"
         );
     }
 }

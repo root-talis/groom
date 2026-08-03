@@ -128,6 +128,16 @@ pub async fn status_default_json_accept_star_star() {
     ;
 }
 
+/// Refused-only wildcard (`*/*;q=0`) must yield 406 — no default_format fallback (D-12 / WR-02).
+#[tokio::test]
+pub async fn status_refused_wildcard_accept_returns_406() {
+    let r = controller::into_router().validate().unwrap().to_axum_router();
+
+    Req::get("/status").accept("*/*;q=0").call(&r).await
+        .assert_status(406)
+    ;
+}
+
 /// Tests that handler picks default html format by default
 #[tokio::test]
 pub async fn status_default_html() {
