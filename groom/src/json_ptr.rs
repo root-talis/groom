@@ -16,9 +16,20 @@
 /// assert_eq!(escaped, "path~1~1with~1slashes");
 /// ```
 pub fn escape_json_pointer(input: &str) -> String {
-    String::from(input)
-        .replace('~', "~0")
-        .replace('/', "~1")
+    // Fast path: no RFC 6901 escapes needed.
+    if !input.bytes().any(|b| b == b'~' || b == b'/') {
+        return input.to_owned();
+    }
+    // Single pass: escape `~` before `/` per character (RFC 6901 order).
+    let mut out = String::with_capacity(input.len() + 8);
+    for ch in input.chars() {
+        match ch {
+            '~' => out.push_str("~0"),
+            '/' => out.push_str("~1"),
+            c => out.push(c),
+        }
+    }
+    out
 }
 
 #[cfg(test)]
