@@ -4,6 +4,7 @@
 
 ### groom
 
+- Form body `Content-Type` values with a charset (or other Mime parameters) are now accepted; detection matches type and subtype only, like JSON.
 - Major architecture change: `GroomRouter` introduced as the central composition type.
 - Added typestate pattern: `GroomRouter<S, NotValidated>` → `.validate()` → `GroomRouter<S, Validated>`.
 - `GroomRouter::new()` — creates an empty router with empty registry and no OpenAPI paths.

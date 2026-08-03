@@ -97,7 +97,8 @@ pub fn negotiate_parameter_insensitive<'a>(
 }
 
 fn is_form_url_encoded(mime: &Mime) -> bool {
-    *mime == mime::APPLICATION_WWW_FORM_URLENCODED
+    mime.type_() == mime::APPLICATION
+        && mime.subtype() == mime::WWW_FORM_URLENCODED
 }
 
 fn is_json(mime: &Mime) -> bool {
@@ -106,4 +107,28 @@ fn is_json(mime: &Mime) -> bool {
 
     mime.type_() == "application"
         && (mime.subtype() == "json" || mime.suffix().is_some_and(|name| name == "json"))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn get_body_content_type_accepts_bare_form_urlencoded() {
+        let mime: Mime = "application/x-www-form-urlencoded".parse().unwrap();
+        let result = get_body_content_type(Some(mime));
+        assert!(matches!(result, Some(BodyContentType::FormUrlEncoded)));
+    }
+
+    #[test]
+    fn get_body_content_type_accepts_form_urlencoded_with_charset() {
+        let mime: Mime = "application/x-www-form-urlencoded; charset=utf-8"
+            .parse()
+            .unwrap();
+        let result = get_body_content_type(Some(mime));
+        assert!(
+            matches!(result, Some(BodyContentType::FormUrlEncoded)),
+            "form Content-Type with charset must classify as FormUrlEncoded"
+        );
+    }
 }
